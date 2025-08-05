@@ -1,0 +1,57 @@
+{
+  "name": "mipt-frontend",
+  "version": "1.0.0",
+  "description": "MIPT Frontend - Industrial Practical Training Report System",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@headlessui/react": "^1.7.17",
+    "@types/node": "^20.10.0",
+    "@types/react": "^18.2.42",
+    "@types/react-dom": "^18.2.17",
+    "axios": "^1.6.2",
+    "file-saver": "^2.0.5",
+    "lucide-react": "^0.294.0",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-hook-form": "^7.48.2",
+    "react-pdf": "^7.6.0",
+    "react-router-dom": "^6.20.1",
+    "typescript": "^5.3.2",
+    "zustand": "^4.4.7"
+  },
+  "devDependencies": {
+    "@types/file-saver": "^2.0.7",
+    "@types/react-pdf": "^7.0.0",
+    "@vitejs/plugin-react": "^4.2.0",
+    "autoprefixer": "^10.4.16",
+    "canvas": "^3.1.2",
+    "postcss": "^8.4.32",
+    "tailwindcss": "^3.3.6",
+    "vite": "^5.0.7",
+    "vite-plugin-pwa": "^1.0.2"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext ts,tsx --report-unused-disable-directives --max-warnings 0",
+    "network": "node scripts/get-ip.js",
+    "test-network": "node scripts/test-network.js",
+    "generate-pwa-icons": "node scripts/generate-pwa-icons.js",
+    "deploy": "bash scripts/deploy-to-netlify.sh",
+    "deploy:windows": "scripts/deploy-to-netlify.bat"
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  }
+}
