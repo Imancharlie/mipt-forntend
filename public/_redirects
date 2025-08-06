@@ -1,0 +1,21 @@
+# Netlify redirects for PWA
+/*    /index.html   200
+
+# Force HTTPS for PWA
+http://:host/* https://:host/:splat 301!
+
+# Cache control for PWA assets
+/manifest.webmanifest
+  Cache-Control: public, max-age=0, must-revalidate
+
+/sw.js
+  Cache-Control: public, max-age=0, must-revalidate
+
+/icon-pt.svg
+  Cache-Control: public, max-age=31536000, immutable
+
+/*.png
+  Cache-Control: public, max-age=31536000, immutable
+
+# API proxy for production
+/api/* https://mipt.pythonanywhere.com/api/:splat 200
