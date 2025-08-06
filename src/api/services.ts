@@ -37,9 +37,24 @@ import {
 export const authService = {
   login: async (data: LoginData) => {
     try {
-      const response = await apiClient.post('/auth/login/', data);
+      // Ensure the request format matches the backend expectations
+      const loginData = {
+        username: data.username,
+        password: data.password
+      };
+      
+      console.log('🔐 Sending login request:', loginData);
+      
+      const response = await apiClient.post('/auth/login/', loginData, {
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      console.log('✅ Login response:', response.data);
       return response.data;
     } catch (error) {
+      console.error('❌ Login error:', error);
       handleApiError(error as AxiosError);
       throw error;
     }
