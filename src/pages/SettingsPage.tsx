@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTheme } from '@/components/ThemeProvider';
 import { useToastContext } from '@/contexts/ToastContext';
-import { PWAInstallGuide } from '@/components/PWAInstallGuide';
+
 import { 
   Settings, 
   Palette, 
@@ -375,7 +375,7 @@ export const SettingsPage: React.FC = () => {
         </div>
 
         {/* PWA Install Guide */}
-        <PWAInstallGuide />
+        
 
      
         <div className="flex justify-end">
