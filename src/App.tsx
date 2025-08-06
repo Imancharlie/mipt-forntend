@@ -6,7 +6,6 @@ import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ToastContainer } from '@/components/ui/ToastContainer';
 import { ToastProvider } from '@/contexts/ToastContext';
-import { PWAInstallPrompt } from '@/components/PWAInstallPrompt';
 import { PWAUpdatePrompt } from '@/components/PWAUpdatePrompt';
 
 // Layout Components
@@ -69,7 +68,6 @@ const App: React.FC = () => {
             <ToastContainer />
 
             {/* PWA Components */}
-            <PWAInstallPrompt />
             <PWAUpdatePrompt />
 
           {/* Main Application */}

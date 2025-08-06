@@ -55,7 +55,7 @@ export const PWAUpdatePrompt: React.FC = () => {
             <p className="text-xs text-gray-600 mb-3">
               {isUpdating 
                 ? 'Installing the latest version...' 
-                : 'A new version of MIPT is available. Update now for the latest features and improvements.'
+                : 'A new version of PT is available. Update now for the latest features and improvements.'
               }
             </p>
             

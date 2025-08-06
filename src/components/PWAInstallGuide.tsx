@@ -86,10 +86,10 @@ export const PWAInstallGuide: React.FC = () => {
       <div className={`card p-4 bg-green-50 border border-green-200`}>
         <div className="flex items-center gap-2 mb-3">
           <CheckCircle className="w-5 h-5 text-green-600" />
-          <h3 className="text-lg font-semibold text-green-800">MIPT is Installed!</h3>
+          <h3 className="text-lg font-semibold text-green-800">PT is Installed!</h3>
         </div>
         <p className="text-sm text-green-700">
-          Great! You're using MIPT as a native app. Enjoy the full experience with offline access and quick home screen access.
+          Great! You're using PT as a native app. Enjoy the full experience with offline access and quick home screen access.
         </p>
       </div>
     );
@@ -99,11 +99,11 @@ export const PWAInstallGuide: React.FC = () => {
     <div className={`card p-4 bg-${theme}-50 border border-${theme}-200`}>
       <div className="flex items-center gap-2 mb-4">
         <Download className={`w-5 h-5 text-${theme}-500`} />
-        <h3 className="text-lg font-semibold text-gray-900">Install MIPT App</h3>
+        <h3 className="text-lg font-semibold text-gray-900">Install PT App</h3>
       </div>
       
       <p className="text-sm text-gray-600 mb-4">
-        Install MIPT as a Progressive Web App (PWA) for the best experience with offline access, native performance, and quick home screen access.
+        Install PT as a Progressive Web App (PWA) for the best experience with offline access, native performance, and quick home screen access.
       </p>
 
       {!canInstall && (

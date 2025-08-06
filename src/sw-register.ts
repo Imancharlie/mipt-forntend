@@ -45,17 +45,7 @@ export function canInstallApp(): boolean {
   );
 }
 
-// Get install prompt
+// Let browser handle install prompt natively
 export function getInstallPrompt(): Promise<Event | null> {
-  return new Promise((resolve) => {
-    const handleBeforeInstallPrompt = (e: Event) => {
-      e.preventDefault();
-      resolve(e);
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt, { once: true });
-    
-    // Timeout after 5 seconds
-    setTimeout(() => resolve(null), 5000);
-  });
+  return Promise.resolve(null); // Disable custom install prompt
 } 
