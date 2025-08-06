@@ -3,7 +3,7 @@ export function registerServiceWorker() {
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker
-        .register('/sw.js')
+        .register('/sw.js', { scope: '/' })
         .then((registration) => {
           console.log('SW registered: ', registration);
           
@@ -19,6 +19,9 @@ export function registerServiceWorker() {
               });
             }
           });
+          
+          // Force update check for Netlify
+          registration.update();
         })
         .catch((registrationError) => {
           console.log('SW registration failed: ', registrationError);
