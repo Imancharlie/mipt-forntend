@@ -17,21 +17,26 @@ const getApiBaseUrl = () => {
     return 'http://127.0.0.1:8000/api';
   }
   
-  // Priority 3: Production fallback (relative URL)
-  return '/api';
+  // Priority 3: Production - use the PythonAnywhere backend
+  return 'https://mipt.pythonanywhere.com/api';
 };
 
 // Fallback API URLs for retry mechanism
 const API_FALLBACKS = [
   'https://mipt.pythonanywhere.com/api',  // Production
-  'http://127.0.0.1:8000/api',           // Local development
-  '/api'                                   // Relative fallback
+  'http://127.0.0.1:8000/api',           // Local development (only in dev)
+  'https://maipt.netlify.app/api'         // Netlify fallback
 ];
 
 // Function to try multiple API endpoints
 const tryApiEndpoints = async (endpoint: string, options: RequestInit = {}) => {
   const baseUrl = getApiBaseUrl();
-  const urls = [baseUrl, ...API_FALLBACKS.filter(url => url !== baseUrl)];
+  // Filter out localhost in production
+  const fallbacks = import.meta.env.DEV 
+    ? API_FALLBACKS.filter(url => url !== baseUrl)
+    : API_FALLBACKS.filter(url => url !== baseUrl && !url.includes('127.0.0.1'));
+  
+  const urls = [baseUrl, ...fallbacks];
   
   for (const url of urls) {
     try {
@@ -182,7 +187,11 @@ apiClient.interceptors.response.use(
       if (refreshToken && !isTokenExpired(refreshToken)) {
         try {
           // Create a new axios instance for refresh to avoid interceptor loop
-          const refreshResponse = await axios.post('/api/auth/token/refresh/', {
+          const refreshUrl = import.meta.env.DEV 
+            ? '/api/auth/token/refresh/'
+            : 'https://mipt.pythonanywhere.com/api/auth/token/refresh/';
+          
+          const refreshResponse = await axios.post(refreshUrl, {
             refresh: refreshToken
           });
           

@@ -53,8 +53,8 @@ export default defineConfig({
       },
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
-        name: 'MIPT - Industrial Training Reports',
-        short_name: 'MIPT',
+        name: 'PT - Industrial Training Reports',
+        short_name: 'PT',
         description: 'Industrial Practical Training Report System - Track and manage your training progress',
         theme_color: '#FF6B35',
         background_color: '#ffffff',

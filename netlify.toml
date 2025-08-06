@@ -4,6 +4,8 @@
 
 [build.environment]
   NODE_VERSION = "18"
+  VITE_API_URL = "https://mipt.pythonanywhere.com/api"
+  VITE_APP_ENV = "production"
 
 [[headers]]
   for = "/manifest.webmanifest"
