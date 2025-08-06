@@ -6,16 +6,20 @@ import { isTokenExpired } from '@/utils/auth';
 
 // Get the API base URL from environment or use a fallback
 const getApiBaseUrl = () => {
-  // Check if we're in development mode
+  // Priority 1: Environment variable (most flexible)
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  
+  // Priority 2: Development mode with default backend port
   if (import.meta.env.DEV) {
-    // In development, use the current host but different port
     const host = window.location.hostname;
     const port = '8000'; // Backend port
     return `http://${host}:${port}/api`;
   }
   
-  // In production, use relative URL or environment variable
-  return import.meta.env.VITE_API_URL || '/api';
+  // Priority 3: Production fallback (relative URL)
+  return '/api';
 };
 
 // Create axios instance
