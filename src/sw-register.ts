@@ -31,7 +31,7 @@ export function registerServiceWorker() {
 }
 
 // Check if app is installed
-export function isAppInstalled(): boolean {
+export function isAppInstalled() {
   return (
     window.matchMedia('(display-mode: standalone)').matches ||
     (window.navigator as any).standalone === true ||
@@ -40,7 +40,7 @@ export function isAppInstalled(): boolean {
 }
 
 // Check if app meets install criteria
-export function canInstallApp(): boolean {
+export function canInstallApp() {
   return (
     'serviceWorker' in navigator &&
     'PushManager' in window &&
@@ -49,6 +49,6 @@ export function canInstallApp(): boolean {
 }
 
 // Let browser handle install prompt natively
-export function getInstallPrompt(): Promise<Event | null> {
+export function getInstallPrompt() {
   return Promise.resolve(null); // Disable custom install prompt
-} 
+}
