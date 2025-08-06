@@ -21,7 +21,45 @@ const getApiBaseUrl = () => {
   return '/api';
 };
 
-// Create axios instance
+// Fallback API URLs for retry mechanism
+const API_FALLBACKS = [
+  'https://mipt.pythonanywhere.com/api',  // Production
+  'http://127.0.0.1:8000/api',           // Local development
+  '/api'                                   // Relative fallback
+];
+
+// Function to try multiple API endpoints
+const tryApiEndpoints = async (endpoint: string, options: RequestInit = {}) => {
+  const baseUrl = getApiBaseUrl();
+  const urls = [baseUrl, ...API_FALLBACKS.filter(url => url !== baseUrl)];
+  
+  for (const url of urls) {
+    try {
+      const fullUrl = `${url}${endpoint}`;
+      console.log(`🔄 Trying API endpoint: ${fullUrl}`);
+      
+      const response = await fetch(fullUrl, {
+        ...options,
+        headers: {
+          'Content-Type': 'application/json',
+          ...options.headers,
+        },
+      });
+      
+      if (response.ok) {
+        console.log(`✅ API endpoint working: ${fullUrl}`);
+        return response;
+      }
+    } catch (error) {
+      console.log(`❌ API endpoint failed: ${url}${endpoint}`, error);
+      continue;
+    }
+  }
+  
+  throw new Error('All API endpoints failed');
+};
+
+// Create axios instance with fallback mechanism
 const apiClient: AxiosInstance = axios.create({
   baseURL: getApiBaseUrl(),
   timeout: 10000,
@@ -30,6 +68,31 @@ const apiClient: AxiosInstance = axios.create({
   },
   withCredentials: true, // Include cookies for CORS
 });
+
+// Enhanced request interceptor with fallback
+apiClient.interceptors.request.use(
+  async (config) => {
+    const store = useAppStore.getState();
+    const token = store.tokens.access;
+    
+    // Skip authentication for login, register, and token refresh endpoints
+    const isAuthEndpoint = config.url?.includes('/auth/login/') || 
+                          config.url?.includes('/auth/register/') ||
+                          config.url?.includes('/auth/token/refresh/');
+    
+    if (!isAuthEndpoint && token && !isTokenExpired(token)) {
+      config.headers.Authorization = `Bearer ${token}`;
+    } else if (!isAuthEndpoint && token && isTokenExpired(token)) {
+      // Token is expired, clear it
+      store.setTokens({ access: null, refresh: store.tokens.refresh });
+    }
+    
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 // Utility function to clear auth state
 const clearAuthState = () => {
@@ -66,13 +129,47 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Response interceptor to handle token refresh
+// Response interceptor to handle token refresh and fallback
 apiClient.interceptors.response.use(
   (response: AxiosResponse) => {
     return response;
   },
   async (error: AxiosError) => {
     const originalRequest = error.config;
+    
+    // If it's a network error (CORS, connection failed), try fallback endpoints
+    if (!error.response && originalRequest) {
+      console.log('🌐 Network error detected, trying fallback endpoints...');
+      
+      try {
+        // Try the fallback mechanism for the same endpoint
+        const endpoint = originalRequest.url?.replace(originalRequest.baseURL || '', '') || '';
+        const requestOptions: RequestInit = {
+          method: originalRequest.method || 'GET',
+          headers: originalRequest.headers as Record<string, string>,
+        };
+        
+        // Add body for POST/PUT requests
+        if (originalRequest.data && ['POST', 'PUT', 'PATCH'].includes(originalRequest.method?.toUpperCase() || '')) {
+          requestOptions.body = JSON.stringify(originalRequest.data);
+        }
+        
+        const response = await tryApiEndpoints(endpoint, requestOptions);
+        
+        // Convert fetch response to axios response format
+        const data = await response.json();
+        return {
+          data,
+          status: response.status,
+          statusText: response.statusText,
+          headers: response.headers,
+          config: originalRequest,
+        };
+      } catch (fallbackError) {
+        console.log('❌ All fallback endpoints failed');
+        return Promise.reject(fallbackError);
+      }
+    }
     
     // Check if this is a 401 error and not a refresh token request or logout request
     if (error.response?.status === 401 && originalRequest && 
