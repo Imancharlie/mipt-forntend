@@ -9,6 +9,10 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: 'autoUpdate',
+      devOptions: {
+        enabled: true,
+        type: 'module'
+      },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
         runtimeCaching: [
@@ -33,6 +37,17 @@ export default defineConfig({
                 maxAgeSeconds: 60 * 60 * 24 * 365 // 1 year
               }
             }
+          },
+          {
+            urlPattern: /^https:\/\/api\./i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'api-cache',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24 // 1 day
+              }
+            }
           }
         ]
       },
@@ -40,13 +55,16 @@ export default defineConfig({
       manifest: {
         name: 'MIPT - Industrial Training Reports',
         short_name: 'MIPT',
-        description: 'Industrial Practical Training Report System',
+        description: 'Industrial Practical Training Report System - Track and manage your training progress',
         theme_color: '#FF6B35',
         background_color: '#ffffff',
         display: 'standalone',
-        orientation: 'portrait',
+        orientation: 'portrait-primary',
         scope: '/',
         start_url: '/',
+        categories: ['productivity', 'education', 'business'],
+        lang: 'en',
+        dir: 'ltr',
         icons: [
           {
             src: 'pwa-192x192.png',
@@ -63,9 +81,62 @@ export default defineConfig({
           {
             src: 'apple-touch-icon.png',
             sizes: '180x180',
-            type: 'image/png'
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: 'favicon-32x32.png',
+            sizes: '32x32',
+            type: 'image/png',
+            purpose: 'any'
+          },
+          {
+            src: 'favicon-16x16.png',
+            sizes: '16x16',
+            type: 'image/png',
+            purpose: 'any'
           }
-        ]
+        ],
+        shortcuts: [
+          {
+            name: 'Daily Report',
+            short_name: 'Daily',
+            description: 'Create or view daily training reports',
+            url: '/daily-report',
+            icons: [
+              {
+                src: 'pwa-192x192.png',
+                sizes: '192x192'
+              }
+            ]
+          },
+          {
+            name: 'Weekly Report',
+            short_name: 'Weekly',
+            description: 'Access weekly training summaries',
+            url: '/weekly-report',
+            icons: [
+              {
+                src: 'pwa-192x192.png',
+                sizes: '192x192'
+              }
+            ]
+          },
+          {
+            name: 'Profile',
+            short_name: 'Profile',
+            description: 'View and edit your profile',
+            url: '/profile',
+            icons: [
+              {
+                src: 'pwa-192x192.png',
+                sizes: '192x192'
+              }
+            ]
+          }
+        ],
+        prefer_related_applications: false,
+        related_applications: []
       }
     })
   ],
