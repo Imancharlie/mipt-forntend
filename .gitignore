@@ -100,3 +100,5 @@ temp/
 # sw.js
 # manifest.webmanifest
 # registerSW.js 
+# Local Netlify folder
+.netlify

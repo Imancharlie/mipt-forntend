@@ -13,9 +13,8 @@ const getApiBaseUrl = () => {
   
   // Priority 2: Development mode with default backend port
   if (import.meta.env.DEV) {
-    const host = window.location.hostname;
-    const port = '8000'; // Backend port
-    return `http://${host}:${port}/api`;
+    // For local development, use 127.0.0.1:8000
+    return 'http://127.0.0.1:8000/api';
   }
   
   // Priority 3: Production fallback (relative URL)
