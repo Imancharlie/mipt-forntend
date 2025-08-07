@@ -4,6 +4,7 @@ import { useTheme } from '@/components/ThemeProvider';
 import { GeneralReport } from '@/types';
 import { Loader2, Sparkles, Edit, Download, CheckCircle } from 'lucide-react';
 import { useForm } from 'react-hook-form';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
 
 export const GeneralReportPage: React.FC = () => {
   const { generalReport, fetchGeneralReport, loading, exportReport } = useAppStore();
@@ -50,8 +51,7 @@ export const GeneralReportPage: React.FC = () => {
   if (loading.isLoading && !generalReport) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] p-4">
-        <Loader2 className={`w-8 h-8 animate-spin text-${theme}-500 mb-4`} />
-        <p className="text-gray-600">Loading general report...</p>
+        <LoadingSpinner size="lg" color="primary" message="Loading general report..." />
       </div>
     );
   }

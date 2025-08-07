@@ -18,6 +18,7 @@ import {
   Calendar,
   Sparkles
 } from 'lucide-react';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
 
 interface WeekOverview {
   weekNumber: number;
@@ -169,13 +170,9 @@ export const WeeklyReportPage: React.FC = () => {
   };
 
   if (loading.isLoading) {
-  return (
+    return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] p-4">
-        <div className="relative">
-          <div className="w-16 h-16 border-4 border-slate-200 rounded-full"></div>
-          <div className="absolute top-0 left-0 w-16 h-16 border-4 border-t-blue-500 rounded-full animate-spin"></div>
-        </div>
-        <p className="text-slate-600 mt-6 font-medium">Loading your training progress...</p>
+        <LoadingSpinner size="lg" color="primary" message="Loading your training progress..." />
       </div>
     );
   }

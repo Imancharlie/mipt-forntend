@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form';
 import { cleanProfileData, mapProgramToFrontend, mapPTPhaseToFrontend, PROGRAM_MAPPING, PT_PHASE_MAPPING } from '@/utils/profileMapping';
 import { getRegistrationProfile, clearRegistrationProfile } from '@/utils/registrationStorage';
 import { useToastContext } from '@/contexts/ToastContext';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
 
 export const ProfilePage: React.FC = () => {
   const { profile, updateProfile, loading, fetchProfile } = useAppStore();
@@ -81,8 +82,7 @@ export const ProfilePage: React.FC = () => {
   if (loading.isLoading && !profile) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] p-4">
-        <Loader2 className={`w-8 h-8 animate-spin text-${theme}-500 mb-4`} />
-        <p className="text-gray-600">Loading your profile...</p>
+        <LoadingSpinner size="lg" color="primary" message="Loading your profile..." />
       </div>
     );
   }

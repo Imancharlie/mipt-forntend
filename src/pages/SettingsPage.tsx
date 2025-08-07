@@ -16,6 +16,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { useAppStore } from '@/store';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
 
 interface UserSettings {
   theme: string;
@@ -213,8 +214,7 @@ export const SettingsPage: React.FC = () => {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] p-4">
-        <Loader2 className={`w-6 h-6 animate-spin text-${theme}-500 mb-2`} />
-        <p className="text-sm text-gray-600">Loading settings...</p>
+        <LoadingSpinner size="lg" color="primary" message="Loading settings..." />
       </div>
     );
   }
@@ -303,7 +303,7 @@ export const SettingsPage: React.FC = () => {
                   ...prev,
                   account: { ...prev.account, username: e.target.value }
                 }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-600 focus:border-orange-600 text-gray-900"
               />
             </div>
             <div>
@@ -315,7 +315,7 @@ export const SettingsPage: React.FC = () => {
                   ...prev,
                   account: { ...prev.account, email: e.target.value }
                 }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-600 focus:border-orange-600 text-gray-900"
               />
             </div>
           </div>
@@ -335,7 +335,7 @@ export const SettingsPage: React.FC = () => {
                   type={showPassword ? 'text' : 'password'}
                   value={passwordData.current}
                   onChange={(e) => setPasswordData(prev => ({ ...prev, current: e.target.value }))}
-                  className="w-full px-3 py-2 pr-10 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full px-3 py-2 pr-10 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-600 focus:border-orange-600 text-gray-900"
                 />
                 <button
                   type="button"
@@ -352,7 +352,7 @@ export const SettingsPage: React.FC = () => {
                 type="password"
                 value={passwordData.new}
                 onChange={(e) => setPasswordData(prev => ({ ...prev, new: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-600 focus:border-orange-600 text-gray-900"
               />
             </div>
             <div>
@@ -361,7 +361,7 @@ export const SettingsPage: React.FC = () => {
                 type="password"
                 value={passwordData.confirm}
                 onChange={(e) => setPasswordData(prev => ({ ...prev, confirm: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-orange-600 focus:border-orange-600 text-gray-900"
               />
             </div>
             <button

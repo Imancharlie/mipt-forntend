@@ -18,6 +18,7 @@ import {
   X
 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
 
 interface UserCompany {
   id?: number;
@@ -182,10 +183,7 @@ export const CompanyPage: React.FC = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30 flex items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin mx-auto mb-4 text-blue-600" />
-          <p className="text-gray-600">Loading company data...</p>
-        </div>
+        <LoadingSpinner size="lg" color="primary" message="Loading company data..." />
       </div>
     );
   }
@@ -320,7 +318,7 @@ export const CompanyPage: React.FC = () => {
                 <input
                   type="text"
                   placeholder="Search companies by name..."
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-600 focus:border-orange-600 text-gray-900"
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   onKeyPress={(e) => e.key === 'Enter' && handleSearch()}
@@ -374,7 +372,7 @@ export const CompanyPage: React.FC = () => {
                   <label className="block text-sm font-medium mb-1">Company Name *</label>
                   <input 
                     type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-600 focus:border-orange-600 text-gray-900"
                     placeholder="Enter company name"
                     {...register('name', { required: 'Company name is required' })} 
                   />
@@ -385,7 +383,7 @@ export const CompanyPage: React.FC = () => {
                   <label className="block text-sm font-medium mb-1">Address/Location</label>
                   <input 
                     type="text"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-600 focus:border-orange-600 text-gray-900"
                     placeholder="Enter company address"
                     {...register('address')} 
                   />
@@ -395,7 +393,7 @@ export const CompanyPage: React.FC = () => {
                   <label className="block text-sm font-medium mb-1">Phone Number</label>
                   <input 
                     type="tel"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-600 focus:border-orange-600 text-gray-900"
                     placeholder="Enter phone number"
                     {...register('phone')} 
                   />
@@ -405,7 +403,7 @@ export const CompanyPage: React.FC = () => {
                   <label className="block text-sm font-medium mb-1">Email</label>
                   <input 
                     type="email"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-600 focus:border-orange-600 text-gray-900"
                     placeholder="Enter email address"
                     {...register('email')} 
                   />
@@ -415,7 +413,7 @@ export const CompanyPage: React.FC = () => {
                   <label className="block text-sm font-medium mb-1">Website</label>
                   <input 
                     type="url"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-600 focus:border-orange-600 text-gray-900"
                     placeholder="Enter website URL"
                     {...register('website')} 
                   />

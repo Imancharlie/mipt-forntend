@@ -59,9 +59,11 @@ const App: React.FC = () => {
           <div className={`theme-${theme} min-h-screen bg-gray-50`}>
             {/* Loading Overlay */}
             {loading.isLoading && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-                <LoadingSpinner message={loading.message} />
-              </div>
+              <LoadingSpinner 
+                message={loading.message} 
+                fullScreen={true}
+                color="primary"
+              />
             )}
 
             {/* Toast Notifications */}

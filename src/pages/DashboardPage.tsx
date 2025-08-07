@@ -91,7 +91,7 @@ export const DashboardPage: React.FC = () => {
   if (loading.isLoading && !dashboardStats && !dailyReports.length && !weeklyReports.length) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] p-3">
-        <LoadingSpinner size="md" message="Loading your dashboard..." />
+        <LoadingSpinner size="lg" color="primary" message="Loading your dashboard..." />
       </div>
     );
   }

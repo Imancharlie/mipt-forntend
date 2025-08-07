@@ -347,10 +347,7 @@ export const DailyReportPage: React.FC = () => {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30 flex items-center justify-center">
-        <div className="text-center">
-          <LoadingSpinner size="lg" color="primary" />
-          <p className="text-gray-600">Loading week data...</p>
-        </div>
+        <LoadingSpinner size="lg" color="primary" message="Loading week data..." />
       </div>
     );
   }
@@ -510,7 +507,7 @@ export const DailyReportPage: React.FC = () => {
                     min="0" 
                     max="12"
                     step="0.5"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    className="w-full px-3 py-2 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-600 focus:border-orange-600 text-gray-900"
                     placeholder="Enter hours spent"
                     {...register('hours_spent', { 
                       required: 'Hours are required',

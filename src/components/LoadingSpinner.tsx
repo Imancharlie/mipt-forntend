@@ -8,14 +8,16 @@ interface LoadingSpinnerProps {
   color?: 'primary' | 'white' | 'gray';
   className?: string;
   inline?: boolean;
+  fullScreen?: boolean;
 }
 
-export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ 
+export const LoadingSpinner: React.FC<LoadingSpinnerProps> = React.memo(({ 
   message = 'Loading...', 
   size = 'md',
   color = 'primary',
   className = '',
-  inline = false
+  inline = false,
+  fullScreen = false
 }) => {
   const { theme } = useTheme();
   
@@ -28,7 +30,7 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   };
 
   const colorClasses = {
-    primary: `text-${theme}-500`,
+    primary: `text-${theme}-600`, // Updated to use muted colors
     white: 'text-white',
     gray: 'text-gray-500'
   };
@@ -41,6 +43,21 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
     return spinner;
   }
 
+  if (fullScreen) {
+    return (
+      <div className="fixed inset-0 bg-white/80 backdrop-blur-sm flex items-center justify-center z-50">
+        <div className="flex flex-col items-center justify-center p-6 bg-white rounded-xl shadow-lg border border-gray-200">
+          <div className="mb-3">
+            {spinner}
+          </div>
+          {message && (
+            <p className="text-gray-600 text-sm font-medium">{message}</p>
+          )}
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex flex-col items-center justify-center p-4">
       <div className="mb-2">
@@ -51,4 +68,6 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
       )}
     </div>
   );
-}; 
+});
+
+LoadingSpinner.displayName = 'LoadingSpinner'; 

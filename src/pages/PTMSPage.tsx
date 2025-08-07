@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useTheme } from '@/components/ThemeProvider';
 import { ExternalLink, Info, LogIn, BookOpen, Users, Calendar, FileText, Loader2 } from 'lucide-react';
+import { LoadingSpinner } from '@/components/LoadingSpinner';
 
 
 interface PTMSData {
@@ -86,8 +87,7 @@ export const PTMSPage: React.FC = () => {
   if (isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] p-4">
-        <Loader2 className={`w-6 h-6 animate-spin text-${theme}-500 mb-2`} />
-        <p className="text-sm text-gray-600">Loading PTMS information...</p>
+        <LoadingSpinner size="lg" color="primary" message="Loading PTMS information..." />
       </div>
     );
   }

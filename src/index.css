@@ -16,7 +16,7 @@
 
 @layer components {
   .btn-primary {
-    @apply bg-orange-500 hover:bg-orange-600 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 min-h-[44px] flex items-center justify-center;
+    @apply bg-orange-600 hover:bg-orange-700 text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 min-h-[44px] flex items-center justify-center;
   }
   
   .btn-secondary {
@@ -24,11 +24,11 @@
   }
   
   .btn-outline {
-    @apply border-2 border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 min-h-[44px] flex items-center justify-center;
+    @apply border-2 border-orange-600 text-orange-600 hover:bg-orange-600 hover:text-white font-medium py-3 px-6 rounded-lg transition-colors duration-200 min-h-[44px] flex items-center justify-center;
   }
   
   .input-field {
-    @apply w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-colors duration-200 min-h-[44px];
+    @apply w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-600 focus:border-orange-600 transition-colors duration-200 min-h-[44px] text-gray-900 placeholder-gray-500;
   }
   
   .card {
@@ -59,21 +59,21 @@
   }
 }
 
-/* Theme-specific styles */
+/* Theme-specific styles - Reduced shininess */
 .theme-orange {
-  --primary-color: #FF6B35;
-  --secondary-color: #F7931E;
-  --accent-color: #FFE5CC;
+  --primary-color: #EA580C; /* More muted orange */
+  --secondary-color: #C2410C;
+  --accent-color: #FEF3C7;
 }
 
 .theme-purple {
-  --primary-color: #8B5CF6;
-  --secondary-color: #A78BFA;
-  --accent-color: #EDE9FE;
+  --primary-color: #7C3AED; /* More muted purple */
+  --secondary-color: #6D28D9;
+  --accent-color: #F3E8FF;
 }
 
 .theme-green {
-  --primary-color: #10B981;
-  --secondary-color: #34D399;
+  --primary-color: #059669; /* More muted green */
+  --secondary-color: #047857;
   --accent-color: #D1FAE5;
 } 
