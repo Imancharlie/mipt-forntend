@@ -24,7 +24,7 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, logout, aiUsageStats } = useAppStore();
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, colorMode } = useTheme();
 
   const navigationItems = [
     { path: '/dashboard', icon: Home, label: 'Dashboard' },
@@ -54,16 +54,16 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({ children }) => {
   return (
     <div className="desktop-container flex">
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
+      <aside className="w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-700 flex flex-col">
         {/* Logo */}
-        <div className="p-6 border-b border-gray-200">
-          <h1 className="text-2xl font-bold text-gray-900">MIPT</h1>
-          <p className="text-sm text-gray-600">Industrial Training Reports</p>
+        <div className="p-6 border-b border-gray-200 dark:border-gray-700">
+          <h1 className="text-2xl font-bold text-gray-900 dark:text-white">MIPT</h1>
+          <p className="text-sm text-gray-600 dark:text-gray-400">Industrial Training Reports</p>
         </div>
 
         {/* User Info */}
         {user && (
-          <div className="p-4 border-b border-gray-200">
+          <div className="p-4 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-center gap-3">
               {/* User Avatar */}
               <div className="relative">
@@ -77,18 +77,18 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({ children }) => {
               </div>
               
               <div className="flex-1">
-                <p className="text-sm font-semibold text-gray-900">
+                <p className="text-sm font-semibold text-gray-900 dark:text-white">
                   {user.first_name} {user.last_name}
                 </p>
-                <p className="text-xs text-gray-600">Online</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400">Online</p>
               </div>
               
               {/* Token Display */}
               {aiUsageStats && (
-                <div className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-blue-50 to-purple-50 rounded-full border border-blue-200">
-                  <Coins className="w-3 h-3 text-blue-600" />
-                  <span className="text-xs font-medium text-blue-700">{aiUsageStats.total_tokens}</span>
-                  <span className="text-xs text-blue-500">tokens</span>
+                <div className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-full border border-blue-200 dark:border-blue-700">
+                  <Coins className="w-3 h-3 text-blue-600 dark:text-blue-400" />
+                  <span className="text-xs font-medium text-blue-700 dark:text-blue-300">{aiUsageStats.total_tokens}</span>
+                  <span className="text-xs text-blue-500 dark:text-blue-400">tokens</span>
                 </div>
               )}
             </div>
@@ -109,12 +109,12 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({ children }) => {
                     className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-left ${
                       isActive 
                         ? `${
-                            theme === 'orange' ? 'bg-orange-100 text-orange-600' :
-                            theme === 'purple' ? 'bg-purple-100 text-purple-600' :
-                            theme === 'green' ? 'bg-green-100 text-green-600' :
-                            'bg-orange-100 text-orange-600'
+                            theme === 'orange' ? 'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400' :
+                            theme === 'purple' ? 'bg-purple-100 dark:bg-purple-900/30 text-purple-600 dark:text-purple-400' :
+                            theme === 'green' ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400' :
+                            'bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400'
                           }` 
-                        : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                        : 'text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800'
                     }`}
                   >
                     <Icon className="w-5 h-5" />
@@ -127,11 +127,11 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({ children }) => {
         </nav>
 
         {/* Footer */}
-        <div className="p-4 border-t border-gray-200">
+        <div className="p-4 border-t border-gray-200 dark:border-gray-700">
           <div className="space-y-2">
             <button
               onClick={handleThemeChange}
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition-colors"
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-800 transition-colors"
             >
               <Settings className="w-5 h-5" />
               <span className="font-medium">Change Theme</span>
@@ -139,7 +139,7 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({ children }) => {
             
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-red-600 hover:text-red-700 hover:bg-red-50 transition-colors"
+              className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
             >
               <LogOut className="w-5 h-5" />
               <span className="font-medium">Logout</span>
@@ -149,7 +149,7 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({ children }) => {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 bg-gray-50 overflow-y-auto">
+      <main className="flex-1 bg-gray-50 dark:bg-gray-900 overflow-y-auto">
         <div className="p-6">
           {children}
         </div>

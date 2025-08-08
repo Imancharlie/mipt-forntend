@@ -19,7 +19,7 @@ import { useAppStore } from '@/store';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 
 interface UserSettings {
-  theme: string;
+  theme: 'light' | 'dark';
   notifications: {
     email: boolean;
     push: boolean;
@@ -33,11 +33,11 @@ interface UserSettings {
 }
 
 export const SettingsPage: React.FC = () => {
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, colorMode, setColorMode } = useTheme();
   const { user } = useAppStore();
   const { showSuccess, showError, showWarning, showInfo } = useToastContext();
   const [settings, setSettings] = useState<UserSettings>({
-    theme: 'orange',
+    theme: colorMode,
     notifications: {
       email: true,
       push: true,
@@ -68,7 +68,7 @@ export const SettingsPage: React.FC = () => {
         } else {
           // Use default settings if API fails
           setSettings({
-            theme: theme,
+            theme: 'light',
             notifications: {
               email: true,
               push: true,
@@ -85,7 +85,7 @@ export const SettingsPage: React.FC = () => {
         console.error('Failed to fetch user settings:', error);
         // Use default settings
         setSettings({
-          theme: theme,
+          theme: 'light',
           notifications: {
             email: true,
             push: true,
@@ -105,8 +105,8 @@ export const SettingsPage: React.FC = () => {
     fetchUserSettings();
   }, [theme, user]);
 
-  const handleThemeChange = (newTheme: string) => {
-    setTheme(newTheme as any);
+  const handleThemeChange = (newTheme: 'light' | 'dark') => {
+    setColorMode(newTheme);
     setSettings(prev => ({ ...prev, theme: newTheme }));
   };
 
@@ -238,23 +238,26 @@ export const SettingsPage: React.FC = () => {
         <div className={`card p-4 bg-${theme}-50 border border-${theme}-200`}>
           <div className="flex items-center gap-2 mb-3">
             <Palette className={`w-5 h-5 text-${theme}-500`} />
-            <h2 className="text-lg font-semibold text-gray-900">Theme</h2>
+            <h2 className="text-lg font-semibold text-gray-900">Appearance</h2>
           </div>
           <div className="space-y-3">
-            <p className="text-sm text-gray-700">Choose your preferred color theme</p>
-            <div className="grid grid-cols-3 gap-3">
-              {['orange', 'purple', 'green'].map((color) => (
-                <button
-                  key={color}
-                  onClick={() => handleThemeChange(color)}
-                  className={`p-3 rounded-lg border-2 transition-all ${
-                    settings.theme === color
-                      ? `border-${color}-500 bg-${color}-100`
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <div className={`w-6 h-6 rounded-full bg-${color}-500 mx-auto mb-2`}></div>
-                  <span className="text-xs font-medium capitalize">{color}</span>
+            <p className="text-sm text-gray-700">Choose your preferred appearance mode</p>
+            <div className="grid grid-cols-2 gap-3">
+              {[
+                { id: 'light', name: 'Light Mode', icon: '☀️', bg: 'bg-white', border: 'border-gray-300' },
+                { id: 'dark', name: 'Dark Mode', icon: '🌙', bg: 'bg-gray-900', border: 'border-gray-600' }
+              ].map((mode) => (
+                                  <button
+                    key={mode.id}
+                    onClick={() => handleThemeChange(mode.id as 'light' | 'dark')}
+                    className={`p-4 rounded-xl border-2 transition-all ${
+                      colorMode === mode.id
+                        ? `border-orange-500 bg-orange-50`
+                        : `${mode.border} hover:border-orange-300`
+                    }`}
+                  >
+                  <div className="text-2xl mb-2">{mode.icon}</div>
+                  <span className="text-sm font-medium text-gray-800">{mode.name}</span>
                 </button>
               ))}
             </div>

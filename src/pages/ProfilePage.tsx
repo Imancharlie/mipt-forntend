@@ -51,11 +51,11 @@ export const ProfilePage: React.FC = () => {
           }).catch((error) => {
             console.error('Failed to auto-complete profile:', error);
             showInfo('Please complete your profile information.');
-            setIsEditing(true);
+            // Don't auto-set to editing mode
           });
         } else {
           showInfo('Please complete your profile information.');
-          setIsEditing(true);
+          // Don't auto-set to editing mode
         }
       }
     }

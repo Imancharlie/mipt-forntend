@@ -57,44 +57,52 @@ export const GeneralReportPage: React.FC = () => {
   }
 
   return (
-    <div className="p-4 max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className={`text-2xl font-bold text-${theme}-600`}>General Report</h1>
-          <p className="text-gray-600">Your comprehensive training report</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <button 
-            className="btn-outline flex items-center gap-2"
-            onClick={() => setIsEditing(!isEditing)}
-          >
-            <Edit className="w-4 h-4" />
-            {isEditing ? 'Cancel Edit' : 'Edit Report'}
-          </button>
-          <button 
-            className="btn-primary flex items-center gap-2"
-            onClick={() => handleExport('pdf')}
-          >
-            <Download className="w-4 h-4" />
-            Export PDF
-          </button>
-          <button 
-            className="btn-secondary flex items-center gap-2"
-            onClick={() => handleExport('docx')}
-          >
-            <Download className="w-4 h-4" />
-            Export DOCX
-          </button>
+    <div className="p-4 lg:p-6 max-w-6xl mx-auto">
+      {/* Enhanced Header */}
+      <div className="mb-8">
+        <div className="bg-gradient-to-r from-orange-50 to-orange-100 border border-orange-200 rounded-2xl p-6 mb-6">
+          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
+            <div>
+              <h1 className={`text-3xl lg:text-4xl font-bold text-${theme}-600 mb-2`}>
+                General Report
+              </h1>
+              <p className="text-gray-600 text-lg">Your comprehensive training report and achievements</p>
+            </div>
+            <div className="flex flex-col sm:flex-row items-center gap-3">
+              <button 
+                className={`px-6 py-3 bg-white border-2 border-${theme}-300 text-${theme}-600 rounded-xl font-semibold shadow-sm hover:shadow-md transition-all duration-300 flex items-center gap-2 hover:bg-${theme}-50`}
+                onClick={() => setIsEditing(!isEditing)}
+              >
+                <Edit className="w-4 h-4" />
+                {isEditing ? 'Cancel Edit' : 'Edit Report'}
+              </button>
+              <div className="flex items-center gap-2">
+                <button 
+                  className={`px-4 py-3 bg-gradient-to-r from-${theme}-500 to-${theme}-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2 hover:scale-105`}
+                  onClick={() => handleExport('pdf')}
+                >
+                  <Download className="w-4 h-4" />
+                  PDF
+                </button>
+                <button 
+                  className={`px-4 py-3 bg-gray-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2 hover:scale-105`}
+                  onClick={() => handleExport('docx')}
+                >
+                  <Download className="w-4 h-4" />
+                  DOCX
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Report Content */}
-      <div className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Title Section */}
-        <div className="card">
+        <div className="lg:col-span-2 bg-white rounded-2xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-all duration-300">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold">Report Title</h2>
+            <h2 className="text-xl font-semibold text-gray-800">Report Title</h2>
             <button
               onClick={() => handleAIEnhance('title')}
               className="p-2 text-gray-500 hover:text-blue-600 transition-colors"
@@ -105,7 +113,7 @@ export const GeneralReportPage: React.FC = () => {
           </div>
           {isEditing ? (
             <input 
-              className="input-field text-xl font-semibold" 
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl text-xl font-semibold focus:border-orange-500 focus:outline-none transition-all duration-300" 
               {...register('title')} 
             />
           ) : (
@@ -116,9 +124,9 @@ export const GeneralReportPage: React.FC = () => {
         </div>
 
         {/* Introduction */}
-        <div className="card">
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-all duration-300">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Introduction</h2>
+            <h2 className="text-lg font-semibold text-gray-800">Introduction</h2>
             <button
               onClick={() => handleAIEnhance('introduction')}
               className="p-2 text-gray-500 hover:text-blue-600 transition-colors"
@@ -129,7 +137,7 @@ export const GeneralReportPage: React.FC = () => {
           </div>
           {isEditing ? (
             <textarea 
-              className="input-field" 
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:outline-none transition-all duration-300 resize-none" 
               rows={6}
               placeholder="Provide an overview of your training program, objectives, and what you hope to achieve..."
               {...register('introduction')} 
@@ -142,9 +150,9 @@ export const GeneralReportPage: React.FC = () => {
         </div>
 
         {/* Company Overview */}
-        <div className="card">
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-all duration-300">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Company Overview</h2>
+            <h2 className="text-lg font-semibold text-gray-800">Company Overview</h2>
             <button
               onClick={() => handleAIEnhance('company_overview')}
               className="p-2 text-gray-500 hover:text-blue-600 transition-colors"
@@ -155,7 +163,7 @@ export const GeneralReportPage: React.FC = () => {
           </div>
           {isEditing ? (
             <textarea 
-              className="input-field" 
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:outline-none transition-all duration-300 resize-none" 
               rows={4}
               placeholder="Describe the company, its industry, size, and your role within the organization..."
               {...register('company_overview')} 
@@ -168,9 +176,9 @@ export const GeneralReportPage: React.FC = () => {
         </div>
 
         {/* Training Objectives */}
-        <div className="card">
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-all duration-300">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Training Objectives</h2>
+            <h2 className="text-lg font-semibold text-gray-800">Training Objectives</h2>
             <button
               onClick={() => handleAIEnhance('training_objectives')}
               className="p-2 text-gray-500 hover:text-blue-600 transition-colors"
@@ -181,7 +189,7 @@ export const GeneralReportPage: React.FC = () => {
           </div>
           {isEditing ? (
             <textarea 
-              className="input-field" 
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:outline-none transition-all duration-300 resize-none" 
               rows={4}
               placeholder="List the specific objectives and goals of your training program..."
               {...register('training_objectives')} 
@@ -194,9 +202,9 @@ export const GeneralReportPage: React.FC = () => {
         </div>
 
         {/* Methodology */}
-        <div className="card">
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-all duration-300">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Methodology</h2>
+            <h2 className="text-lg font-semibold text-gray-800">Methodology</h2>
             <button
               onClick={() => handleAIEnhance('methodology')}
               className="p-2 text-gray-500 hover:text-blue-600 transition-colors"
@@ -207,7 +215,7 @@ export const GeneralReportPage: React.FC = () => {
           </div>
           {isEditing ? (
             <textarea 
-              className="input-field" 
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:outline-none transition-all duration-300 resize-none" 
               rows={4}
               placeholder="Describe the methods, approaches, and techniques used during your training..."
               {...register('methodology')} 
@@ -220,9 +228,9 @@ export const GeneralReportPage: React.FC = () => {
         </div>
 
         {/* Achievements */}
-        <div className="card">
+        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-all duration-300">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Achievements</h2>
+            <h2 className="text-lg font-semibold text-gray-800">Achievements</h2>
             <button
               onClick={() => handleAIEnhance('achievements')}
               className="p-2 text-gray-500 hover:text-blue-600 transition-colors"
@@ -233,7 +241,7 @@ export const GeneralReportPage: React.FC = () => {
           </div>
           {isEditing ? (
             <textarea 
-              className="input-field" 
+              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:outline-none transition-all duration-300 resize-none" 
               rows={4}
               placeholder="Highlight your key achievements, completed projects, and significant contributions..."
               {...register('achievements')} 
