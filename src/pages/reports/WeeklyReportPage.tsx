@@ -2,9 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/store';
 import { useTheme } from '@/components/ThemeProvider';
-import { AIEnhancementButton } from '@/components/AIEnhancementButton';
 import { WeeklyReport } from '@/types';
 import { useToastContext } from '@/contexts/ToastContext';
+import apiClient from '@/api/client';
 import { 
   Loader2, 
   CheckCircle, 
@@ -16,7 +16,8 @@ import {
   Play,
   Eye,
   Calendar,
-  Sparkles
+  Clock,
+  FileText
 } from 'lucide-react';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 
@@ -37,15 +38,39 @@ export const WeeklyReportPage: React.FC = () => {
   const navigate = useNavigate();
   const { showSuccess, showError } = useToastContext();
   const [isDownloading, setIsDownloading] = useState(false);
+  const [dailyReportsData, setDailyReportsData] = useState<{[key: number]: any[]}>({});
 
   useEffect(() => {
     fetchWeeklyReports();
   }, [fetchWeeklyReports]);
 
-  // Generate 8 weeks overview with real data
+  // Fetch daily reports for each week to get accurate counts
+  useEffect(() => {
+    const fetchDailyReportsForWeeks = async () => {
+      const dailyData: {[key: number]: any[]} = {};
+      
+      for (let week = 1; week <= 8; week++) {
+        try {
+          const response = await apiClient.get(`/reports/daily/?week_number=${week}`);
+          dailyData[week] = response.data.results || [];
+        } catch (error) {
+          console.log(`No daily reports found for week ${week}`);
+          dailyData[week] = [];
+        }
+      }
+      
+      setDailyReportsData(dailyData);
+    };
+
+    fetchDailyReportsForWeeks();
+  }, []);
+
+  // Generate 8 weeks overview with real progress tracking
   const generateWeeksOverview = (): WeekOverview[] => {
     const weeks: WeekOverview[] = [];
     const currentDate = new Date();
+    
+
     
     for (let week = 1; week <= 8; week++) {
       const weekReport = weeklyReports.find(report => report.week_number === week);
@@ -60,22 +85,51 @@ export const WeeklyReportPage: React.FC = () => {
       
       if (weekReport) {
         totalHours = weekReport.total_hours || 0;
-        dailyReportsCount = weekReport.daily_reports?.length || 0;
         
-        // Calculate real completion percentage based on daily reports
+        // Use daily reports from the separate API call for accurate count
+        const weekDailyReports = dailyReportsData[week] || [];
+        dailyReportsCount = weekDailyReports.length;
+        
+
+        
+        // Real progress calculation: 80% from daily reports, 20% from main jobs
+        let dailyProgress = 0;
+        let mainJobsProgress = 0;
+        
+        // Calculate daily reports progress (80% weight)
         if (dailyReportsCount > 0) {
-          completionPercentage = Math.min((dailyReportsCount / 5) * 100, 100);
+          dailyProgress = Math.min((dailyReportsCount / 5) * 0.8, 0.8); // Max 80%
         }
         
+        // Calculate main jobs progress (20% weight)
+        const hasMainJobs = weekReport.main_job && weekReport.main_job.operations && weekReport.main_job.operations.length > 0;
+        const hasMainJobsContent = hasMainJobs && weekReport.main_job.operations.some((operation: any) => 
+          operation.operation_description && operation.operation_description.trim().length > 0
+        );
+        
+        if (hasMainJobsContent) {
+          mainJobsProgress = 0.2; // Full 20% if main jobs have content
+        } else if (hasMainJobs) {
+          mainJobsProgress = 0.1; // Partial 10% if main jobs exist but empty
+        }
+        
+        // Total completion percentage
+        completionPercentage = Math.round((dailyProgress + mainJobsProgress) * 100);
+        
+        // Determine status based on completion
+        if (completionPercentage >= 100) {
+          status = 'completed';
+          completionPercentage = 100;
+        } else if (completionPercentage > 0) {
+          status = 'in-progress';
+        } else {
+          status = 'not-started';
+        }
+        
+        // Override with report status if it's submitted/approved
         if (weekReport.status === 'SUBMITTED' || weekReport.status === 'APPROVED') {
           status = 'completed';
           completionPercentage = 100;
-        } else if (weekReport.status === 'DRAFT' || dailyReportsCount > 0) {
-          status = 'in-progress';
-          // Use actual completion percentage calculated above
-        } else {
-          status = 'not-started';
-          completionPercentage = 0;
         }
       } else {
         // Check if this week is in the past
@@ -190,7 +244,7 @@ export const WeeklyReportPage: React.FC = () => {
               <div>
                 <div className="flex items-center gap-2 mb-3">
                   <div className={`p-2 bg-gradient-to-r from-${theme}-500 to-${theme}-600 rounded-xl shadow-lg`}>
-                    <Sparkles className="w-5 h-5 text-white" />
+                    <FileText className="w-5 h-5 text-white" />
               </div>
                   <h1 className={`text-2xl font-bold text-${theme}-600`}>
                     LOG BOOK
@@ -201,19 +255,7 @@ export const WeeklyReportPage: React.FC = () => {
             
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-3">
-              {/* AI Enhancement Button for all reports */}
-              {weeklyReports.length > 0 && (
-                <AIEnhancementButton
-                  weeklyReportId={weeklyReports[0].id} // This will be enhanced to handle multiple reports
-                  onEnhancementComplete={(_data) => {
-                    showSuccess('Weekly reports enhanced successfully! 🚀');
-                    fetchWeeklyReports(); // Refresh the reports
-                  }}
-                  className="px-6 py-3 text-sm font-semibold"
-                />
-              )}
-              
-              {/* Download button - moved to header for mobile */}
+              {/* Download button */}
               <button 
                 onClick={handleDownloadAllReports}
                 disabled={isDownloading || weeklyReports.length === 0}
@@ -241,9 +283,10 @@ export const WeeklyReportPage: React.FC = () => {
                   <div>
                     <div className="flex items-center gap-2 mb-2">
                       <TrendingUp className="w-5 h-5 text-emerald-500" />
-                      <span className="text-sm font-medium text-slate-600">Overall Progress</span>
+                      <span className="text-sm font-medium text-slate-600">Real Progress</span>
                     </div>
                     <p className="text-3xl font-bold text-slate-800">{totalProgress.toFixed(1)}%</p>
+                    <p className="text-xs text-slate-500 mt-1">80% Daily + 20% Jobs</p>
                   </div>
                   <div className="relative w-12 h-12">
                     <svg className="w-12 h-12 transform -rotate-90" viewBox="0 0 36 36">
@@ -272,7 +315,7 @@ export const WeeklyReportPage: React.FC = () => {
                   <div>
                     <div className="flex items-center gap-2 mb-2">
                       <CheckCircle className="w-5 h-5 text-blue-500" />
-                      <span className="text-sm font-medium text-slate-600">Completion Status</span>
+                      <span className="text-sm font-medium text-slate-600">Weeks Status</span>
                     </div>
                     <p className="text-3xl font-bold text-slate-800">{totalCompletedWeeks}<span className="text-lg text-slate-500">/8</span></p>
                   </div>
@@ -339,31 +382,33 @@ export const WeeklyReportPage: React.FC = () => {
                 </p>
               </div>
 
+              {/* Progress Breakdown */}
+              {week.report && (
+                <div className="text-center mb-2">
+                  <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
+                    <Clock className="w-3 h-3" />
+                    <span>{week.dailyReportsCount}/5 days</span>
+                    <span className="text-slate-400">•</span>
+                    <FileText className="w-3 h-3" />
+                    <span>{week.report.main_job?.operations?.length || 0} jobs</span>
+                  </div>
+
+                </div>
+              )}
+
               {/* Action Buttons */}
               <div className="mt-2 space-y-1">
                 {week.report ? (
-                  <>
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleWeekClick(week.weekNumber);
-                      }}
-                      className="w-full bg-white/50 hover:bg-white/80 backdrop-blur-sm border border-white/30 text-slate-700 rounded-lg py-1 px-2 text-xs font-medium transition-all duration-300 flex items-center justify-center gap-1"
-                    >
-                      <Eye className="w-3 h-3" />
-                      View
-                    </button>
-                    
-                    {/* AI Enhancement Button for individual week */}
-                    <AIEnhancementButton
-                      weeklyReportId={week.report.id}
-                      onEnhancementComplete={(_data) => {
-                        showSuccess(`Week ${week.weekNumber} enhanced successfully! 🚀`);
-                        fetchWeeklyReports(); // Refresh the reports
-                      }}
-                      className="w-full py-1 px-2 text-xs font-medium"
-                    />
-                  </>
+                  <button 
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleWeekClick(week.weekNumber);
+                    }}
+                    className="w-full bg-white/50 hover:bg-white/80 backdrop-blur-sm border border-white/30 text-slate-700 rounded-lg py-1 px-2 text-xs font-medium transition-all duration-300 flex items-center justify-center gap-1"
+                  >
+                    <Eye className="w-3 h-3" />
+                    View
+                  </button>
                 ) : (
                   <button 
                     onClick={(e) => {

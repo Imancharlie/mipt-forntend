@@ -128,7 +128,34 @@ export const useAppStore = create<AppState>()(
       weeklyReports: [],
       generalReport: null,
       companies: [],
-      aiUsageStats: null,
+      aiUsageStats: {
+        total_enhancements: 12,
+        total_tokens: 18500,
+        enhancement_types: [
+          { enhancement_type: 'weekly_report', count: 8 },
+          { enhancement_type: 'daily_report', count: 3 },
+          { enhancement_type: 'general_report', count: 1 }
+        ],
+        content_types: [
+          { content_type: 'empty_report', count: 5 },
+          { content_type: 'partial_content', count: 4 },
+          { content_type: 'complete_content', count: 3 }
+        ],
+        recent_enhancements: [
+          {
+            content_type: 'weekly_report',
+            enhancement_type: 'comprehensive',
+            tokens_consumed: 1800,
+            created_at: '2024-01-15T10:30:00Z'
+          },
+          {
+            content_type: 'daily_report',
+            enhancement_type: 'grammar_improvement',
+            tokens_consumed: 450,
+            created_at: '2024-01-14T14:20:00Z'
+          }
+        ]
+      },
       theme: 'orange',
       loading: { isLoading: false },
       error: null,

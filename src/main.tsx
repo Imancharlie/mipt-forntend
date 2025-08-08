@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import App from './App.tsx'
 import './index.css'
 import { registerServiceWorker } from './sw-register'
+import './utils/offlineQueue'
 
 // Register service worker for PWA
 registerServiceWorker();

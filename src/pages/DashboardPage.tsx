@@ -289,7 +289,7 @@ export const DashboardPage: React.FC = () => {
       {/* Header */}
       <div className="mb-4">
         <h1 className={`text-lg lg:text-2xl font-bold text-${theme}-600 mb-1`}>
-          {getGreeting()}{profile ? `, ${profile.user_details.full_name}` : ''}!
+          {getGreeting()}{profile ? `, ${profile.user_details.full_name.split(' ')[0]}` : ''}!
         </h1>
         <p className="text-gray-600 text-xs lg:text-sm">
           {profile ? 

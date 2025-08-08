@@ -8,7 +8,10 @@ import {
   User, 
   Settings,
   LogOut,
-  Award
+  Award,
+  CreditCard,
+  HelpCircle,
+  Coins
 } from 'lucide-react';
 import { useAppStore } from '@/store';
 import { useTheme } from '../ThemeProvider';
@@ -20,7 +23,7 @@ interface DesktopLayoutProps {
 export const DesktopLayout: React.FC<DesktopLayoutProps> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAppStore();
+  const { user, logout, aiUsageStats } = useAppStore();
   const { theme, setTheme } = useTheme();
 
   const navigationItems = [
@@ -30,6 +33,8 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({ children }) => {
     { path: '/general-report', icon: BookOpen, label: 'General Report' },
     { path: '/pt-assessment', icon: Award, label: 'PT Assessment' },
     { path: '/resources', icon: BookOpen, label: 'Resources' },
+    { path: '/billing', icon: CreditCard, label: 'Billing' },
+    { path: '/help', icon: HelpCircle, label: 'Help Center' },
     { path: '/settings', icon: Settings, label: 'Settings' },
     { path: '/profile', icon: User, label: 'Profile' },
   ];
@@ -60,17 +65,32 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({ children }) => {
         {user && (
           <div className="p-4 border-b border-gray-200">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
-                <span className="text-sm font-medium text-gray-600">
-                  {user.first_name[0]}{user.last_name[0]}
-                </span>
+              {/* User Avatar */}
+              <div className="relative">
+                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-md border border-white">
+                  <span className="text-sm font-bold text-white">
+                    {user.first_name?.[0] || ''}{user.last_name?.[0] || ''}
+                  </span>
+                </div>
+                {/* Online Status Indicator */}
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border border-white shadow-sm"></div>
               </div>
-              <div>
-                <p className="text-sm font-medium text-gray-900">
+              
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-gray-900">
                   {user.first_name} {user.last_name}
                 </p>
-                <p className="text-xs text-gray-600">{user.email}</p>
+                <p className="text-xs text-gray-600">Online</p>
               </div>
+              
+              {/* Token Display */}
+              {aiUsageStats && (
+                <div className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-blue-50 to-purple-50 rounded-full border border-blue-200">
+                  <Coins className="w-3 h-3 text-blue-600" />
+                  <span className="text-xs font-medium text-blue-700">{aiUsageStats.total_tokens}</span>
+                  <span className="text-xs text-blue-500">tokens</span>
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -88,7 +108,12 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({ children }) => {
                     onClick={() => navigate(item.path)}
                     className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-left ${
                       isActive 
-                        ? `bg-${theme}-100 text-${theme}-600` 
+                        ? `${
+                            theme === 'orange' ? 'bg-orange-100 text-orange-600' :
+                            theme === 'purple' ? 'bg-purple-100 text-purple-600' :
+                            theme === 'green' ? 'bg-green-100 text-green-600' :
+                            'bg-orange-100 text-orange-600'
+                          }` 
                         : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                     }`}
                   >

@@ -64,11 +64,21 @@ export const WeeklyReportDetailPage: React.FC = () => {
   const [dailyHours, setDailyHours] = useState<{[key: string]: number}>({});
   const [dailyDescriptions, setDailyDescriptions] = useState<{[key: string]: string}>({});
   const [isLoading, setIsLoading] = useState(true);
+  const [showExportMenu, setShowExportMenu] = useState(false);
+  const exportMenuRef = useRef<HTMLDivElement | null>(null);
   const hasLoadedData = useRef(false);
 
   const { register, handleSubmit, getValues, formState: { errors } } = useForm();
 
   useEffect(() => {
+    // close export menu when clicking outside
+    const handleClickOutside = (e: MouseEvent) => {
+      if (exportMenuRef.current && !exportMenuRef.current.contains(e.target as Node)) {
+        setShowExportMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+
     const loadWeekData = async () => {
       if (!weekNumber) return;
       
@@ -153,6 +163,7 @@ export const WeeklyReportDetailPage: React.FC = () => {
     };
     
     loadWeekData();
+    return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [weekNumber]); // Only depend on weekNumber
 
   // Calculate total hours automatically
@@ -673,13 +684,44 @@ export const WeeklyReportDetailPage: React.FC = () => {
             PDF
           </button> */}
           
-          <button
-            onClick={() => handleDownloadReport('docx')}
-            className={`btn-secondary flex items-center gap-1 lg:gap-2 text-xs lg:text-sm px-3 py-1.5 lg:px-4 lg:py-2`}
-          >
-            <FileDown className="w-3 h-3 lg:w-4 lg:h-4" />
-            DOCX
-          </button>
+          <div className="relative" ref={exportMenuRef}>
+            <button
+              onClick={() => setShowExportMenu((v) => !v)}
+              className={`btn-secondary flex items-center gap-1 lg:gap-2 text-xs lg:text-sm px-3 py-1.5 lg:px-4 lg:py-2`}
+              aria-haspopup="menu"
+              aria-expanded={showExportMenu}
+            >
+              <FileDown className="w-3 h-3 lg:w-4 lg:h-4" />
+              Export
+            </button>
+            {showExportMenu && (
+              <div
+                role="menu"
+                className="absolute z-40 mt-2 w-36 rounded-md border border-gray-200 bg-white shadow-lg overflow-hidden"
+              >
+                <button
+                  role="menuitem"
+                  className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50"
+                  onClick={() => {
+                    setShowExportMenu(false);
+                    handleDownloadReport('pdf');
+                  }}
+                >
+                  PDF
+                </button>
+                <button
+                  role="menuitem"
+                  className="w-full px-3 py-2 text-left text-sm hover:bg-gray-50"
+                  onClick={() => {
+                    setShowExportMenu(false);
+                    handleDownloadReport('docx');
+                  }}
+                >
+                  DOCX
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
 

@@ -26,6 +26,8 @@ import { ProfilePage } from '@/pages/ProfilePage';
 import { SettingsPage } from '@/pages/SettingsPage';
 import { ResourcesPage } from '@/pages/ResourcesPage';
 import { PTAssessmentPage } from '@/pages/PTAssessmentPage';
+import BillingPage from '@/pages/BillingPage';
+import HelpCenterPage from '@/pages/HelpCenterPage';
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -50,7 +52,7 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 };
 
 const App: React.FC = () => {
-  const { theme, loading, error } = useAppStore();
+  const { theme, loading } = useAppStore();
 
   return (
     <ErrorBoundary>
@@ -179,6 +181,26 @@ const App: React.FC = () => {
                 <ProtectedRoute>
                   <MobileLayout>
                     <SettingsPage />
+                  </MobileLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/billing"
+              element={
+                <ProtectedRoute>
+                  <MobileLayout>
+                    <BillingPage />
+                  </MobileLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/help"
+              element={
+                <ProtectedRoute>
+                  <MobileLayout>
+                    <HelpCenterPage />
                   </MobileLayout>
                 </ProtectedRoute>
               }

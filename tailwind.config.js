@@ -7,18 +7,18 @@ export default {
   theme: {
     extend: {
       colors: {
-        // Orange Theme - More muted and less shiny
+        // Orange Theme - brighter pleasant orange
         'orange': {
-          50: '#FFF7ED',
-          100: '#FFEDD5',
-          200: '#FED7AA',
-          300: '#FDBA74',
-          400: '#FB923C',
-          500: '#EA580C', // More muted primary
-          600: '#C2410C', // More muted hover
-          700: '#9A3412',
-          800: '#7C2D12',
-          900: '#5C1D0B',
+          50: '#FFF4E6',
+          100: '#FFE6BF',
+          200: '#FFD196',
+          300: '#FFB866',
+          400: '#FF9A33',
+          500: '#FF7F1A', // primary (brighter but not neon)
+          600: '#F76A00', // hover
+          700: '#D95D00',
+          800: '#B34C00',
+          900: '#8C3C00',
         },
         // Purple Theme
         'purple': {
