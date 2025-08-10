@@ -10,14 +10,21 @@ export const LoginPage: React.FC = () => {
   const { login, loading, error, clearError } = useAppStore();
   const { theme } = useTheme();
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoggingIn, setIsLoggingIn] = useState(false);
 
   const onSubmit = async (data: LoginData) => {
+    if (isLoggingIn) return; // Prevent multiple submissions
+    
     clearError(); // Clear any previous errors
+    setIsLoggingIn(true);
+    
     try {
       await login(data);
     } catch (error: any) {
       // Error is already handled by the store, but we can add additional logging here
       console.error('Login error:', error);
+    } finally {
+      setIsLoggingIn(false);
     }
   };
 
@@ -40,9 +47,9 @@ export const LoginPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center px-4 bg-gray-50">
-      <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
-        <h2 className={`text-2xl font-bold mb-6 text-${theme}-600 text-center`}>Sign In</h2>
+    <div className="min-h-screen flex flex-col justify-center items-center px-4 bg-gray-50 dark:bg-gray-900">
+      <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 border border-gray-200 dark:border-gray-700">
+        <h2 className="text-2xl font-bold mb-6 text-orange-600 dark:text-orange-400 text-center">Sign In</h2>
         
         {/* Error Message */}
         {error && (
@@ -56,7 +63,7 @@ export const LoginPage: React.FC = () => {
 
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
           <div>
-            <label className="block text-sm font-medium mb-1">Username</label>
+            <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Username</label>
             <input
               type="text"
               className="input-field"
@@ -67,7 +74,7 @@ export const LoginPage: React.FC = () => {
           </div>
           
           <div>
-            <label className="block text-sm font-medium mb-1">Password</label>
+            <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Password</label>
             <div className="relative">
               <input
                 type={showPassword ? 'text' : 'password'}
@@ -78,7 +85,7 @@ export const LoginPage: React.FC = () => {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300"
               >
                 {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
@@ -88,17 +95,17 @@ export const LoginPage: React.FC = () => {
           
           <button
             type="submit"
-            className={`btn-primary w-full flex items-center justify-center gap-2 ${loading.isLoading ? 'opacity-60 cursor-not-allowed' : ''}`}
-            disabled={loading.isLoading || isSubmitting}
+            className={`btn-primary w-full flex items-center justify-center gap-2 ${isLoggingIn ? 'opacity-60 cursor-not-allowed' : ''}`}
+            disabled={isLoggingIn || isSubmitting}
           >
-            {loading.isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
+            {isLoggingIn ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
             Sign In
           </button>
         </form>
         
         <div className="mt-6 text-center text-sm">
-          <span>Don&apos;t have an account?</span>{' '}
-          <a href="/register" className={`text-${theme}-600 hover:underline font-medium`}>Register</a>
+          <span className="text-gray-600 dark:text-gray-400">Don&apos;t have an account?</span>{' '}
+          <a href="/register" className="text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 font-medium hover:underline">Register</a>
         </div>
       </div>
     </div>

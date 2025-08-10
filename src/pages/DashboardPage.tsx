@@ -30,6 +30,10 @@ export const DashboardPage: React.FC = () => {
     fetchDailyReports,
     fetchWeeklyReports
   } = useAppStore();
+  
+  // Ensure arrays are always defined to prevent runtime errors
+  const safeDailyReports = dailyReports || [];
+  const safeWeeklyReports = weeklyReports || [];
   const { theme } = useTheme();
   const navigate = useNavigate();
   const [weeksData, setWeeksData] = useState<WeekData[]>([]);
@@ -50,7 +54,7 @@ export const DashboardPage: React.FC = () => {
     };
     
     loadDashboardData();
-  }, [fetchDashboard, fetchDailyReports, fetchWeeklyReports]);
+  }, []); // Empty dependency array - these functions are stable from the store
 
   useEffect(() => {
     // Generate weeks data
@@ -66,8 +70,8 @@ export const DashboardPage: React.FC = () => {
         const isCompleted = currentDate > weekDates.endDate;
         
         // Find weekly report for this week
-        const weeklyReport = weeklyReports?.find(report => report.week_number === week);
-        const weekDailyReports = dailyReports?.filter(report => report.week_number === week) || [];
+        const weeklyReport = safeWeeklyReports.find(report => report.week_number === week);
+        const weekDailyReports = safeDailyReports.filter(report => report.week_number === week);
         
         weeks.push({
           weekNumber: week,
@@ -86,9 +90,10 @@ export const DashboardPage: React.FC = () => {
     };
     
     generateWeeksData();
-  }, [weeklyReports, dailyReports]);
+  }, [safeWeeklyReports, safeDailyReports]);
 
-  if (loading.isLoading && !dashboardStats && !dailyReports.length && !weeklyReports.length) {
+  // Show loading when data is being fetched
+  if (loading.isLoading) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[60vh] p-3">
         <LoadingSpinner size="lg" color="primary" message="Loading your dashboard..." />
@@ -560,7 +565,7 @@ export const DashboardPage: React.FC = () => {
             </button>
           </div>
           <div className="space-y-2">
-            {dailyReports && dailyReports.slice(0, 3).map((report) => {
+            {safeDailyReports.slice(0, 3).map((report) => {
               const isCompleted = report.hours_spent > 0 && report.description && report.description.length > 20;
               return (
                 <div key={report.id} className={`flex items-center gap-2 p-2 rounded transition-all duration-200 ${
@@ -585,7 +590,7 @@ export const DashboardPage: React.FC = () => {
                 </div>
               );
             })}
-            {(!dailyReports || dailyReports.length === 0) && (
+            {safeDailyReports.length === 0 && (
               <div className="text-center py-3">
                 <p className="text-gray-400 text-xs lg:text-sm">No daily reports yet</p>
                 <p className="text-gray-300 text-xs mt-1">Start logging your daily activities</p>
@@ -606,7 +611,7 @@ export const DashboardPage: React.FC = () => {
             </button>
           </div>
           <div className="space-y-2">
-            {weeklyReports && weeklyReports.slice(0, 3).map((report) => (
+            {safeWeeklyReports.slice(0, 3).map((report) => (
               <div key={report.id} className="flex items-center gap-2 p-2 rounded bg-gray-50">
                 <div className={`w-1 h-1 bg-${theme}-500 rounded-full`}></div>
                 <div className="flex-1 min-w-0">
@@ -622,7 +627,7 @@ export const DashboardPage: React.FC = () => {
                 </span>
               </div>
             ))}
-            {(!weeklyReports || weeklyReports.length === 0) && (
+            {safeWeeklyReports.length === 0 && (
               <p className="text-gray-500 text-center py-3 text-xs lg:text-sm">No weekly reports yet</p>
             )}
           </div>

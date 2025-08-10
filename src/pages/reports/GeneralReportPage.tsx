@@ -16,7 +16,7 @@ export const GeneralReportPage: React.FC = () => {
 
   useEffect(() => {
     fetchGeneralReport();
-  }, [fetchGeneralReport]);
+  }, []); // Removed fetchGeneralReport from dependencies to prevent infinite loop
 
   useEffect(() => {
     if (generalReport) {

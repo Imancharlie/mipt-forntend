@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useTheme } from '@/components/ThemeProvider';
 import { useToastContext } from '@/contexts/ToastContext';
+import { useAppStore } from '@/store';
 import { AIEnhancementButton } from '@/components/AIEnhancementButton';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { 
@@ -51,7 +52,9 @@ interface WeeklyReportData {
 }
 
 export const WeeklyReportDetailPage: React.FC = () => {
-  const { weekNumber } = useParams<{ weekNumber: string }>();
+  const params = useParams<{ weekNumber: string }>();
+  const weekNumber = params?.weekNumber;
+  const { fetchUserBalance } = useAppStore();
   const navigate = useNavigate();
   const { theme } = useTheme();
   const { showSuccess, showError, showWarning, showInfo } = useToastContext();
@@ -646,10 +649,17 @@ export const WeeklyReportDetailPage: React.FC = () => {
               </button>
               
               {/* AI Enhancement Button */}
-              {reportData.id && (
+              {(reportData.week_number ?? reportData.id) && (
                 <AIEnhancementButton
-                  weeklyReportId={reportData.id}
-                  onEnhancementComplete={(_data) => {
+                  weeklyReportId={reportData.week_number ?? reportData.id}
+                  reportData={reportData}
+                  onEnhancementComplete={async (_data) => {
+                    // Refresh the user balance to show updated tokens
+                    try {
+                      await fetchUserBalance();
+                    } catch (error) {
+                      console.error('Failed to refresh user balance:', error);
+                    }
                     // Refresh the page data after enhancement
                     window.location.reload();
                   }}

@@ -20,7 +20,12 @@ import {
   CreateWeeklyReportData,
   EnhanceTextData,
   EnhanceTextResponse,
-
+  UserBalance,
+  Transaction,
+  CreateTransactionData,
+  TokenUsage,
+  BillingDashboardData,
+  PaymentInfo,
 } from '@/types';
 import {
   authService,
@@ -33,8 +38,11 @@ import {
   aiService,
   exportService,
   mainJobService,
+  billingService,
 } from '@/api/services';
+import { adminDashboardService } from '@/api/adminServices';
 import { isTokenExpired } from '@/utils/auth';
+import { setAuthToken } from '@/api/client';
 
 interface AppState {
   // Authentication
@@ -64,6 +72,35 @@ interface AppState {
   // AI Usage
   aiUsageStats: AIUsageStats | null;
   
+  // Billing
+  userBalance: UserBalance | null;
+  transactions: Transaction[];
+  tokenUsageHistory: TokenUsage[];
+  billingDashboard: BillingDashboardData | null;
+  paymentInfo: PaymentInfo | null;
+  
+  // User Management (Admin)
+  adminUsers: {
+    users: any[];
+    totalUsers: number;
+    activeUsers: number;
+    newUsersToday: number;
+    newUsersWeek: number;
+    pagination: {
+      page: number;
+      pages: number;
+      hasNext: boolean;
+      hasPrevious: boolean;
+      totalCount: number;
+    } | null;
+  } | null;
+  adminUserBalances: Record<number, UserBalance>;
+  adminLoading: {
+    users: boolean;
+    userActions: boolean;
+    userBalances: boolean;
+  };
+  
   // UI State
   theme: Theme;
   loading: LoadingState;
@@ -82,6 +119,11 @@ interface AppState {
   setGeneralReport: (report: GeneralReport | null) => void;
   setCompanies: (companies: Company[]) => void;
   setAIUsageStats: (stats: AIUsageStats | null) => void;
+  setUserBalance: (balance: UserBalance | null) => void;
+  setTransactions: (transactions: Transaction[]) => void;
+  setTokenUsageHistory: (history: TokenUsage[]) => void;
+  setBillingDashboard: (dashboard: BillingDashboardData | null) => void;
+  setPaymentInfo: (info: PaymentInfo | null) => void;
   setTheme: (theme: Theme) => void;
   setLoading: (loading: LoadingState) => void;
   setError: (error: AppError | null) => void;
@@ -91,6 +133,8 @@ interface AppState {
   registerAndLogin: (data: RegisterData) => Promise<void>;
   logout: () => Promise<void>;
   updateProfile: (data: UpdateProfileData) => Promise<void>;
+  uploadProfilePicture: (file: File) => Promise<string>;
+  removeProfilePicture: () => Promise<void>;
   fetchDashboard: () => Promise<void>;
   fetchDailyReports: () => Promise<void>;
   createDailyReport: (data: CreateDailyReportData) => Promise<void>;
@@ -105,9 +149,35 @@ interface AppState {
   exportReport: (type: 'pdf' | 'docx', reportType: string, id: number) => Promise<void>;
   downloadAllWeeklyReports: (type: 'pdf' | 'docx') => Promise<void>;
   
+  // Billing Actions
+  fetchUserBalance: () => Promise<void>;
+  createTransaction: (data: CreateTransactionData) => Promise<Transaction>;
+  verifyPayment: (transactionId: number, data: { user_phone_number: string; sender_name: string; amount: number }) => Promise<void>;
+  fetchTokenUsageHistory: () => Promise<void>;
+  fetchBillingDashboard: () => Promise<void>;
+  fetchPaymentInfo: () => Promise<void>;
+  fetchTransactions: () => Promise<void>;
+  
+  // User Management Actions (Admin)
+  fetchAdminUsers: (filters?: {
+    search?: string;
+    program?: string;
+    status?: string;
+    date?: string;
+    page?: number;
+  }) => Promise<void>;
+  performAdminUserAction: (actionData: {
+    user_ids: number[];
+    action: 'BAN' | 'UNBAN' | 'DELETE' | 'ACTIVATE';
+    reason: string;
+  }) => Promise<void>;
+  fetchAdminUserBalance: (userId: number) => Promise<void>;
+  clearAdminUsers: () => void;
+  
   // Utility Actions
   clearError: () => void;
   clearLoading: () => void;
+  initializeAuth: () => Promise<void>;
 }
 
 export const useAppStore = create<AppState>()(
@@ -156,13 +226,30 @@ export const useAppStore = create<AppState>()(
           }
         ]
       },
+      userBalance: null,
+      transactions: [],
+      tokenUsageHistory: [],
+      billingDashboard: null,
+      paymentInfo: null,
+      adminUsers: null,
+      adminUserBalances: {},
+      adminLoading: { users: false, userActions: false, userBalances: false },
       theme: 'orange',
       loading: { isLoading: false },
       error: null,
 
       // Setters
       setUser: (user) => set({ user }),
-      setTokens: (tokens) => set({ tokens }),
+      setTokens: (tokens) => {
+        set({ tokens });
+        // Also update the token in apiClient and localStorage
+        setAuthToken(tokens.access);
+        if (tokens.refresh) {
+          localStorage.setItem('refresh_token', tokens.refresh);
+        } else {
+          localStorage.removeItem('refresh_token');
+        }
+      },
       setIsAuthenticated: (isAuthenticated) => set({ isAuthenticated }),
       setProfile: (profile) => set({ profile }),
       setProfileComplete: (profileComplete) => set({ profileComplete }),
@@ -173,9 +260,17 @@ export const useAppStore = create<AppState>()(
       setGeneralReport: (generalReport) => set({ generalReport }),
       setCompanies: (companies) => set({ companies }),
       setAIUsageStats: (aiUsageStats) => set({ aiUsageStats }),
+      setUserBalance: (userBalance) => set({ userBalance }),
+      setTransactions: (transactions) => set({ transactions }),
+      setTokenUsageHistory: (tokenUsageHistory) => set({ tokenUsageHistory }),
+      setBillingDashboard: (billingDashboard) => set({ billingDashboard }),
+      setPaymentInfo: (paymentInfo) => set({ paymentInfo }),
       setTheme: (theme) => set({ theme }),
       setLoading: (loading) => set({ loading }),
       setError: (error) => set({ error }),
+      setAdminUsers: (adminUsers: any) => set({ adminUsers }),
+      setAdminUserBalances: (adminUserBalances: Record<number, UserBalance>) => set({ adminUserBalances }),
+      setAdminLoading: (adminLoading: { users: boolean; userActions: boolean; userBalances: boolean }) => set({ adminLoading }),
 
       // API Actions
       login: async (credentials) => {
@@ -189,6 +284,9 @@ export const useAppStore = create<AppState>()(
             loading: { isLoading: false },
             error: null // Clear any previous errors
           });
+          
+          // Set the token in the apiClient for future requests
+          setAuthToken(response.access);
           
           // After successful login, fetch profile to check if it's complete
           try {
@@ -260,6 +358,9 @@ export const useAppStore = create<AppState>()(
             error: null
           });
           
+          // Set the token in the apiClient for future requests
+          setAuthToken(response.access);
+          
           // After successful login, fetch profile to check if it's complete
           try {
             await get().fetchProfile();
@@ -328,6 +429,10 @@ export const useAppStore = create<AppState>()(
             dashboardStats: null,
             loading: { isLoading: false }
           });
+          
+          // Clear the token from apiClient and localStorage
+          setAuthToken(null);
+          localStorage.removeItem('refresh_token');
         } catch (error) {
           // Even if there's an error, clear the auth state
           set({ 
@@ -339,17 +444,147 @@ export const useAppStore = create<AppState>()(
             error: { message: 'Logout completed but with warnings', type: 'auth' },
             loading: { isLoading: false }
           });
+          
+          // Clear the token from apiClient and localStorage
+          setAuthToken(null);
+          localStorage.removeItem('refresh_token');
         }
       },
 
       updateProfile: async (data) => {
         set({ loading: { isLoading: true, message: 'Updating profile...' } });
         try {
+          console.log('=== UPDATE PROFILE DEBUG ===');
+          console.log('Sending profile data:', data);
+          
           const profile = await profileService.updateProfile(data);
-          set({ profile, loading: { isLoading: false } });
+          
+          console.log('Profile update response:', profile);
+          console.log('Profile user_details after update:', profile.user_details);
+          
+          // If first_name or last_name were updated, also update the user object
+          const currentUser = get().user;
+          if (currentUser && (data.first_name || data.last_name)) {
+            const updatedUser = {
+              ...currentUser,
+              ...(data.first_name && { first_name: data.first_name }),
+              ...(data.last_name && { last_name: data.last_name }),
+            };
+            
+            console.log('Updated user object:', updatedUser);
+            set({ profile, user: updatedUser, loading: { isLoading: false } });
+          } else {
+            set({ profile, loading: { isLoading: false } });
+          }
+          
+          console.log('============================');
         } catch (error) {
+          console.error('Profile update error:', error);
           set({ 
             error: { message: 'Profile update failed', type: 'general' },
+            loading: { isLoading: false }
+          });
+          throw error;
+        }
+      },
+
+      uploadProfilePicture: async (file) => {
+        set({ loading: { isLoading: true, message: 'Uploading profile picture...' } });
+        try {
+          const response = await profileService.uploadProfilePicture(file);
+          if (response.success) {
+            // Update the user object with the new profile picture URL
+            const currentUser = get().user;
+            if (currentUser) {
+              set({ 
+                user: { ...currentUser, profile_picture: response.profile_picture_url },
+                loading: { isLoading: false }
+              });
+            }
+            return response.profile_picture_url;
+          } else {
+            throw new Error(response.message || 'Failed to upload profile picture');
+          }
+        } catch (error) {
+          set({ 
+            error: { message: 'Failed to upload profile picture', type: 'general' },
+            loading: { isLoading: false }
+          });
+          throw error;
+        }
+      },
+
+      removeProfilePicture: async () => {
+        set({ loading: { isLoading: true, message: 'Removing profile picture...' } });
+        try {
+          const response = await profileService.removeProfilePicture();
+          if (response.success) {
+            // Update the user object to remove the profile picture
+            const currentUser = get().user;
+            if (currentUser) {
+              set({ 
+                user: { ...currentUser, profile_picture: undefined },
+                loading: { isLoading: false }
+              });
+            }
+          } else {
+            throw new Error(response.message || 'Failed to remove profile picture');
+          }
+        } catch (error) {
+          set({ 
+            error: { message: 'Failed to remove profile picture', type: 'general' },
+            loading: { isLoading: false }
+          });
+          throw error;
+        }
+      },
+
+      fetchProfile: async () => {
+        set({ loading: { isLoading: true, message: 'Loading profile...' } });
+        try {
+          const profile = await profileService.getProfile();
+          
+          console.log('=== FETCH PROFILE DEBUG ===');
+          console.log('Profile response:', profile);
+          console.log('Profile user_details:', profile.user_details);
+          console.log('==========================');
+          
+          // Check if profile contains updated user information and sync with user object
+          const currentUser = get().user;
+          if (currentUser) {
+            let updatedUser = { ...currentUser };
+            
+            // Extract names from user_details.full_name if available
+            if (profile.user_details?.full_name) {
+              const nameParts = profile.user_details.full_name.split(' ');
+              const firstName = nameParts[0] || '';
+              const lastName = nameParts.slice(1).join(' ') || '';
+              
+              updatedUser = {
+                ...updatedUser,
+                first_name: firstName,
+                last_name: lastName,
+                email: profile.user_details.email || currentUser.email,
+                username: profile.user_details.username || currentUser.username,
+              };
+            }
+            
+            // Update profile picture from profile if available
+            if (profile.profile_picture) {
+              updatedUser = {
+                ...updatedUser,
+                profile_picture: profile.profile_picture,
+              };
+            }
+            
+            console.log('Updating user object with profile data:', updatedUser);
+            set({ profile, user: updatedUser, loading: { isLoading: false } });
+          } else {
+            set({ profile, loading: { isLoading: false } });
+          }
+        } catch (error) {
+          set({ 
+            error: { message: 'Failed to load profile', type: 'general' },
             loading: { isLoading: false }
           });
           throw error;
@@ -467,20 +702,6 @@ export const useAppStore = create<AppState>()(
         }
       },
 
-      fetchProfile: async () => {
-        set({ loading: { isLoading: true, message: 'Loading profile...' } });
-        try {
-          const profile = await profileService.getProfile();
-          set({ profile, loading: { isLoading: false } });
-        } catch (error) {
-          set({ 
-            error: { message: 'Failed to load profile', type: 'network' },
-            loading: { isLoading: false }
-          });
-          throw error;
-        }
-      },
-
       fetchCompanies: async () => {
         set({ loading: { isLoading: true, message: 'Loading companies...' } });
         try {
@@ -587,15 +808,19 @@ export const useAppStore = create<AppState>()(
         }
       },
 
-      enhanceWeeklyReportWithAI: async (weeklyReportId, additionalInstructions) => {
+      enhanceWeeklyReportWithAI: async (weeklyReportIdentifier, additionalInstructions) => {
         set({ loading: { isLoading: true, message: 'Enhancing weekly report with AI...' } });
         try {
-          const enhancedReport = await weeklyReportService.enhanceWithAI(weeklyReportId, additionalInstructions);
+          // weeklyReportIdentifier can be week_number; ensure we get week data first
+          const weeklyReport = await weeklyReportService.getWeeklyReport(weeklyReportIdentifier);
+
+          // Perform AI enhancement directly (backend handles token management)
+          const enhancedReport = await weeklyReportService.enhanceWithAI(weeklyReport.week_number, additionalInstructions);
           
           // Update the weekly reports list with the enhanced report
           const { weeklyReports } = get();
           const updatedReports = weeklyReports.map(report => 
-            report.id === weeklyReportId ? enhancedReport : report
+            report.id === weeklyReport.id ? enhancedReport : report
           );
           
           set({ 
@@ -604,10 +829,13 @@ export const useAppStore = create<AppState>()(
           });
           
           console.log('Weekly report enhanced successfully:', enhancedReport);
+          
+          // Return value is not used by the interface, so we don't return anything
         } catch (error) {
           console.error('AI enhancement error:', error);
+          const errorMessage = error instanceof Error ? error.message : 'Failed to enhance weekly report';
           set({ 
-            error: { message: 'Failed to enhance weekly report', type: 'general' },
+            error: { message: errorMessage, type: 'general' },
             loading: { isLoading: false }
           });
           throw error;
@@ -668,9 +896,276 @@ export const useAppStore = create<AppState>()(
         }
       },
 
+      // Billing Actions
+      fetchUserBalance: async () => {
+        set({ loading: { isLoading: true, message: 'Fetching balance...' } });
+        try {
+          const response = await billingService.getBalance();
+          if (response.success) {
+            set({ userBalance: response.data, loading: { isLoading: false } });
+          } else {
+            throw new Error('Failed to fetch balance');
+          }
+        } catch (error) {
+          set({ 
+            error: { message: 'Failed to fetch balance', type: 'network' },
+            loading: { isLoading: false }
+          });
+          throw error;
+        }
+      },
+
+      createTransaction: async (data) => {
+        set({ loading: { isLoading: true, message: 'Creating transaction...' } });
+        try {
+          const response = await billingService.createTransaction(data);
+          if (response.success) {
+            // Refresh transactions
+            await get().fetchTransactions();
+            set({ loading: { isLoading: false } });
+            return response.data;
+          } else {
+            throw new Error(response.message || 'Failed to create transaction');
+          }
+        } catch (error) {
+          set({ 
+            error: { message: 'Failed to create transaction', type: 'network' },
+            loading: { isLoading: false }
+          });
+          throw error;
+        }
+      },
+
+      verifyPayment: async (transactionId, data) => {
+        set({ loading: { isLoading: true, message: 'Verifying payment...' } });
+        try {
+          const response = await billingService.verifyPayment(transactionId, data);
+          if (response.success) {
+            // Refresh transactions and balance
+            await Promise.all([
+              get().fetchTransactions(),
+              get().fetchUserBalance()
+            ]);
+            set({ loading: { isLoading: false } });
+          } else {
+            throw new Error(response.message || 'Failed to verify payment');
+          }
+        } catch (error) {
+          set({ 
+            error: { message: 'Failed to verify payment', type: 'network' },
+            loading: { isLoading: false }
+          });
+          throw error;
+        }
+      },
+
+
+
+      fetchTokenUsageHistory: async () => {
+        try {
+          const response = await billingService.getUsageHistory();
+          if (response.success) {
+            set({ tokenUsageHistory: Array.isArray(response.data) ? response.data : [] });
+          } else {
+            throw new Error('Failed to fetch usage history');
+          }
+        } catch (error) {
+          set({ 
+            error: { message: 'Failed to fetch usage history', type: 'network' },
+            tokenUsageHistory: [] // Ensure it's always an array even on error
+          });
+          throw error;
+        }
+      },
+
+      fetchBillingDashboard: async () => {
+        set({ loading: { isLoading: true, message: 'Fetching billing data...' } });
+        try {
+          const response = await billingService.getDashboardData();
+          if (response.success) {
+            set({ billingDashboard: response.data, loading: { isLoading: false } });
+          } else {
+            throw new Error('Failed to fetch billing dashboard');
+          }
+        } catch (error) {
+          set({ 
+            error: { message: 'Failed to fetch billing data', type: 'network' },
+            loading: { isLoading: false }
+          });
+          throw error;
+        }
+      },
+
+      fetchPaymentInfo: async () => {
+        try {
+          const response = await billingService.getPaymentInfo();
+          if (response.success) {
+            set({ paymentInfo: response.data });
+          } else {
+            throw new Error('Failed to fetch payment info');
+          }
+        } catch (error) {
+          set({ error: { message: 'Failed to fetch payment info', type: 'network' } });
+          throw error;
+        }
+      },
+
+      fetchTransactions: async () => {
+        try {
+          const response = await billingService.getTransactions();
+          if (response.success) {
+            set({ transactions: Array.isArray(response.data) ? response.data : [] });
+          } else {
+            throw new Error('Failed to fetch transactions');
+          }
+        } catch (error) {
+          set({ 
+            error: { message: 'Failed to fetch transactions', type: 'network' },
+            transactions: [] // Ensure it's always an array even on error
+          });
+          throw error;
+        }
+      },
+
+      // User Management Actions (Admin)
+      fetchAdminUsers: async (filters) => {
+        set({ adminLoading: { ...get().adminLoading, users: true } });
+        try {
+          const response = await adminDashboardService.getUsers(filters);
+          set({ 
+            adminUsers: {
+              users: response.users,
+              totalUsers: response.total_users,
+              activeUsers: response.active_users,
+              newUsersToday: response.new_users_today,
+              newUsersWeek: response.new_users_week,
+              pagination: {
+                page: response.pagination.page,
+                pages: response.pagination.pages,
+                hasNext: response.pagination.has_next,
+                hasPrevious: response.pagination.has_previous,
+                totalCount: response.pagination.total_count
+              }
+            }, 
+            adminLoading: { ...get().adminLoading, users: false } 
+          });
+        } catch (error) {
+          set({ adminLoading: { ...get().adminLoading, users: false } });
+          throw error;
+        }
+      },
+      performAdminUserAction: async (actionData) => {
+        set({ adminLoading: { ...get().adminLoading, userActions: true } });
+        try {
+          const response = await adminDashboardService.performUserAction(actionData);
+          if (response.success) {
+            // Refresh user list and balances
+            await Promise.all([
+              get().fetchAdminUsers(),
+              get().fetchAdminUserBalance(actionData.user_ids[0]) // Assuming user_ids is an array of one user for simplicity
+            ]);
+            set({ adminLoading: { ...get().adminLoading, userActions: false } });
+          } else {
+            throw new Error(response.message || 'Failed to perform admin user action');
+          }
+        } catch (error) {
+          set({ adminLoading: { ...get().adminLoading, userActions: false } });
+          throw error;
+        }
+      },
+      fetchAdminUserBalance: async (userId) => {
+        set({ adminLoading: { ...get().adminLoading, userBalances: true } });
+        try {
+          const response = await adminDashboardService.billing.getUserBalance(userId);
+          if (response.success) {
+            set((state) => ({ adminUserBalances: { ...state.adminUserBalances, [userId]: response.data } }));
+            set({ adminLoading: { ...get().adminLoading, userBalances: false } });
+          } else {
+            throw new Error('Failed to fetch admin user balance');
+          }
+        } catch (error) {
+          set({ adminLoading: { ...get().adminLoading, userBalances: false } });
+          throw error;
+        }
+      },
+      clearAdminUsers: () => set({ adminUsers: null }),
+
       // Utility Actions
       clearError: () => set({ error: null }),
       clearLoading: () => set({ loading: { isLoading: false } }),
+      
+      // Initialize authentication state from persisted data
+      initializeAuth: async () => {
+        const state = get();
+        
+        // Prevent multiple simultaneous initializations
+        if (state.loading.isLoading) {
+          console.log('Authentication initialization already in progress, skipping...');
+          return;
+        }
+        
+        // Check if we have tokens in localStorage (they might be more up-to-date)
+        const storedAccessToken = localStorage.getItem('access_token');
+        const storedRefreshToken = localStorage.getItem('refresh_token');
+        
+        // Use stored tokens if they exist and are different from store
+        if (storedAccessToken && storedAccessToken !== state.tokens.access) {
+          state.tokens.access = storedAccessToken;
+        }
+        if (storedRefreshToken && storedRefreshToken !== state.tokens.refresh) {
+          state.tokens.refresh = storedRefreshToken;
+        }
+        
+        if (state.tokens.access && !state.isAuthenticated) {
+          set({ loading: { isLoading: true, message: 'Initializing authentication...' } });
+          
+          try {
+            // Set the token in apiClient
+            setAuthToken(state.tokens.access);
+            
+            // Try to fetch profile to verify token is still valid
+            await get().fetchProfile();
+            set({ isAuthenticated: true, loading: { isLoading: false } });
+            console.log('Authentication restored successfully');
+          } catch (error) {
+            console.warn('Token validation failed, attempting refresh...');
+            
+            // Try to refresh the token
+            if (state.tokens.refresh) {
+              try {
+                const response = await authService.refreshToken({ refresh: state.tokens.refresh });
+                const newTokens = { access: response.access, refresh: response.refresh || state.tokens.refresh };
+                
+                set({ 
+                  tokens: newTokens,
+                  isAuthenticated: true 
+                });
+                
+                // Update localStorage and apiClient
+                setAuthToken(newTokens.access);
+                if (newTokens.refresh) {
+                  localStorage.setItem('refresh_token', newTokens.refresh);
+                }
+                
+                console.log('Token refreshed successfully');
+                return;
+              } catch (refreshError) {
+                console.warn('Token refresh failed:', refreshError);
+              }
+            }
+            
+            // If refresh failed or no refresh token, clear everything
+            console.warn('Clearing invalid authentication state');
+            set({ 
+              user: null, 
+              tokens: { access: null, refresh: null }, 
+              isAuthenticated: false 
+            });
+            setAuthToken(null);
+            localStorage.removeItem('refresh_token');
+          }
+        }
+      },
     }),
     {
       name: 'mipt-store',

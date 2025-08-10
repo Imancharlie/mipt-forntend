@@ -11,7 +11,9 @@ import {
   Award,
   CreditCard,
   HelpCircle,
-  Coins
+  Coins,
+  Activity,
+  Shield
 } from 'lucide-react';
 import { useAppStore } from '@/store';
 import { useTheme } from '../ThemeProvider';
@@ -23,8 +25,17 @@ interface DesktopLayoutProps {
 export const DesktopLayout: React.FC<DesktopLayoutProps> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout, aiUsageStats } = useAppStore();
+  const { user, logout, userBalance, fetchUserBalance } = useAppStore();
   const { theme, setTheme, colorMode } = useTheme();
+
+  // Fetch user balance on mount - only when user exists and balance is missing
+  React.useEffect(() => {
+    if (user && !userBalance) {
+      fetchUserBalance().catch(console.error);
+    }
+  }, [user, userBalance]); // Removed fetchUserBalance from dependencies to prevent infinite loop
+
+
 
   const navigationItems = [
     { path: '/dashboard', icon: Home, label: 'Dashboard' },
@@ -33,10 +44,11 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({ children }) => {
     { path: '/general-report', icon: BookOpen, label: 'General Report' },
     { path: '/pt-assessment', icon: Award, label: 'PT Assessment' },
     { path: '/resources', icon: BookOpen, label: 'Resources' },
+    { path: '/workplace', icon: Activity, label: 'Workplace' },
     { path: '/billing', icon: CreditCard, label: 'Billing' },
     { path: '/help', icon: HelpCircle, label: 'Help Center' },
     { path: '/settings', icon: Settings, label: 'Settings' },
-    { path: '/profile', icon: User, label: 'Profile' },
+    ...(user?.is_staff ? [{ path: '/admin', icon: Shield, label: 'Admin Dashboard' }] : []),
   ];
 
   const handleLogout = async () => {
@@ -58,25 +70,36 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({ children }) => {
         {/* Logo */}
         <div className="p-6 border-b border-gray-200 dark:border-gray-700">
           <h1 className="text-2xl font-bold text-gray-900 dark:text-white">MIPT</h1>
-          <p className="text-sm text-gray-600 dark:text-gray-400">Industrial Training Reports</p>
+          <p className="text-sm text-gray-600 dark:text-gray-400">Practical Training Reports</p>
         </div>
 
         {/* User Info */}
         {user && (
           <div className="p-4 border-b border-gray-200 dark:border-gray-700">
-            <div className="flex items-center gap-3">
+            <button
+              onClick={() => navigate('/profile')}
+              className="w-full flex items-center gap-3 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg p-2 transition-colors"
+            >
               {/* User Avatar */}
               <div className="relative">
-                <div className="w-10 h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-md border border-white">
-                  <span className="text-sm font-bold text-white">
-                    {user.first_name?.[0] || ''}{user.last_name?.[0] || ''}
-                  </span>
-                </div>
+                {user.profile_picture ? (
+                  <img
+                    src={user.profile_picture}
+                    alt="Profile"
+                    className="w-10 h-10 rounded-full object-cover shadow-md border border-white"
+                  />
+                ) : (
+                  <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center shadow-md border border-white">
+                    <span className="text-sm font-bold text-white">
+                      {user.first_name?.[0] || ''}{user.last_name?.[0] || ''}
+                    </span>
+                  </div>
+                )}
                 {/* Online Status Indicator */}
                 <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border border-white shadow-sm"></div>
               </div>
               
-              <div className="flex-1">
+              <div className="flex-1 text-left">
                 <p className="text-sm font-semibold text-gray-900 dark:text-white">
                   {user.first_name} {user.last_name}
                 </p>
@@ -84,14 +107,14 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({ children }) => {
               </div>
               
               {/* Token Display */}
-              {aiUsageStats && (
-                <div className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-blue-50 to-purple-50 dark:from-blue-900/20 dark:to-purple-900/20 rounded-full border border-blue-200 dark:border-blue-700">
-                  <Coins className="w-3 h-3 text-blue-600 dark:text-blue-400" />
-                  <span className="text-xs font-medium text-blue-700 dark:text-blue-300">{aiUsageStats.total_tokens}</span>
-                  <span className="text-xs text-blue-500 dark:text-blue-400">tokens</span>
+              {userBalance && (
+                <div className="flex items-center gap-1 px-2 py-1 bg-orange-100 dark:bg-orange-900/30 rounded-full border border-orange-200 dark:border-orange-700">
+                  <Coins className="w-3 h-3 text-orange-600 dark:text-orange-400" />
+                  <span className="text-xs font-medium text-orange-700 dark:text-orange-300">{userBalance.available_tokens}</span>
+                  <span className="text-xs text-orange-500 dark:text-orange-400">tokens</span>
                 </div>
               )}
-            </div>
+            </button>
           </div>
         )}
 

@@ -28,6 +28,15 @@ import { ResourcesPage } from '@/pages/ResourcesPage';
 import { PTAssessmentPage } from '@/pages/PTAssessmentPage';
 import BillingPage from '@/pages/BillingPage';
 import HelpCenterPage from '@/pages/HelpCenterPage';
+import WorkplacePage from '@/pages/WorkplacePage';
+
+// Admin Pages
+import AdminDashboardPage from '@/pages/admin/AdminDashboardPage';
+import UserManagementPage from '@/pages/admin/UserManagementPage';
+import AnalyticsPage from '@/pages/admin/AnalyticsPage';
+import TokenUsagePage from '@/pages/admin/TokenUsagePage';
+import RecentActivityPage from '@/pages/admin/RecentActivityPage';
+import BillingDashboardPage from '@/pages/admin/BillingDashboardPage';
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -52,7 +61,12 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 };
 
 const App: React.FC = () => {
-  const { theme, loading } = useAppStore();
+  const { theme, loading, initializeAuth } = useAppStore();
+
+  // Initialize authentication state on app startup
+  React.useEffect(() => {
+    initializeAuth();
+  }, [initializeAuth]);
 
   return (
     <ErrorBoundary>
@@ -215,6 +229,78 @@ const App: React.FC = () => {
                 </ProtectedRoute>
               }
             />
+            <Route
+              path="/workplace"
+              element={
+                <ProtectedRoute>
+                  <MobileLayout>
+                    <WorkplacePage />
+                  </MobileLayout>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Admin Routes */}
+            <Route
+              path="/admin"
+              element={
+                <ProtectedRoute>
+                  <MobileLayout>
+                    <AdminDashboardPage />
+                  </MobileLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/users"
+              element={
+                <ProtectedRoute>
+                  <MobileLayout>
+                    <UserManagementPage />
+                  </MobileLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/analytics"
+              element={
+                <ProtectedRoute>
+                  <MobileLayout>
+                    <AnalyticsPage />
+                  </MobileLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/token-usage"
+              element={
+                <ProtectedRoute>
+                  <MobileLayout>
+                    <TokenUsagePage />
+                  </MobileLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/activity"
+              element={
+                <ProtectedRoute>
+                  <MobileLayout>
+                    <RecentActivityPage />
+                  </MobileLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/admin/billing"
+              element={
+                <ProtectedRoute>
+                  <MobileLayout>
+                    <BillingDashboardPage />
+                  </MobileLayout>
+                </ProtectedRoute>
+              }
+            />
 
             {/* Desktop Routes (same components, different layout) */}
             <Route
@@ -253,6 +339,78 @@ const App: React.FC = () => {
                 <ProtectedRoute>
                   <DesktopLayout>
                     <ResourcesPage />
+                  </DesktopLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/desktop/workplace"
+              element={
+                <ProtectedRoute>
+                  <DesktopLayout>
+                    <WorkplacePage />
+                  </DesktopLayout>
+                </ProtectedRoute>
+              }
+            />
+
+            {/* Desktop Admin Routes */}
+            <Route
+              path="/desktop/admin"
+              element={
+                <ProtectedRoute>
+                  <DesktopLayout>
+                    <AdminDashboardPage />
+                  </DesktopLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/desktop/admin/users"
+              element={
+                <ProtectedRoute>
+                  <DesktopLayout>
+                    <UserManagementPage />
+                  </DesktopLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/desktop/admin/analytics"
+              element={
+                <ProtectedRoute>
+                  <DesktopLayout>
+                    <AnalyticsPage />
+                  </DesktopLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/desktop/admin/token-usage"
+              element={
+                <ProtectedRoute>
+                  <DesktopLayout>
+                    <TokenUsagePage />
+                  </DesktopLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/desktop/admin/activity"
+              element={
+                <ProtectedRoute>
+                  <DesktopLayout>
+                    <RecentActivityPage />
+                  </DesktopLayout>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/desktop/admin/billing"
+              element={
+                <ProtectedRoute>
+                  <DesktopLayout>
+                    <BillingDashboardPage />
                   </DesktopLayout>
                 </ProtectedRoute>
               }

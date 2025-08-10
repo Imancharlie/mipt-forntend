@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useAppStore } from '@/store';
-import { Menu, X, User, Settings, LogOut, Home, FileText, Calendar, BookOpen, Award, CreditCard, HelpCircle, Coins } from 'lucide-react';
+import { Menu, X, User, Settings, LogOut, Home, FileText, Calendar, BookOpen, Award, CreditCard, HelpCircle, Coins, Activity, Shield, Loader2, AlertCircle } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 interface MobileLayoutProps {
@@ -9,13 +9,26 @@ interface MobileLayoutProps {
 
 export const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { user, logout, theme, aiUsageStats } = useAppStore();
+  const { user, logout, theme, userBalance, fetchUserBalance, loading } = useAppStore();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Fetch user balance on mount - only when user exists and balance is missing
+  React.useEffect(() => {
+    if (user && !userBalance) {
+      fetchUserBalance().catch(console.error);
+    }
+  }, [user, userBalance]); // Removed fetchUserBalance from dependencies to prevent infinite loop
 
   const handleLogout = async () => {
     await logout();
     navigate('/login');
+  };
+
+  const handleRefreshBalance = () => {
+    if (user) {
+      fetchUserBalance().catch(console.error);
+    }
   };
 
   const navigation = [
@@ -25,13 +38,47 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
     { name: 'General Report', href: '/general-report', icon: BookOpen },
     { name: 'PT Assessment', href: '/pt-assessment', icon: Award },
     { name: 'Resources', href: '/resources', icon: BookOpen },
+    { name: 'Workplace', href: '/workplace', icon: Activity },
     { name: 'Billing', href: '/billing', icon: CreditCard },
     { name: 'Help Center', href: '/help', icon: HelpCircle },
     { name: 'Settings', href: '/settings', icon: Settings },
-    { name: 'Profile', href: '/profile', icon: User },
+    ...(user?.is_staff ? [{ name: 'Admin Dashboard', href: '/admin', icon: Shield }] : []),
   ];
 
   const isActive = (href: string) => location.pathname === href;
+
+  // Render token display with different states
+  const renderTokenDisplay = () => {
+    if (loading?.userBalance) {
+      return (
+        <div className="flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-full border border-gray-200 dark:border-gray-600">
+          <Loader2 className="w-3 h-3 text-gray-500 animate-spin" />
+          <span className="text-xs text-gray-500 dark:text-gray-400">Loading...</span>
+        </div>
+      );
+    }
+
+    if (!userBalance) {
+      return (
+        <button
+          onClick={handleRefreshBalance}
+          className="flex items-center gap-1 px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 rounded-full border border-yellow-200 dark:border-yellow-700 hover:bg-yellow-200 dark:hover:bg-yellow-800/40 transition-colors"
+          title="Click to refresh balance"
+        >
+          <AlertCircle className="w-3 h-3 text-yellow-600 dark:text-yellow-400" />
+          <span className="text-xs text-yellow-700 dark:text-yellow-300">Refresh</span>
+        </button>
+      );
+    }
+
+    return (
+      <div className="flex items-center gap-1 px-2 py-1 bg-orange-100 dark:bg-orange-900/30 rounded-full border border-orange-200 dark:border-orange-700">
+        <Coins className="w-3 h-3 text-orange-600 dark:text-orange-400" />
+        <span className="text-xs font-medium text-orange-700 dark:text-orange-300">{userBalance.available_tokens}</span>
+        <span className="text-xs text-orange-500 dark:text-orange-400">tokens</span>
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -53,34 +100,39 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
           
           <div className="flex items-center gap-2">
             {/* Token Display */}
-            {aiUsageStats && (
-              <div className="flex items-center gap-1 px-2 py-1 bg-gradient-to-r from-blue-50 to-purple-50 rounded-full border border-blue-200">
-                <Coins className="w-3 h-3 text-blue-600" />
-                <span className="text-xs font-medium text-blue-700">{aiUsageStats.total_tokens}</span>
-                <span className="text-xs text-blue-500">tokens</span>
-              </div>
-            )}
+            {renderTokenDisplay()}
             
             {/* User Profile in Navbar */}
             {user && (
-              <div className="flex items-center gap-2">
+              <button
+                onClick={() => navigate('/profile')}
+                className="flex items-center gap-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg p-1 transition-colors"
+              >
                 {/* User Avatar */}
                 <div className="relative">
-                  <div className="w-8 h-8 lg:w-10 lg:h-10 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center shadow-md border border-white">
-                    <span className="text-white font-bold text-sm lg:text-base">
-                      {user.first_name?.[0] || ''}{user.last_name?.[0] || ''}
-                    </span>
-                  </div>
+                  {user.profile_picture ? (
+                    <img
+                      src={user.profile_picture}
+                      alt="Profile"
+                      className="w-8 h-8 lg:w-10 lg:h-10 rounded-full object-cover shadow-md border border-white"
+                    />
+                  ) : (
+                    <div className="w-8 h-8 lg:w-10 lg:h-10 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center shadow-md border border-white">
+                      <span className="text-white font-bold text-sm lg:text-base">
+                        {user.first_name?.[0] || ''}{user.last_name?.[0] || ''}
+                      </span>
+                    </div>
+                  )}
                   {/* Online Status Indicator */}
                   <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 lg:w-4 lg:h-4 bg-green-500 rounded-full border border-white shadow-sm"></div>
                 </div>
                 
                 {/* User Info */}
                 <div className="hidden sm:block">
-                  <p className="text-sm font-semibold text-gray-900">{user.first_name} {user.last_name}</p>
-                  <p className="text-xs text-gray-600">Online</p>
+                  <p className="text-sm font-semibold text-gray-900 dark:text-white">{user.first_name} {user.last_name}</p>
+                  <p className="text-xs text-gray-600 dark:text-gray-400">Online</p>
                 </div>
-              </div>
+              </button>
             )}
           </div>
         </div>

@@ -42,7 +42,7 @@ export const WeeklyReportPage: React.FC = () => {
 
   useEffect(() => {
     fetchWeeklyReports();
-  }, [fetchWeeklyReports]);
+  }, []); // Removed fetchWeeklyReports from dependencies to prevent infinite loop
 
   // Fetch daily reports for each week to get accurate counts
   useEffect(() => {

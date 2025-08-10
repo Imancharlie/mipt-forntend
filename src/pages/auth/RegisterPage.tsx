@@ -97,9 +97,9 @@ export const RegisterPage: React.FC = () => {
   const currentMethods = getCurrentMethods();
 
   return (
-    <div className="min-h-screen flex flex-col justify-center items-center px-4 bg-gray-50">
-      <div className="w-full max-w-md bg-white rounded-xl shadow-lg p-8">
-        <h2 className={`text-2xl font-bold mb-6 text-${theme}-600 text-center`}>Register</h2>
+    <div className="min-h-screen flex flex-col justify-center items-center px-4 bg-gray-50 dark:bg-gray-900">
+      <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 border border-gray-200 dark:border-gray-700">
+        <h2 className="text-2xl font-bold mb-6 text-orange-600 dark:text-orange-400 text-center">Register</h2>
         
         {/* Progress Bar */}
         <div className="mb-6">

@@ -66,9 +66,7 @@ export const DailyReportPage: React.FC = () => {
   
   const [selectedWeek, setSelectedWeek] = useState(getCurrentWeekNumber());
   
-  // Debug: Log the current week calculation
-  console.log('Current week number:', getCurrentWeekNumber());
-  console.log('Selected week:', selectedWeek);
+
   
   const [currentDayIndex, setCurrentDayIndex] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
@@ -76,9 +74,11 @@ export const DailyReportPage: React.FC = () => {
     enabled: true,
     time: '18:00',
     days: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'],
-    notification_type: 'browser' as 'browser' | 'email' | 'both',
+    notification_methods: ['browser', 'email'] as ('browser' | 'email' | 'sms')[],
     message: 'Time to log your daily activities!'
   });
+  const [showWeekdayDetails, setShowWeekdayDetails] = useState(false);
+  const [showWeekendDetails, setShowWeekendDetails] = useState(false);
   const [weekDays, setWeekDays] = useState<DayData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -335,41 +335,41 @@ export const DailyReportPage: React.FC = () => {
               Week {selectedWeek} • {getWeekDateRange(selectedWeek)}
             </p>
                   </div>
-                  
+                
           <div className="flex items-center gap-3">
-                <button 
+                  <button
                   onClick={() => setShowSettings(true)}
                   className={`px-4 py-2 bg-white/60 backdrop-blur-sm border border-${theme}-200 text-${theme}-600 rounded-xl font-medium shadow-sm hover:shadow-md transition-all duration-300 text-sm flex items-center gap-2`}
                 >
                   <Settings className="w-4 h-4" />
                   Settings
-                </button>
-          </div>
-          </div>
-        </div>
-
+                  </button>
+                  </div>
+                </div>
+              </div>
+              
       {/* Enhanced Weekday Navigation */}
       <div className="mb-6">
         <div className="bg-white/80 backdrop-blur-sm border border-gray-200 rounded-2xl p-4">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-800">Week {selectedWeek} Days</h2>
             <div className="flex items-center gap-2">
-            <button
+                <button 
                 onClick={() => setSelectedWeek(Math.max(1, selectedWeek - 1))}
                 className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-            >
+                >
               <ChevronLeft className="w-4 h-4" />
-            </button>
+                </button>
               <span className="text-sm font-medium text-gray-600">Week {selectedWeek}</span>
-              <button
+                  <button 
                 onClick={() => setSelectedWeek(selectedWeek + 1)}
                 className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-              >
+                  >
                 <ChevronRight className="w-4 h-4" />
-              </button>
-            </div>
+                  </button>
           </div>
-          
+        </div>
+
           {/* Enhanced Day Cards */}
           <div className="grid grid-cols-5 gap-1">
             {weekDays.map((day, index) => {
@@ -401,8 +401,8 @@ export const DailyReportPage: React.FC = () => {
                     <div className="text-xs text-gray-500">
                       {getFormattedDate(day.date)}
                     </div>
-                  </div>
-                  
+            </div>
+            
                   {/* Status Icon */}
                   <div className="flex justify-center mb-1">
                     {day.isCompleted ? (
@@ -427,11 +427,11 @@ export const DailyReportPage: React.FC = () => {
                       {day.isCompleted ? 'Done' : day.isCurrentDay ? 'Today' : 'Pending'}
                     </div>
                   </div>
-                </button>
+            </button>
               );
             })}
           </div>
-        </div>
+            </div>
           </div>
 
       {/* Current Day Form */}
@@ -462,8 +462,8 @@ export const DailyReportPage: React.FC = () => {
                   {weekDays[currentDayIndex].isCurrentDay ? 'Today\'s Log' : 
                    weekDays[currentDayIndex].isCompleted ? 'Completed' : 'Pending'}
                 </p>
-              </div>
-            </div>
+                  </div>
+                </div>
             
                 {weekDays[currentDayIndex].isCompleted && (
               <span className="px-3 py-1 text-sm rounded-full bg-green-100 text-green-800 font-medium">
@@ -482,7 +482,7 @@ export const DailyReportPage: React.FC = () => {
                     min="0" 
                     max="12"
                     step="0.5"
-                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-600 focus:border-orange-600 text-gray-900"
+                className="input-field"
                     placeholder="Enter hours spent"
                     {...register('hours_spent', { 
                       required: 'Hours are required',
@@ -497,11 +497,20 @@ export const DailyReportPage: React.FC = () => {
               <label className="block text-sm font-medium mb-2">What did you learn/performed today?</label>
                     <textarea 
                 rows={4}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 dark:focus:ring-orange-400 dark:focus:border-orange-400 transition-all duration-200 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 shadow-sm hover:shadow-md focus:shadow-lg resize-none"
                       placeholder="Describe your activities, tasks performed, skills learned..."
                       {...register('description', { 
                         required: 'Description is required',
-                        minLength: { value: 20, message: 'Description must be at least 20 characters' }
+                        validate: {
+                          notEmpty: (value) => {
+                            const trimmed = value?.trim();
+                            return trimmed && trimmed.length > 0 || 'Description cannot be empty';
+                          },
+                          hasWords: (value) => {
+                            const trimmed = value?.trim();
+                            return (trimmed && trimmed.split(/\s+/).length >= 1) || 'Description must contain at least one word';
+                          }
+                        }
                       })} 
                     />
                   {errors.description && <p className="text-xs text-red-500 mt-1">{errors.description.message}</p>}
@@ -551,181 +560,331 @@ export const DailyReportPage: React.FC = () => {
             <div className="flex items-center gap-2 mb-2">
             <Target className="w-5 h-5 text-orange-500" />
             <span className="text-sm font-medium text-gray-700">Current Status</span>
-          </div>
+            </div>
           <p className="text-lg font-bold text-gray-800">
             {weekDays.find(day => day.isCurrentDay) ? 'Today Active' : 
              allDaysCompleted ? 'Week Complete!' : 'In Progress'}
-          </p>
-                    </div>
-                  </div>
+            </p>
+          </div>
+        </div>
 
-        {/* Settings Modal */}
+        {/* Enhanced Settings Modal */}
         {showSettings && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-2xl p-6 w-full max-w-md">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-800">Reminder Settings</h3>
+            <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 lg:p-8 w-full max-w-md lg:max-w-2xl max-h-[90vh] overflow-y-auto">
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 lg:w-12 lg:h-12 bg-gradient-to-r from-orange-500 to-orange-600 rounded-full flex items-center justify-center">
+                    <Settings className="w-5 h-5 lg:w-6 lg:h-6 text-white" />
+              </div>
+                    <div>
+                    <h3 className="text-xl lg:text-2xl font-semibold text-gray-800 dark:text-white">Daily Reminder Settings</h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">Configure your daily log reminders</p>
+                    </div>
+                    </div>
                 <button 
                   onClick={() => setShowSettings(false)}
-                  className="text-gray-500 hover:text-gray-700"
+                  className="text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-300"
                 >
-                  <X className="w-5 h-5" />
+                  <X className="w-6 h-6" />
                 </button>
               </div>
               
-              <div className="space-y-4">
+              <div className="space-y-6">
                 {/* Enable/Disable Reminders */}
-                <div>
-                  <label className="flex items-center gap-2">
+                <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                  <label className="flex items-center gap-3 cursor-pointer">
                     <input
                       type="checkbox"
                       checked={reminderSettings.enabled}
                       onChange={(e) => setReminderSettings(prev => ({ ...prev, enabled: e.target.checked }))}
-                      className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                      className="w-5 h-5 text-orange-600 rounded focus:ring-orange-500 dark:focus:ring-orange-400"
                     />
-                    <span className="text-sm font-medium">Enable Daily Reminders</span>
+                    <div>
+                      <span className="text-base lg:text-lg font-medium text-gray-800 dark:text-white">Enable Daily Reminders</span>
+                      <p className="text-sm text-gray-600 dark:text-gray-400">
+                        Receive notifications to log your daily activities and stay on track
+                      </p>
+                    </div>
                   </label>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Receive notifications to log your daily activities
-                  </p>
                 </div>
                 
+                {reminderSettings.enabled && (
+                  <>
                 {/* Reminder Time */}
                 <div>
-                  <label className="block text-sm font-medium mb-1">Reminder Time</label>
+                      <label className="block text-sm lg:text-base font-medium mb-3 text-gray-700 dark:text-gray-300">⏰ Reminder Time</label>
                   <input
                     type="time"
                     value={reminderSettings.time}
                     onChange={(e) => setReminderSettings(prev => ({ ...prev, time: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
+                        className="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
                   />
-                  <p className="text-xs text-gray-500 mt-1">
-                    When to receive daily reminders
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                        Set when you'd like to receive daily reminders
                   </p>
                 </div>
                 
-                {/* Reminder Days */}
+                    {/* Simplified Day Selection */}
                 <div>
-                  <label className="block text-sm font-medium mb-1">Reminder Days</label>
-                  <div className="space-y-2">
-                    {['monday', 'tuesday', 'wednesday', 'thursday', 'friday'].map((day) => (
-                      <label key={day} className="flex items-center gap-2">
+                      <label className="block text-sm lg:text-base font-medium mb-3 text-gray-700 dark:text-gray-300">📅 Reminder Days</label>
+                      
+                      <div className="space-y-3">
+                        {/* Weekdays Option */}
+                        <div>
+                          <label className="flex items-center gap-3">
                         <input
                           type="checkbox"
-                          checked={reminderSettings.days.includes(day)}
+                              checked={
+                                reminderSettings.days.includes('monday') &&
+                                reminderSettings.days.includes('tuesday') &&
+                                reminderSettings.days.includes('wednesday') &&
+                                reminderSettings.days.includes('thursday') &&
+                                reminderSettings.days.includes('friday')
+                              }
                           onChange={(e) => {
                             if (e.target.checked) {
+                                  const weekends = reminderSettings.days.filter(d => ['saturday', 'sunday'].includes(d));
                               setReminderSettings(prev => ({
                                 ...prev,
-                                days: [...prev.days, day]
+                                    days: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', ...weekends]
                               }));
                             } else {
                               setReminderSettings(prev => ({
                                 ...prev,
-                                days: prev.days.filter(d => d !== day)
+                                    days: prev.days.filter(d => !['monday', 'tuesday', 'wednesday', 'thursday', 'friday'].includes(d))
                               }));
                             }
                           }}
-                          className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
-                        />
-                        <span className="text-sm capitalize">{day}</span>
+                              className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500 dark:focus:ring-orange-400"
+                            />
+                            <span 
+                              onClick={() => setShowWeekdayDetails(!showWeekdayDetails)}
+                              className="text-sm lg:text-base font-medium text-gray-700 dark:text-gray-300 cursor-pointer hover:text-orange-600 dark:hover:text-orange-400"
+                            >
+                              Weekdays (Mon-Fri)
+                            </span>
+                          </label>
+                          
+                          {/* Expandable Weekday Details */}
+                          {showWeekdayDetails && (
+                            <div className="mt-3 ml-7 grid grid-cols-2 lg:grid-cols-5 gap-2">
+                              {[
+                                { key: 'monday', label: 'Monday', short: 'Mon' },
+                                { key: 'tuesday', label: 'Tuesday', short: 'Tue' },
+                                { key: 'wednesday', label: 'Wednesday', short: 'Wed' },
+                                { key: 'thursday', label: 'Thursday', short: 'Thu' },
+                                { key: 'friday', label: 'Friday', short: 'Fri' }
+                              ].map((day) => (
+                                <label key={day.key} className="relative cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={reminderSettings.days.includes(day.key)}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setReminderSettings(prev => ({
+                                          ...prev,
+                                          days: [...prev.days, day.key]
+                                        }));
+                                      } else {
+                                        setReminderSettings(prev => ({
+                                          ...prev,
+                                          days: prev.days.filter(d => d !== day.key)
+                                        }));
+                                      }
+                                    }}
+                                    className="sr-only"
+                                  />
+                                  <div className={`p-2 rounded-lg border-2 transition-all duration-200 text-center ${
+                                    reminderSettings.days.includes(day.key)
+                                      ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300'
+                                      : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500'
+                                  }`}>
+                                    <div className="font-medium text-xs lg:text-sm">{day.short}</div>
+                                  </div>
                       </label>
                     ))}
                   </div>
+                          )}
                 </div>
                 
-                {/* Notification Type */}
+                        {/* Weekends Option */}
                 <div>
-                  <label className="block text-sm font-medium mb-1">Notification Type</label>
-                  <div className="space-y-2">
-                    <label className="flex items-center gap-2">
+                          <label className="flex items-center gap-3">
                       <input
-                        type="radio"
-                        name="notification_type"
-                        value="browser"
-                        checked={reminderSettings.notification_type === 'browser'}
-                        onChange={(e) => setReminderSettings(prev => ({ ...prev, notification_type: e.target.value as any }))}
-                        className="w-4 h-4 text-blue-600"
-                      />
-                      <span className="text-sm">Browser Notifications</span>
+                              type="checkbox"
+                              checked={
+                                reminderSettings.days.includes('saturday') &&
+                                reminderSettings.days.includes('sunday')
+                              }
+                              onChange={(e) => {
+                                if (e.target.checked) {
+                                  const weekdays = reminderSettings.days.filter(d => ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'].includes(d));
+                                  setReminderSettings(prev => ({
+                                    ...prev,
+                                    days: [...weekdays, 'saturday', 'sunday']
+                                  }));
+                                } else {
+                                  setReminderSettings(prev => ({
+                                    ...prev,
+                                    days: prev.days.filter(d => !['saturday', 'sunday'].includes(d))
+                                  }));
+                                }
+                              }}
+                              className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500 dark:focus:ring-orange-400"
+                            />
+                            <span 
+                              onClick={() => setShowWeekendDetails(!showWeekendDetails)}
+                              className="text-sm lg:text-base font-medium text-gray-700 dark:text-gray-300 cursor-pointer hover:text-orange-600 dark:hover:text-orange-400"
+                            >
+                              Weekends (Sat-Sun)
+                            </span>
                     </label>
-                    <label className="flex items-center gap-2">
+                          
+                          {/* Expandable Weekend Details */}
+                          {showWeekendDetails && (
+                            <div className="mt-3 ml-7 grid grid-cols-2 gap-2">
+                              {[
+                                { key: 'saturday', label: 'Saturday', short: 'Sat' },
+                                { key: 'sunday', label: 'Sunday', short: 'Sun' }
+                              ].map((day) => (
+                                <label key={day.key} className="relative cursor-pointer">
                       <input
-                        type="radio"
-                        name="notification_type"
-                        value="email"
-                        checked={reminderSettings.notification_type === 'email'}
-                        onChange={(e) => setReminderSettings(prev => ({ ...prev, notification_type: e.target.value as any }))}
-                        className="w-4 h-4 text-blue-600"
-                      />
-                      <span className="text-sm">Email Notifications</span>
+                                    type="checkbox"
+                                    checked={reminderSettings.days.includes(day.key)}
+                                    onChange={(e) => {
+                                      if (e.target.checked) {
+                                        setReminderSettings(prev => ({
+                                          ...prev,
+                                          days: [...prev.days, day.key]
+                                        }));
+                                      } else {
+                                        setReminderSettings(prev => ({
+                                          ...prev,
+                                          days: prev.days.filter(d => d !== day.key)
+                                        }));
+                                      }
+                                    }}
+                                    className="sr-only"
+                                  />
+                                  <div className={`p-2 rounded-lg border-2 transition-all duration-200 text-center ${
+                                    reminderSettings.days.includes(day.key)
+                                      ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/30 text-orange-700 dark:text-orange-300'
+                                      : 'border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-400 dark:hover:border-gray-500'
+                                  }`}>
+                                    <div className="font-medium text-xs lg:text-sm">{day.short}</div>
+                                  </div>
                     </label>
-                    <label className="flex items-center gap-2">
-                      <input
-                        type="radio"
-                        name="notification_type"
-                        value="both"
-                        checked={reminderSettings.notification_type === 'both'}
-                        onChange={(e) => setReminderSettings(prev => ({ ...prev, notification_type: e.target.value as any }))}
-                        className="w-4 h-4 text-blue-600"
-                      />
-                      <span className="text-sm">Both</span>
-                    </label>
+                              ))}
+                            </div>
+                          )}
                   </div>
                 </div>
                 
-                {/* Custom Message */}
-                <div>
-                  <label className="block text-sm font-medium mb-1">Custom Message</label>
-                  <textarea
-                    value={reminderSettings.message || ''}
-                    onChange={(e) => setReminderSettings(prev => ({ ...prev, message: e.target.value }))}
-                    placeholder="Time to log your daily activities!"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg"
-                    rows={2}
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Custom message for your reminders
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-3">
+                        Click on the option text to see and select individual days.
                   </p>
                 </div>
                 
-                {/* Test Notification Button */}
+                    {/* Notification Methods */}
                 <div>
-                  <button
-                    onClick={() => {
-                      if ('Notification' in window && Notification.permission === 'granted') {
-                        new Notification('Daily Report Reminder', {
-                          body: reminderSettings.message || 'Time to log your daily activities!',
-                          icon: '/favicon.ico'
-                        });
-                        showSuccess('Test notification sent!');
+                      <label className="block text-sm lg:text-base font-medium mb-3 text-gray-700 dark:text-gray-300">🔔 Notification Methods</label>
+                      <div className="space-y-3">
+                        <label className="flex items-center gap-3 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={reminderSettings.notification_methods.includes('email')}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setReminderSettings(prev => ({
+                                  ...prev,
+                                  notification_methods: [...prev.notification_methods, 'email']
+                                }));
                       } else {
-                        showError('Please enable notifications in your browser settings');
-                      }
-                    }}
-                    className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-all duration-300"
-                  >
-                    Test Notification
-                  </button>
+                                setReminderSettings(prev => ({
+                                  ...prev,
+                                  notification_methods: prev.notification_methods.filter((m: string) => m !== 'email')
+                                }));
+                              }
+                            }}
+                            className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500 dark:focus:ring-orange-400"
+                          />
+                          <div>
+                            <span className="text-sm lg:text-base font-medium text-gray-800 dark:text-white">Email Notifications</span>
+                            <p className="text-xs text-gray-600 dark:text-gray-400">Email reminders to your inbox</p>
                 </div>
+                        </label>
+                        
+                        <label className="flex items-center gap-3 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={reminderSettings.notification_methods.includes('sms')}
+                            onChange={(e) => {
+                              if (e.target.checked) {
+                                setReminderSettings(prev => ({
+                                  ...prev,
+                                  notification_methods: [...prev.notification_methods, 'sms']
+                                }));
+                              } else {
+                                setReminderSettings(prev => ({
+                                  ...prev,
+                                  notification_methods: prev.notification_methods.filter((m: string) => m !== 'sms')
+                                }));
+                              }
+                            }}
+                            className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500 dark:focus:ring-orange-400"
+                          />
+                          <div>
+                            <span className="text-sm lg:text-base font-medium text-gray-800 dark:text-white">SMS/Text Messages</span>
+                            <p className="text-xs text-gray-600 dark:text-gray-400">Text messages to your phone</p>
+                          </div>
+                        </label>
+                      </div>
+                      <p className="text-sm text-gray-500 dark:text-gray-400 mt-2">
+                        Browser notifications are enabled by default. Select additional methods as needed.
+                      </p>
+                    </div>
+                    
+
+                  </>
+                )}
                 
-                {/* Save Button */}
-                <div className="flex gap-3">
+                {/* Action Buttons */}
+                <div className="flex gap-3 pt-4 border-t border-gray-200 dark:border-gray-600">
                   <button
                     onClick={() => setShowSettings(false)}
-                    className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg font-medium hover:bg-gray-200 transition-all duration-300"
+                    className="flex-1 px-6 py-3 bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-lg font-medium hover:bg-gray-200 dark:hover:bg-gray-500 transition-all duration-300"
                   >
                     Cancel
                   </button>
                   <button
                     onClick={() => {
-                      // Save settings logic will go here
-                      showSuccess('Reminder settings saved!');
+                      // Validation
+                      if (reminderSettings.enabled) {
+                        if (reminderSettings.days.length === 0) {
+                          showError('Please select at least one day for reminders');
+                          return;
+                        }
+                        
+                        // Ensure browser is always included when reminders are enabled
+                        const methods = reminderSettings.notification_methods.includes('browser') 
+                          ? reminderSettings.notification_methods 
+                          : ['browser', ...reminderSettings.notification_methods] as ('browser' | 'email' | 'sms')[];
+                        
+                        // Update settings to ensure browser is included
+                        setReminderSettings(prev => ({
+                          ...prev,
+                          notification_methods: methods
+                        }));
+                      }
+                      
+                      // Save settings logic will go here - for now just show success
+                      showSuccess('Reminder settings saved successfully!');
                       setShowSettings(false);
                     }}
-                    className="flex-1 px-4 py-2 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300"
+                    className="flex-1 px-6 py-3 bg-gradient-to-r from-orange-600 to-orange-700 text-white rounded-lg font-medium shadow-lg hover:shadow-xl transition-all duration-300 hover:from-orange-700 hover:to-orange-800"
                   >
-                    Save Settings
+                    💾 Save Settings
                   </button>
                 </div>
               </div>

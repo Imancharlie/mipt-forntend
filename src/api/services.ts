@@ -31,6 +31,12 @@ import {
   MainJob,
   CreateMainJobData,
   CreateMainJobOperationData,
+  UserBalance,
+  Transaction,
+  CreateTransactionData,
+  TokenUsage,
+  BillingDashboardData,
+  PaymentInfo,
 } from '@/types';
 
 // Authentication Services
@@ -82,7 +88,7 @@ export const authService = {
 
   refreshToken: async (data: RefreshData) => {
     try {
-      const response = await apiClient.post('/auth/token/refresh/', data);
+      const response = await apiClient.post('/auth/refresh', data);
       return response.data;
     } catch (error) {
       handleApiError(error as AxiosError);
@@ -106,6 +112,33 @@ export const profileService = {
   updateProfile: async (data: UpdateProfileData): Promise<UserProfile> => {
     try {
       const response = await apiClient.put('/auth/profile/', data);
+      return response.data;
+    } catch (error) {
+      handleApiError(error as AxiosError);
+      throw error;
+    }
+  },
+
+  uploadProfilePicture: async (file: File): Promise<{ success: boolean; message: string; profile_picture_url: string }> => {
+    try {
+      const formData = new FormData();
+      formData.append('profile_picture', file);
+      
+      const response = await apiClient.post('/auth/profile/upload-picture/', formData, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error) {
+      handleApiError(error as AxiosError);
+      throw error;
+    }
+  },
+
+  removeProfilePicture: async (): Promise<{ success: boolean; message: string }> => {
+    try {
+      const response = await apiClient.delete('/auth/profile/remove-picture/');
       return response.data;
     } catch (error) {
       handleApiError(error as AxiosError);
@@ -325,7 +358,7 @@ export const weeklyReportService = {
 
   submitWeeklyReport: async (id: number): Promise<WeeklyReport> => {
     try {
-      const response = await apiClient.patch(`/reports/weekly/${id}/submit/`);
+      const response = await apiClient.patch(`/reports/weekly/week/${id}/submit/`);
       return response.data;
     } catch (error) {
       handleApiError(error as AxiosError);
@@ -335,7 +368,7 @@ export const weeklyReportService = {
 
   getWeeklyReport: async (id: number): Promise<WeeklyReport> => {
     try {
-      const response = await apiClient.get(`/reports/weekly/${id}/`);
+      const response = await apiClient.get(`/reports/weekly/week/${id}/`);
       return response.data;
     } catch (error) {
       handleApiError(error as AxiosError);
@@ -379,16 +412,16 @@ export const weeklyReportService = {
     }
   },
 
-  enhanceWithAI: async (weeklyReportId: number, additionalInstructions?: string): Promise<WeeklyReport> => {
+  enhanceWithAI: async (weekNumber: number, additionalInstructions?: string): Promise<WeeklyReport> => {
     try {
       console.log('Sending AI enhancement request to backend...');
-      console.log('Weekly Report ID:', weeklyReportId);
+      console.log('Week Number:', weekNumber);
       console.log('Additional Instructions:', additionalInstructions || 'None');
-      console.log('Request URL:', `/reports/weekly/${weeklyReportId}/enhance_with_ai/`);
+      console.log('Request URL:', `/reports/weekly/enhance/${weekNumber}/`);
       
       // First, check if the weekly report exists
       try {
-        const reportCheck = await apiClient.get(`/reports/weekly/${weeklyReportId}/`);
+        const reportCheck = await apiClient.get(`/reports/weekly/week/${weekNumber}/`);
         console.log('Weekly report exists:', reportCheck.data);
       } catch (checkError: any) {
         console.error('Weekly report check failed:', checkError.response?.status, checkError.response?.data);
@@ -398,7 +431,7 @@ export const weeklyReportService = {
       }
       
       // Try to call the backend API with proper error handling
-      const response = await apiClient.post(`/reports/weekly/${weeklyReportId}/enhance_with_ai/`, {
+      const response = await apiClient.post(`/reports/weekly/enhance/${weekNumber}/`, {
         additional_instructions: additionalInstructions || ''
       });
       
@@ -426,7 +459,7 @@ export const weeklyReportService = {
         
         // Mock enhancement for development/testing
         const mockEnhancedReport: WeeklyReport = {
-          id: weeklyReportId,
+          id: weekNumber,
           week_number: 1,
           start_date: '2025-01-20',
           end_date: '2025-01-24',
@@ -900,6 +933,157 @@ export const reminderService = {
   testNotification: async () => {
     const response = await apiClient.post('/reminders/test/');
     return response.data;
+  }
+};
+
+// Billing Services
+export const billingService = {
+  // Get user balance
+  getBalance: async (): Promise<{ success: boolean; data: UserBalance }> => {
+    try {
+      const response = await apiClient.get('/billing/balance/my_balance/');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to get balance:', error);
+      throw handleApiError(error as AxiosError);
+    }
+  },
+
+  // Create transaction
+  createTransaction: async (data: CreateTransactionData): Promise<{ success: boolean; message: string; data: Transaction }> => {
+    try {
+      const response = await apiClient.post('/billing/transactions/', data);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to create transaction:', error);
+      throw handleApiError(error as AxiosError);
+    }
+  },
+
+  // Verify payment details
+  verifyPayment: async (transactionId: number, data: { user_phone_number: string; sender_name: string; amount: number }): Promise<{ success: boolean; message: string }> => {
+    try {
+      const response = await apiClient.post(`/billing/transactions/${transactionId}/verify_payment/`, data);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to verify payment:', error);
+      throw handleApiError(error as AxiosError);
+    }
+  },
+
+
+
+  // Get usage history
+  getUsageHistory: async (): Promise<{ success: boolean; data: TokenUsage[] }> => {
+    try {
+      const response = await apiClient.get('/billing/token-usage/usage_history/');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to get usage history:', error);
+      throw handleApiError(error as AxiosError);
+    }
+  },
+
+  // Get billing dashboard data
+  getDashboardData: async (): Promise<{ success: boolean; data: BillingDashboardData }> => {
+    try {
+      const response = await apiClient.get('/billing/dashboard/dashboard_data/');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to get dashboard data:', error);
+      throw handleApiError(error as AxiosError);
+    }
+  },
+
+  // Get payment information
+  getPaymentInfo: async (): Promise<{ success: boolean; data: PaymentInfo }> => {
+    try {
+      const response = await apiClient.get('/billing/dashboard/payment_info/');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to get payment info:', error);
+      throw handleApiError(error as AxiosError);
+    }
+  },
+
+  // Get user transactions
+  getTransactions: async (): Promise<{ success: boolean; data: Transaction[] }> => {
+    try {
+      const response = await apiClient.get('/billing/transactions/');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to get transactions:', error);
+      throw handleApiError(error as AxiosError);
+    }
+  },
+
+  // Staff Transaction Management
+  staff: {
+    // Create transaction on behalf of user
+    createTransaction: async (data: {
+      user_id: number;
+      user_phone_number: string;
+      sender_name: string;
+      payment_method: 'DIRECT' | 'WAKALA';
+      wakala_name?: string;
+      amount: number;
+    }): Promise<{ success: boolean; message: string; data: Transaction }> => {
+      try {
+        const response = await apiClient.post('/billing/staff/transactions/', data);
+        return response.data;
+      } catch (error) {
+        console.error('Failed to create staff transaction:', error);
+        throw handleApiError(error as AxiosError);
+      }
+    },
+
+    // Get pending transactions
+    getPendingTransactions: async (): Promise<{ success: boolean; data: Transaction[] }> => {
+      try {
+        const response = await apiClient.get('/billing/staff/transactions/pending_transactions/');
+        return response.data;
+      } catch (error) {
+        console.error('Failed to get pending transactions:', error);
+        throw handleApiError(error as AxiosError);
+      }
+    },
+
+    // Approve transaction
+    approveTransaction: async (transactionId: number): Promise<{ success: boolean; message: string }> => {
+      try {
+        const response = await apiClient.post(`/billing/staff/transactions/${transactionId}/approve_transaction/`);
+        return response.data;
+      } catch (error) {
+        console.error('Failed to approve transaction:', error);
+        throw handleApiError(error as AxiosError);
+      }
+    },
+
+    // Reject transaction
+    rejectTransaction: async (transactionId: number): Promise<{ success: boolean; message: string }> => {
+      try {
+        const response = await apiClient.post(`/billing/staff/transactions/${transactionId}/reject_transaction/`);
+        return response.data;
+      } catch (error) {
+        console.error('Failed to reject transaction:', error);
+        throw handleApiError(error as AxiosError);
+      }
+    },
+
+    // Get all transactions (staff view)
+    getAllTransactions: async (params?: {
+      status?: 'PENDING' | 'APPROVED' | 'REJECTED';
+      payment_method?: 'DIRECT' | 'WAKALA';
+      page?: number;
+    }): Promise<{ success: boolean; data: Transaction[]; pagination?: any }> => {
+      try {
+        const response = await apiClient.get('/billing/staff/transactions/', { params });
+        return response.data;
+      } catch (error) {
+        console.error('Failed to get all transactions:', error);
+        throw handleApiError(error as AxiosError);
+      }
+    }
   }
 };
 

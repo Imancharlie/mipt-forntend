@@ -27,6 +27,8 @@ export interface UserData {
   email: string;
   first_name: string;
   last_name: string;
+  profile_picture?: string;
+  is_staff?: boolean;
 }
 
 // User Profile Types
@@ -42,6 +44,7 @@ export interface UserProfile {
   phone_number?: string;
   company_name?: string;
   company_region?: string;
+  profile_picture?: string;
   user_details: {
     username: string;
     email: string;
@@ -51,6 +54,8 @@ export interface UserProfile {
 
 export interface UpdateProfileData {
   student_id?: string;
+  first_name?: string;
+  last_name?: string;
   program?: string;
   year_of_study?: number;
   pt_phase?: string;
@@ -370,4 +375,75 @@ export interface ReminderNotification {
   scheduled_time: string;
   is_sent: boolean;
   created_at: string;
+}
+
+// Billing Types
+export interface UserBalance {
+  id: number;
+  user: string;
+  user_full_name: string;
+  available_tokens: number;
+  payment_status: 'FREE_TRIAL' | 'UNSUBSCRIBED' | 'SUBSCRIBED';
+  tokens_used: number;
+  can_use_ai: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface Transaction {
+  id: number;
+  user: string;
+  user_full_name: string;
+  user_phone_number: string;
+  sender_name: string;
+  payment_method: 'DIRECT' | 'WAKALA';
+  wakala_name?: string;
+  transaction_status: 'PENDING' | 'APPROVED' | 'REJECTED';
+  amount: string;
+  tokens_generated: number;
+  confirmed_by_name?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CreateTransactionData {
+  user_phone_number: string;
+  sender_name: string;
+  payment_method: 'DIRECT' | 'WAKALA';
+  wakala_name?: string;
+  amount: number;
+}
+
+export interface TokenUsage {
+  id: number;
+  user: string;
+  usage_type: 'FULLFILLED' | 'PARTIAL' | 'EMPTY';
+  tokens_used: number;
+  weekly_report_id: number;
+  created_at: string;
+}
+
+
+
+export interface BillingDashboardData {
+  balance: {
+    available_tokens: number;
+    payment_status: string;
+    tokens_used: number;
+  };
+  recent_transactions: Transaction[];
+  pending_transactions: number;
+  total_spent: number;
+  can_use_ai: boolean;
+}
+
+export interface PaymentInfo {
+  payment_number: string;
+  payment_instructions: string[];
+  token_calculation: string;
+  usage_costs: {
+    fullfilled: string;
+    partial: string;
+    empty: string;
+  };
 } 

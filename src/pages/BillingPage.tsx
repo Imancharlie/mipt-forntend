@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAppStore } from '@/store';
 import { useToastContext } from '@/contexts/ToastContext';
+import { CreateTransactionData } from '@/types';
 import { 
   Coins, 
-  CreditCard, 
   Phone, 
   User, 
   DollarSign, 
@@ -34,7 +34,13 @@ interface PaymentConfirmation {
 }
 
 const BillingPage: React.FC = () => {
-  const { aiUsageStats } = useAppStore();
+  const { 
+    userBalance, 
+    paymentInfo, 
+    fetchUserBalance, 
+    fetchPaymentInfo, 
+    createTransaction
+  } = useAppStore();
   const { showSuccess, showError } = useToastContext();
   
   const [showPaymentMethods, setShowPaymentMethods] = useState(false);
@@ -48,13 +54,18 @@ const BillingPage: React.FC = () => {
   });
   const [calculatorAmount, setCalculatorAmount] = useState<number>(2000);
 
+  useEffect(() => {
+    fetchUserBalance();
+    fetchPaymentInfo();
+  }, []); // Removed store functions from dependencies to prevent infinite loop
+
   const paymentMethods: PaymentMethod[] = [
     {
       id: 'mpesa',
       name: 'M-Pesa',
       description: 'Pay using M-Pesa mobile money',
       icon: <Phone className="w-6 h-6" />,
-      number: '4556432',
+      number: paymentInfo?.payment_number || '4556432',
       accountName: 'MIPT Training'
     },
     {
@@ -67,9 +78,9 @@ const BillingPage: React.FC = () => {
     }
   ];
 
-  // Calculate tokens based on amount (2000 TSH = 600 tokens)
+  // Calculate tokens based on amount (backend formula: Tokens = Amount × 0.3)
   const calculateTokens = (amount: number) => {
-    return Math.floor((amount / 2000) * 600);
+    return Math.floor(amount * 0.3);
   };
 
   const handleProceedToPayment = () => {
@@ -84,7 +95,7 @@ const BillingPage: React.FC = () => {
     setShowPaymentMethods(true);
   };
 
-  const handleSubmitConfirmation = () => {
+  const handleSubmitConfirmation = async () => {
     if (!paymentDetails.amount || paymentDetails.amount <= 0) {
       showError('Please enter a valid amount');
       return;
@@ -97,13 +108,31 @@ const BillingPage: React.FC = () => {
 
     if (confirmationType === 'wakala' && !paymentDetails.wakalaName) {
       showError('Please enter the wakala name');
-      return;
-    }
+        return;
+      }
 
-    showSuccess('Payment confirmation submitted! Staff will verify and add tokens to your account.');
-    setShowConfirmationModal(false);
-    setConfirmationType('');
-    setPaymentDetails({ method: '', amount: 0, name: '', confirmationType: 'own' });
+    try {
+      // Create transaction data based on confirmation type
+      const transactionData: CreateTransactionData = {
+        user_phone_number: paymentDetails.phoneNumber || paymentInfo?.payment_number || '',
+        sender_name: paymentDetails.name,
+        payment_method: confirmationType === 'wakala' ? 'WAKALA' : 'DIRECT',
+        amount: paymentDetails.amount,
+      };
+
+      if (confirmationType === 'wakala' && paymentDetails.wakalaName) {
+        transactionData.wakala_name = paymentDetails.wakalaName;
+      }
+
+      await createTransaction(transactionData);
+
+      showSuccess('Payment confirmation submitted! Staff will verify and add tokens to your account.');
+      setShowConfirmationModal(false);
+      setConfirmationType('');
+      setPaymentDetails({ method: '', amount: 0, name: '', confirmationType: 'own' });
+    } catch (error) {
+      showError('Failed to submit payment confirmation. Please try again.');
+    }
   };
 
   return (
@@ -121,13 +150,13 @@ const BillingPage: React.FC = () => {
       {/* Current Tokens */}
       <div className="mb-8">
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
-          <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between">
             <div>
               <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Current Tokens</h2>
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-2 px-4 py-2 bg-orange-100 dark:bg-orange-900/30 rounded-full text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-700">
                   <Coins className="w-5 h-5" />
-                  <span className="text-xl font-bold">{aiUsageStats?.total_tokens || 0}</span>
+                  <span className="text-xl font-bold">{userBalance?.available_tokens || 0}</span>
                   <span className="text-sm">tokens</span>
                 </div>
               </div>
@@ -158,9 +187,9 @@ const BillingPage: React.FC = () => {
                     <p>• <strong>Enhancement costs:</strong> 300 tokens (complete report) or 500 tokens (blank report)</p>
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
+        </div>
+        </div>
+      </div>
 
           {/* Token Calculator */}
           <div className="mb-8">
@@ -174,7 +203,7 @@ const BillingPage: React.FC = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                     Amount (TSH)
-                  </label>
+          </label>
                   <div className="relative">
                     <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                     <input
@@ -187,10 +216,10 @@ const BillingPage: React.FC = () => {
                       step="1000"
                     />
                   </div>
-                </div>
+        </div>
 
                 <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-xl border border-orange-200 dark:border-orange-700">
-                  <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between">
                     <span className="text-sm text-orange-700 dark:text-orange-300">Tokens you'll receive:</span>
                     <span className="text-2xl font-bold text-orange-600 dark:text-orange-400">
                       {calculateTokens(calculatorAmount)} tokens
@@ -200,15 +229,23 @@ const BillingPage: React.FC = () => {
 
                 <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
                   <p><strong>What you can do with {calculateTokens(calculatorAmount)} tokens:</strong></p>
-                  <ul className="list-disc list-inside space-y-1 ml-4">
-                    <li>Enhance {Math.floor(calculateTokens(calculatorAmount) / 300)} complete week reports</li>
-                    <li>Or enhance {Math.floor(calculateTokens(calculatorAmount) / 500)} blank reports with AI</li>
-                    <li>Generate main job operations and steps</li>
-                  </ul>
+                  {paymentInfo?.usage_costs ? (
+                    <ul className="list-disc list-inside space-y-1 ml-4">
+                      <li>{paymentInfo.usage_costs.fullfilled}</li>
+                      <li>{paymentInfo.usage_costs.partial}</li>
+                      <li>{paymentInfo.usage_costs.empty}</li>
+                    </ul>
+                  ) : (
+                    <ul className="list-disc list-inside space-y-1 ml-4">
+                      <li>Enhance {Math.floor(calculateTokens(calculatorAmount) / 300)} complete week reports</li>
+                      <li>Or enhance {Math.floor(calculateTokens(calculatorAmount) / 500)} blank reports with AI</li>
+                      <li>Generate main job operations and steps</li>
+                    </ul>
+                  )}
                 </div>
               </div>
-            </div>
-          </div>
+        </div>
+      </div>
 
           {/* Proceed Button */}
           <div className="mb-8">
@@ -226,7 +263,7 @@ const BillingPage: React.FC = () => {
                 </p>
               </div>
             </div>
-          </div>
+        </div>
         </>
       ) : (
         <>
@@ -302,8 +339,8 @@ const BillingPage: React.FC = () => {
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
               >
                 <X className="w-5 h-5" />
-              </button>
-            </div>
+        </button>
+      </div>
 
             <div className="space-y-6">
               {/* Payment Method Selection */}
@@ -439,7 +476,7 @@ const BillingPage: React.FC = () => {
                 </div>
               )}
             </div>
-          </div>
+      </div>
         </div>
       )}
     </div>

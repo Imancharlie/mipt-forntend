@@ -59,7 +59,7 @@ export const testAIEnhancementEndpoint = async (weeklyReportId: number) => {
     // Test 1: Check if report exists
     console.log('📋 Test 1: Checking if weekly report exists...');
     try {
-      const response = await fetch(`http://localhost:8000/api/reports/weekly/${weeklyReportId}/`, {
+      const response = await fetch(`http://localhost:8000/api/reports/weekly/week/${weeklyReportId}/`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
           'Content-Type': 'application/json'
@@ -81,7 +81,7 @@ export const testAIEnhancementEndpoint = async (weeklyReportId: number) => {
     // Test 2: Test AI enhancement endpoint
     console.log('🤖 Test 2: Testing AI enhancement endpoint...');
     try {
-      const response = await fetch(`http://localhost:8000/api/reports/weekly/${weeklyReportId}/enhance_with_ai/`, {
+      const response = await fetch(`http://localhost:8000/api/reports/weekly/enhance/${weeklyReportId}/`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`,

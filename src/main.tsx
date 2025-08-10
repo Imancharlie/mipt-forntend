@@ -3,16 +3,19 @@ import ReactDOM from 'react-dom/client'
 import { BrowserRouter } from 'react-router-dom'
 import App from './App.tsx'
 import './index.css'
-import { registerServiceWorker } from './sw-register'
+// import { registerServiceWorker } from './sw-register' // Removed - VitePWA handles this
 import './utils/offlineQueue'
 
-// Register service worker for PWA
-registerServiceWorker();
+// VitePWA automatically registers the service worker
+// registerServiceWorker(); // Removed to prevent conflicts
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
-    <BrowserRouter>
-      <App />
-    </BrowserRouter>
-  </React.StrictMode>,
+const root = document.getElementById('root');
+if (!root) {
+  throw new Error('Root element not found');
+}
+
+ReactDOM.createRoot(root).render(
+  <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
+    <App />
+  </BrowserRouter>,
 ) 

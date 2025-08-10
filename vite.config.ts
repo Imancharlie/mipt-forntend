@@ -8,13 +8,16 @@ export default defineConfig({
   plugins: [
     react(),
     VitePWA({
-      registerType: 'autoUpdate',
+      registerType: 'prompt', // Changed from 'autoUpdate' to 'prompt' to prevent aggressive updates
       devOptions: {
         enabled: true,
         type: 'module'
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        skipWaiting: false, // Disable aggressive skip waiting
+        clientsClaim: false, // Disable aggressive client claiming
+        cleanupOutdatedCaches: true,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -53,8 +56,8 @@ export default defineConfig({
       },
       includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
-        name: 'PT - Industrial Training Reports',
-        short_name: 'PT',
+        name: 'MiPT - Industrial Training Reports',
+        short_name: 'MiPT',
         description: 'Industrial Practical Training Report System - Track and manage your training progress',
         theme_color: '#FF6B35',
         background_color: '#ffffff',

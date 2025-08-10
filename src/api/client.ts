@@ -1,217 +1,123 @@
-import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios';
-import { useAppStore } from '@/store';
-import { isTokenExpired } from '@/utils/auth';
+import axios, { AxiosError } from 'axios';
 
+// Token manager to handle authentication tokens
+let currentToken: string | null = null;
+let isRefreshing = false;
+let failedQueue: Array<{ resolve: (value?: any) => void; reject: (reason?: any) => void }> = [];
 
-
-// Get the API base URL from environment or use a fallback
-const getApiBaseUrl = () => {
-  // Priority 1: Environment variable (most flexible)
-  if (import.meta.env.VITE_API_URL) {
-    return import.meta.env.VITE_API_URL;
-  }
-  
-  // Priority 2: Development mode with default backend port
-  if (import.meta.env.DEV) {
-    // For local development, use 127.0.0.1:8000
-    return 'http://127.0.0.1:8000/api';
-  }
-  
-  // Priority 3: Production - use the PythonAnywhere backend
-  return 'https://mipt.pythonanywhere.com/api';
-};
-
-// Fallback API URLs for retry mechanism
-const API_FALLBACKS = [
-  'https://mipt.pythonanywhere.com/api',  // Production
-  'http://127.0.0.1:8000/api',           // Local development (only in dev)
-  'https://maipt.netlify.app/api'         // Netlify fallback
-];
-
-// Function to try multiple API endpoints
-const tryApiEndpoints = async (endpoint: string, options: RequestInit = {}) => {
-  const baseUrl = getApiBaseUrl();
-  // Filter out localhost in production
-  const fallbacks = import.meta.env.DEV 
-    ? API_FALLBACKS.filter(url => url !== baseUrl)
-    : API_FALLBACKS.filter(url => url !== baseUrl && !url.includes('127.0.0.1'));
-  
-  const urls = [baseUrl, ...fallbacks];
-  
-  for (const url of urls) {
-    try {
-      const fullUrl = `${url}${endpoint}`;
-      console.log(`🔄 Trying API endpoint: ${fullUrl}`);
-      
-      const response = await fetch(fullUrl, {
-        ...options,
-        headers: {
-          'Content-Type': 'application/json',
-          ...options.headers,
-        },
-      });
-      
-      if (response.ok) {
-        console.log(`✅ API endpoint working: ${fullUrl}`);
-        return response;
-      }
-    } catch (error) {
-      console.log(`❌ API endpoint failed: ${url}${endpoint}`, error);
-      continue;
+const processQueue = (error: any, token: string | null = null) => {
+  failedQueue.forEach(({ resolve, reject }) => {
+    if (error) {
+      reject(error);
+    } else {
+      resolve(token);
     }
-  }
+  });
   
-  throw new Error('All API endpoints failed');
+  failedQueue = [];
 };
 
-// Create axios instance with fallback mechanism
-const apiClient: AxiosInstance = axios.create({
-  baseURL: getApiBaseUrl(),
-  timeout: 10000,
+export const setAuthToken = (token: string | null) => {
+  currentToken = token;
+  // Also update localStorage for persistence
+  if (token) {
+    localStorage.setItem('access_token', token);
+  } else {
+    localStorage.removeItem('access_token');
+  }
+};
+
+// Initialize token from localStorage on module load
+const initializeToken = () => {
+  const storedToken = localStorage.getItem('access_token');
+  if (storedToken) {
+    currentToken = storedToken;
+  }
+};
+
+// Call initialization
+initializeToken();
+
+// Axios instance for API calls
+const apiClient = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api',
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true, // Include cookies for CORS
+  withCredentials: true,
 });
 
-// Enhanced request interceptor with fallback
-apiClient.interceptors.request.use(
-  async (config) => {
-    const store = useAppStore.getState();
-    const token = store.tokens.access;
-    
-    // Skip authentication for login, register, and token refresh endpoints
-    const isAuthEndpoint = config.url?.includes('/auth/login/') || 
-                          config.url?.includes('/auth/register/') ||
-                          config.url?.includes('/auth/token/refresh/');
-    
-    if (!isAuthEndpoint && token && !isTokenExpired(token)) {
-      config.headers.Authorization = `Bearer ${token}`;
-    } else if (!isAuthEndpoint && token && isTokenExpired(token)) {
-      // Token is expired, clear it
-      store.setTokens({ access: null, refresh: store.tokens.refresh });
+// Log the effective base URL for debugging
+console.log('API Client initialized with baseURL:', apiClient.defaults.baseURL);
+console.log('Environment VITE_API_URL:', import.meta.env.VITE_API_URL);
+
+// Attach bearer token if present
+apiClient.interceptors.request.use((config) => {
+  try {
+    if (currentToken) {
+      if (!config.headers) config.headers = {} as any;
+      (config.headers as any).Authorization = `Bearer ${currentToken}`;
     }
-    
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
+  } catch {}
+  return config;
+});
 
-// Utility function to clear auth state
-const clearAuthState = () => {
-  const store = useAppStore.getState();
-  store.setUser(null);
-  store.setTokens({ access: null, refresh: null });
-  store.setIsAuthenticated(false);
-  store.setProfile(null);
-  store.setDashboardStats(null);
-};
-
-// Request interceptor to add JWT token
-apiClient.interceptors.request.use(
-  (config) => {
-    const store = useAppStore.getState();
-    const token = store.tokens.access;
-    
-    // Skip authentication for login, register, and token refresh endpoints
-    const isAuthEndpoint = config.url?.includes('/auth/login/') || 
-                          config.url?.includes('/auth/register/') ||
-                          config.url?.includes('/auth/token/refresh/');
-    
-    if (!isAuthEndpoint && token && !isTokenExpired(token)) {
-      config.headers.Authorization = `Bearer ${token}`;
-    } else if (!isAuthEndpoint && token && isTokenExpired(token)) {
-      // Token is expired, clear it
-      store.setTokens({ access: null, refresh: store.tokens.refresh });
-    }
-    
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  }
-);
-
-// Response interceptor to handle token refresh and fallback
+// Response interceptor to handle token refresh
 apiClient.interceptors.response.use(
-  (response: AxiosResponse) => {
-    return response;
-  },
+  (response) => response,
   async (error: AxiosError) => {
-    const originalRequest = error.config;
+    const originalRequest = error.config as any;
     
-    // If it's a network error (CORS, connection failed), try fallback endpoints
-    if (!error.response && originalRequest) {
-      console.log('🌐 Network error detected, trying fallback endpoints...');
-      
-      try {
-        // Try the fallback mechanism for the same endpoint
-        const endpoint = originalRequest.url?.replace(originalRequest.baseURL || '', '') || '';
-        const requestOptions: RequestInit = {
-          method: originalRequest.method || 'GET',
-          headers: originalRequest.headers as Record<string, string>,
-        };
-        
-        // Add body for POST/PUT requests
-        if (originalRequest.data && ['POST', 'PUT', 'PATCH'].includes(originalRequest.method?.toUpperCase() || '')) {
-          requestOptions.body = JSON.stringify(originalRequest.data);
-        }
-        
-        const response = await tryApiEndpoints(endpoint, requestOptions);
-        
-        // Convert fetch response to axios response format
-        const data = await response.json();
-        return {
-          data,
-          status: response.status,
-          statusText: response.statusText,
-          headers: response.headers,
-          config: originalRequest,
-        };
-      } catch (fallbackError) {
-        console.log('❌ All fallback endpoints failed');
-        return Promise.reject(fallbackError);
+    if (error.response?.status === 401 && !originalRequest._retry) {
+      if (isRefreshing) {
+        // If already refreshing, queue this request
+        return new Promise((resolve, reject) => {
+          failedQueue.push({ resolve, reject });
+        }).then(token => {
+          originalRequest.headers.Authorization = `Bearer ${token}`;
+          return apiClient(originalRequest);
+        }).catch(err => Promise.reject(err));
       }
-    }
-    
-    // Check if this is a 401 error and not a refresh token request or logout request
-    if (error.response?.status === 401 && originalRequest && 
-        !originalRequest.url?.includes('/auth/token/refresh/') && 
-        !originalRequest.url?.includes('/auth/logout/')) {
+
+      originalRequest._retry = true;
+      isRefreshing = true;
+
+      const refreshToken = localStorage.getItem('refresh_token');
       
-      const store = useAppStore.getState();
-      const refreshToken = store.tokens.refresh;
-      
-      if (refreshToken && !isTokenExpired(refreshToken)) {
+      if (refreshToken) {
         try {
-          // Create a new axios instance for refresh to avoid interceptor loop
-          const refreshUrl = import.meta.env.DEV 
-            ? '/api/auth/token/refresh/'
-            : 'https://mipt.pythonanywhere.com/api/auth/token/refresh/';
-          
-          const refreshResponse = await axios.post(refreshUrl, {
+          const response = await axios.post('http://127.0.0.1:8000/api/auth/refresh', {
             refresh: refreshToken
           });
           
-          const { access } = refreshResponse.data;
-          store.setTokens({ access, refresh: refreshToken });
+          const { access } = response.data;
+          setAuthToken(access);
           
-          // Retry the original request with new token
-          if (originalRequest.headers) {
-            originalRequest.headers.Authorization = `Bearer ${access}`;
-          }
+          // Update the original request
+          originalRequest.headers.Authorization = `Bearer ${access}`;
+          
+          // Process queued requests
+          processQueue(null, access);
           
           return apiClient(originalRequest);
         } catch (refreshError) {
-          // Token refresh failed, clear auth state
-          clearAuthState();
+          // Refresh failed, clear tokens but DON'T redirect automatically
+          processQueue(refreshError, null);
+          setAuthToken(null);
+          localStorage.removeItem('refresh_token');
+          
+          // Instead of redirecting, let the store handle the authentication failure
+          console.warn('Token refresh failed, authentication state should be cleared by store');
+          
           return Promise.reject(refreshError);
+        } finally {
+          isRefreshing = false;
         }
       } else {
-        // No refresh token or expired refresh token, clear auth state
-        clearAuthState();
+        // No refresh token, clear access token but DON'T redirect
+        setAuthToken(null);
+        console.warn('No refresh token available, authentication state should be cleared by store');
+        return Promise.reject(error);
       }
     }
     
@@ -219,78 +125,9 @@ apiClient.interceptors.response.use(
   }
 );
 
-// Error handler utility
-export const handleApiError = (error: AxiosError) => {
-  const store = useAppStore.getState();
-  
-  if (error.response) {
-    // Server responded with error status
-    const { status, data } = error.response;
-    
-    switch (status) {
-      case 400:
-        store.setError({
-          message: (data as any)?.message || 'Invalid request data. Please check your input.',
-          type: 'validation',
-          field: (data as any)?.field,
-        });
-        break;
-      case 401:
-        if (error.config?.url?.includes('/auth/login/')) {
-          store.setError({
-            message: 'Invalid username or password. Please check your credentials.',
-            type: 'auth',
-          });
-        } else {
-          store.setError({
-            message: 'Authentication required. Please log in again.',
-            type: 'auth',
-          });
-        }
-        break;
-      case 403:
-        store.setError({
-          message: 'Access denied. You do not have permission to perform this action.',
-          type: 'auth',
-        });
-        break;
-      case 404:
-        store.setError({
-          message: 'Resource not found. Please check the URL or contact support.',
-          type: 'general',
-        });
-        break;
-      case 500:
-        store.setError({
-          message: 'Server error. Please try again later or contact support.',
-          type: 'network',
-        });
-        break;
-      default:
-        store.setError({
-          message: (data as any)?.message || 'An unexpected error occurred. Please try again.',
-          type: 'general',
-        });
-    }
-  } else if (error.request) {
-    // Network error
-    store.setError({
-      message: 'Network error. Please check your internet connection and try again. If the problem persists, contact support.',
-      type: 'network',
-      retry: () => {
-        // Retry the last request
-        if (error.config) {
-          apiClient(error.config);
-        }
-      },
-    });
-  } else {
-    // Other error
-    store.setError({
-      message: error.message || 'An error occurred. Please try again.',
-      type: 'general',
-    });
-  }
-};
+export function handleApiError(error: AxiosError): never {
+  // Centralized error passthrough (extend as needed)
+  throw error;
+}
 
-export default apiClient; 
+export default apiClient;

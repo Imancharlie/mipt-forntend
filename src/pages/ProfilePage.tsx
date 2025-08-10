@@ -1,8 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useAppStore } from '@/store';
 import { useTheme } from '@/components/ThemeProvider';
 import { UpdateProfileData } from '@/types';
-import { Loader2, User, Mail, Phone, Building2, GraduationCap, Calendar, Save, Edit } from 'lucide-react';
+import { Loader2, User, Phone, Building2, GraduationCap, Calendar, Save, Edit, Camera, Upload, X } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { cleanProfileData, mapProgramToFrontend, mapPTPhaseToFrontend, PROGRAM_MAPPING, PT_PHASE_MAPPING } from '@/utils/profileMapping';
 import { getRegistrationProfile, clearRegistrationProfile } from '@/utils/registrationStorage';
@@ -10,33 +10,102 @@ import { useToastContext } from '@/contexts/ToastContext';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 
 export const ProfilePage: React.FC = () => {
-  const { profile, updateProfile, loading, fetchProfile } = useAppStore();
+  const { profile, updateProfile, loading, fetchProfile, user, uploadProfilePicture, removeProfilePicture } = useAppStore();
   const { theme } = useTheme();
   const { showSuccess, showError, showInfo } = useToastContext();
   const [isEditing, setIsEditing] = useState(false);
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm<UpdateProfileData>();
+  const [profilePicture, setProfilePicture] = useState<string | null>(null);
+  const [isUploadingPicture, setIsUploadingPicture] = useState(false);
+  const [localNames, setLocalNames] = useState<{firstName: string, lastName: string} | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { register, handleSubmit, reset, watch, formState: { errors, isSubmitting } } = useForm<UpdateProfileData>();
 
   useEffect(() => {
     fetchProfile();
-  }, [fetchProfile]);
+  }, []); // Removed fetchProfile from dependencies to prevent infinite loop
+
+  // Profile picture upload functions
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      handleProfilePictureUpload(file);
+    }
+  };
+
+  const handleProfilePictureUpload = async (file: File) => {
+    if (!file.type.startsWith('image/')) {
+      showError('Please select a valid image file');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      showError('Image size must be less than 5MB');
+      return;
+    }
+
+    setIsUploadingPicture(true);
+    try {
+      const profilePictureUrl = await uploadProfilePicture(file);
+      setProfilePicture(profilePictureUrl);
+      showSuccess('Profile picture updated successfully!');
+    } catch (error) {
+      console.error('Failed to upload profile picture:', error);
+      showError('Failed to upload profile picture. Please try again.');
+    } finally {
+      setIsUploadingPicture(false);
+    }
+  };
+
+  const handleRemoveProfilePicture = async () => {
+    try {
+      await removeProfilePicture();
+      setProfilePicture(null);
+      showSuccess('Profile picture removed successfully!');
+    } catch (error) {
+      console.error('Failed to remove profile picture:', error);
+      showError('Failed to remove profile picture. Please try again.');
+    }
+  };
 
   useEffect(() => {
     if (profile) {
-      reset({
+      // Set profile picture if available (check both user and profile objects)
+      if (user?.profile_picture) {
+        setProfilePicture(user.profile_picture);
+      } else if (profile.profile_picture) {
+        setProfilePicture(profile.profile_picture);
+      }
+      
+      // Reset form with current data - try multiple sources for names
+      const firstName = localNames?.firstName || user?.first_name || profile?.user_details?.full_name?.split(' ')[0] || '';
+      const lastName = localNames?.lastName || user?.last_name || profile?.user_details?.full_name?.split(' ').slice(1).join(' ') || '';
+      
+      const formData = {
+        first_name: firstName,
+        last_name: lastName,
         program: mapProgramToFrontend(profile.program),
         year_of_study: profile.year_of_study,
         pt_phase: mapPTPhaseToFrontend(profile.pt_phase),
         department: profile.department,
-        supervisor_name: profile.supervisor_name,
-        supervisor_email: profile.supervisor_email,
         phone_number: profile.phone_number,
         company_name: profile.company_name,
         company_region: profile.company_region,
-      });
+      };
+      
+      console.log('=== PROFILE DEBUG INFO ===');
+      console.log('User object:', user);
+      console.log('Profile object:', profile);
+      console.log('Profile user_details:', profile?.user_details);
+      console.log('Extracted firstName:', firstName);
+      console.log('Extracted lastName:', lastName);
+      console.log('Final form data:', formData);
+      console.log('==========================');
+      reset(formData);
       
       // Check if profile is incomplete and show notification (only once)
       const isProfileIncomplete = !profile.program || !profile.year_of_study || 
-                                !profile.pt_phase || !profile.department || !profile.supervisor_name;
+                                !profile.pt_phase || !profile.department ||
+                                !user?.first_name || !user?.last_name;
       
       if (isProfileIncomplete) {
         // Check if we have stored registration profile data
@@ -59,10 +128,18 @@ export const ProfilePage: React.FC = () => {
         }
       }
     }
-  }, [profile, reset, updateProfile, fetchProfile]);
+  }, [profile, user, localNames, reset]);
 
   const onSubmit = async (data: UpdateProfileData) => {
     try {
+      // Store names locally for immediate display
+      if (data.first_name || data.last_name) {
+        setLocalNames({
+          firstName: data.first_name || '',
+          lastName: data.last_name || ''
+        });
+      }
+      
       // Clean and map the data to backend format
       const cleanedData = cleanProfileData(data);
       
@@ -75,6 +152,8 @@ export const ProfilePage: React.FC = () => {
       await fetchProfile();
     } catch (error) {
       console.error('Failed to update profile:', error);
+      // Clear local names on error
+      setLocalNames(null);
       showError('Failed to update profile. Please try again.');
     }
   };
@@ -100,20 +179,95 @@ export const ProfilePage: React.FC = () => {
   return (
     <div className="p-4 max-w-2xl mx-auto">
       {/* Header */}
-      <div className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className={`text-2xl font-bold text-${theme}-600`}>
-            Profile{profile.user_details?.full_name ? ` - ${profile.user_details.full_name}` : ''}
-          </h1>
-          <p className="text-gray-600">Manage your personal information and training details</p>
+      <div className="mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-2xl font-bold text-orange-600 dark:text-orange-400">
+              Profile{user?.first_name ? ` - ${user.first_name} ${user?.last_name || ''}` : ''}
+            </h1>
+            <p className="text-gray-600 dark:text-gray-400">Manage your personal information and training details</p>
+          </div>
+          <button 
+            className="btn-outline flex items-center gap-2"
+            onClick={() => setIsEditing(!isEditing)}
+          >
+            <Edit className="w-4 h-4" />
+            {isEditing ? 'Cancel Edit' : 'Edit Profile'}
+          </button>
         </div>
-        <button 
-          className="btn-outline flex items-center gap-2"
-          onClick={() => setIsEditing(!isEditing)}
-        >
-          <Edit className="w-4 h-4" />
-          {isEditing ? 'Cancel Edit' : 'Edit Profile'}
-        </button>
+
+        {/* Profile Picture Section */}
+        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 mb-6">
+          <div className="flex items-center gap-6">
+            <div className="relative">
+              {profilePicture ? (
+                <img
+                  src={profilePicture}
+                  alt="Profile"
+                  className="w-24 h-24 rounded-full object-cover border-4 border-orange-200 dark:border-orange-700"
+                />
+              ) : (
+                <div className="w-24 h-24 bg-gradient-to-br from-orange-500 to-orange-600 rounded-full flex items-center justify-center shadow-lg border-4 border-orange-200 dark:border-orange-700">
+                  <span className="text-2xl font-bold text-white">
+                    {user?.first_name?.[0] || 'U'}{user?.last_name?.[0] || ''}
+                  </span>
+                </div>
+              )}
+              
+              {isEditing && (
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="absolute -bottom-2 -right-2 w-8 h-8 bg-orange-500 hover:bg-orange-600 text-white rounded-full flex items-center justify-center transition-colors shadow-md"
+                  disabled={isUploadingPicture}
+                >
+                  {isUploadingPicture ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Camera className="w-4 h-4" />
+                  )}
+                </button>
+              )}
+            </div>
+            
+            <div className="flex-1">
+              <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-2">Profile Picture</h3>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-3">
+                Upload a photo to personalize your profile. JPG, PNG or GIF up to 5MB.
+              </p>
+              
+              {isEditing && (
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    className="px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-lg transition-colors flex items-center gap-2 text-sm"
+                    disabled={isUploadingPicture}
+                  >
+                    <Upload className="w-4 h-4" />
+                    Upload Photo
+                  </button>
+                  
+                  {profilePicture && (
+                    <button
+                      onClick={handleRemoveProfilePicture}
+                      className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-lg transition-colors flex items-center gap-2 text-sm"
+                    >
+                      <X className="w-4 h-4" />
+                      Remove
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+          
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleFileSelect}
+            className="hidden"
+          />
+        </div>
       </div>
 
       {/* Profile Form */}
@@ -126,24 +280,44 @@ export const ProfilePage: React.FC = () => {
               Personal Information
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                              <div>
-                  <label className="block text-sm font-medium mb-1">Program</label>
-                  <select 
-                    className="input-field" 
-                    disabled={!isEditing}
-                    {...register('program')} 
-                  >
-                    <option value="">Select a program</option>
-                    {Object.entries(PROGRAM_MAPPING).filter(([key]) => key.includes('BSc.')).map(([displayName, value]) => (
-                      <option key={value} value={displayName}>
-                        {displayName}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.program && <p className="text-xs text-red-500 mt-1">{errors.program.message}</p>}
-                </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Year of Study</label>
+                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">First Name</label>
+                <input 
+                  className="input-field" 
+                  placeholder="Enter your first name"
+                  disabled={!isEditing}
+                  {...register('first_name', { required: 'First name is required' })} 
+                />
+                {errors.first_name && <p className="text-xs text-red-500 mt-1">{errors.first_name.message}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Last Name</label>
+                <input 
+                  className="input-field" 
+                  placeholder="Enter your last name"
+                  disabled={!isEditing}
+                  {...register('last_name', { required: 'Last name is required' })} 
+                />
+                {errors.last_name && <p className="text-xs text-red-500 mt-1">{errors.last_name.message}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Program</label>
+                <select 
+                  className="input-field" 
+                  disabled={!isEditing}
+                  {...register('program')} 
+                >
+                  <option value="">Select a program</option>
+                  {Object.entries(PROGRAM_MAPPING).filter(([key]) => key.includes('BSc.')).map(([displayName, value]) => (
+                    <option key={value} value={displayName}>
+                      {displayName}
+                    </option>
+                  ))}
+                </select>
+                {errors.program && <p className="text-xs text-red-500 mt-1">{errors.program.message}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Year of Study</label>
                 <select 
                   className="input-field" 
                   disabled={!isEditing}
@@ -158,24 +332,24 @@ export const ProfilePage: React.FC = () => {
                 </select>
                 {errors.year_of_study && <p className="text-xs text-red-500 mt-1">{errors.year_of_study.message}</p>}
               </div>
-                              <div>
-                  <label className="block text-sm font-medium mb-1">PT Phase</label>
-                  <select 
-                    className="input-field" 
-                    disabled={!isEditing}
-                    {...register('pt_phase')} 
-                  >
-                    <option value="">Select PT phase</option>
-                    {Object.entries(PT_PHASE_MAPPING).filter(([key]) => key.includes('Practical Training')).map(([displayName, value]) => (
-                      <option key={value} value={displayName}>
-                        {displayName}
-                      </option>
-                    ))}
-                  </select>
-                  {errors.pt_phase && <p className="text-xs text-red-500 mt-1">{errors.pt_phase.message}</p>}
-                </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Department</label>
+                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">PT Phase</label>
+                <select 
+                  className="input-field" 
+                  disabled={!isEditing}
+                  {...register('pt_phase')} 
+                >
+                  <option value="">Select PT phase</option>
+                  {Object.entries(PT_PHASE_MAPPING).filter(([key]) => key.includes('Practical Training')).map(([displayName, value]) => (
+                    <option key={value} value={displayName}>
+                      {displayName}
+                    </option>
+                  ))}
+                </select>
+                {errors.pt_phase && <p className="text-xs text-red-500 mt-1">{errors.pt_phase.message}</p>}
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Department</label>
                 <input 
                   className="input-field" 
                   placeholder="e.g., Computer Science Department"
@@ -190,12 +364,12 @@ export const ProfilePage: React.FC = () => {
           {/* Contact Information */}
           <div>
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <Mail className="w-5 h-5" />
+              <Phone className="w-5 h-5" />
               Contact Information
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Phone Number</label>
+                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Phone Number</label>
                 <input 
                   className="input-field" 
                   placeholder="Enter your phone number"
@@ -203,42 +377,6 @@ export const ProfilePage: React.FC = () => {
                   {...register('phone_number')} 
                 />
                 {errors.phone_number && <p className="text-xs text-red-500 mt-1">{errors.phone_number.message}</p>}
-              </div>
-            </div>
-          </div>
-
-          {/* Supervisor Information */}
-          <div>
-            <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <User className="w-5 h-5" />
-              Supervisor Information
-            </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">Supervisor Name</label>
-                <input 
-                  className="input-field" 
-                  placeholder="Enter supervisor's full name"
-                  disabled={!isEditing}
-                  {...register('supervisor_name')} 
-                />
-                {errors.supervisor_name && <p className="text-xs text-red-500 mt-1">{errors.supervisor_name.message}</p>}
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">Supervisor Email</label>
-                <input 
-                  type="email" 
-                  className="input-field" 
-                  placeholder="supervisor@company.com"
-                  disabled={!isEditing}
-                  {...register('supervisor_email', { 
-                    pattern: {
-                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: 'Invalid email address'
-                    }
-                  })} 
-                />
-                {errors.supervisor_email && <p className="text-xs text-red-500 mt-1">{errors.supervisor_email.message}</p>}
               </div>
             </div>
           </div>
@@ -251,7 +389,7 @@ export const ProfilePage: React.FC = () => {
             </h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Company Name</label>
+                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Company Name</label>
                 <input 
                   className="input-field" 
                   placeholder="Enter company name"
@@ -261,7 +399,7 @@ export const ProfilePage: React.FC = () => {
                 {errors.company_name && <p className="text-xs text-red-500 mt-1">{errors.company_name.message}</p>}
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1">Company Region</label>
+                <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Company Region</label>
                 <input 
                   className="input-field" 
                   placeholder="e.g., Dar es Salaam"
@@ -275,7 +413,7 @@ export const ProfilePage: React.FC = () => {
 
           {/* Save Button */}
           {isEditing && (
-            <div className="flex justify-end pt-4 border-t border-gray-200">
+            <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
               <button 
                 type="submit" 
                 className="btn-primary flex items-center gap-2"
@@ -293,28 +431,30 @@ export const ProfilePage: React.FC = () => {
       {profile && (
         <div className="mt-6">
           <div className="card">
-            <h3 className="text-lg font-semibold mb-3">Profile Completion</h3>
+            <h3 className="text-lg font-semibold mb-3 text-gray-800 dark:text-white">Profile Completion</h3>
             <div className="space-y-3">
               {[
+                { field: 'first_name', label: 'First Name', icon: User, value: watch('first_name') || localNames?.firstName || user?.first_name || profile?.user_details?.full_name?.split(' ')[0] },
+                { field: 'last_name', label: 'Last Name', icon: User, value: watch('last_name') || localNames?.lastName || user?.last_name || profile?.user_details?.full_name?.split(' ').slice(1).join(' ') },
                 { field: 'program', label: 'Program', icon: GraduationCap },
                 { field: 'year_of_study', label: 'Year of Study', icon: Calendar },
                 { field: 'pt_phase', label: 'PT Phase', icon: Calendar },
                 { field: 'department', label: 'Department', icon: Building2 },
                 { field: 'phone_number', label: 'Phone Number', icon: Phone },
-                { field: 'supervisor_name', label: 'Supervisor Name', icon: User },
-                { field: 'supervisor_email', label: 'Supervisor Email', icon: Mail },
                 { field: 'company_name', label: 'Company Name', icon: Building2 },
                 { field: 'company_region', label: 'Company Region', icon: Building2 },
-              ].map(({ field, label, icon: Icon }) => {
-                const value = profile[field as keyof typeof profile];
+              ].map(({ field, label, icon: Icon, value: customValue }) => {
+                const value = customValue || profile[field as keyof typeof profile];
                 const isComplete = value && value.toString().trim() !== '';
                 
                 return (
                   <div key={field} className="flex items-center gap-3">
                     <Icon className={`w-4 h-4 ${isComplete ? 'text-green-500' : 'text-gray-400'}`} />
-                    <span className="flex-1 text-sm">{label}</span>
+                    <span className="flex-1 text-sm text-gray-700 dark:text-gray-300">{label}</span>
                     <span className={`text-xs px-2 py-1 rounded-full ${
-                      isComplete ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
+                      isComplete 
+                        ? 'bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-400' 
+                        : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                     }`}>
                       {isComplete ? 'Complete' : 'Incomplete'}
                     </span>

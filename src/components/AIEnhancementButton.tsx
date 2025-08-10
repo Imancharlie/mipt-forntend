@@ -3,7 +3,7 @@ import { useAppStore } from '@/store';
 import { useTheme } from '@/components/ThemeProvider';
 import { useToastContext } from '@/contexts/ToastContext';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
-import { Sparkles, X, CheckCircle, Bug, Coins, Brain, FileText, Clock } from 'lucide-react';
+import { Sparkles, X, CheckCircle, Bug, Coins, Brain, FileText, Clock, AlertCircle } from 'lucide-react';
 import { testAIEnhancementEndpoint } from '@/utils/debug';
 
 interface AIEnhancementButtonProps {
@@ -19,7 +19,7 @@ export const AIEnhancementButton: React.FC<AIEnhancementButtonProps> = ({
   className = '',
   reportData
 }) => {
-  const { enhanceWeeklyReportWithAI, loading } = useAppStore();
+  const { enhanceWeeklyReportWithAI, loading, userBalance, paymentInfo } = useAppStore();
   const { theme } = useTheme();
   const { showSuccess, showError } = useToastContext();
   
@@ -88,33 +88,42 @@ export const AIEnhancementButton: React.FC<AIEnhancementButtonProps> = ({
   const performEnhancement = async (customInstructions?: string) => {
     setIsEnhancing(true);
     setEnhancementProgress(0);
+    setCurrentStep('Checking token balance...');
+
+    // Check if user has sufficient tokens
+    if (!userBalance || !userBalance.can_use_ai) {
+      showError('Insufficient tokens or not subscribed. Please top up your account.');
+      setIsEnhancing(false);
+      return;
+    }
+
     setCurrentStep('Initializing AI enhancement...');
-    
-    // Simulate progress steps
-    const progressSteps = [
-      { progress: 10, step: 'Analyzing report structure...' },
-      { progress: 25, step: 'Processing content sections...' },
-      { progress: 40, step: 'Generating enhanced content...' },
-      { progress: 60, step: 'Applying AI improvements...' },
-      { progress: 80, step: 'Finalizing enhancements...' },
-      { progress: 95, step: 'Saving enhanced report...' },
-      { progress: 100, step: 'Enhancement complete!' }
-    ];
-    
-    let currentStepIndex = 0;
-    
-    const updateProgress = () => {
-      if (currentStepIndex < progressSteps.length) {
-        const step = progressSteps[currentStepIndex];
-        setEnhancementProgress(step.progress);
-        setCurrentStep(step.step);
-        currentStepIndex++;
-      }
-    };
-    
-    // Start progress updates
-    const progressInterval = setInterval(updateProgress, 800);
-    
+      
+      // Simulate progress steps
+      const progressSteps = [
+        { progress: 10, step: 'Analyzing report structure...' },
+        { progress: 25, step: 'Processing content sections...' },
+        { progress: 40, step: 'Generating enhanced content...' },
+        { progress: 60, step: 'Applying AI improvements...' },
+        { progress: 80, step: 'Finalizing enhancements...' },
+        { progress: 95, step: 'Saving enhanced report...' },
+        { progress: 100, step: 'Enhancement complete!' }
+      ];
+      
+      let currentStepIndex = 0;
+      
+      const updateProgress = () => {
+        if (currentStepIndex < progressSteps.length) {
+          const step = progressSteps[currentStepIndex];
+          setEnhancementProgress(step.progress);
+          setCurrentStep(step.step);
+          currentStepIndex++;
+        }
+      };
+      
+      // Start progress updates
+      const progressInterval = setInterval(updateProgress, 800);
+      
     try {
       console.log('Starting AI enhancement for weekly report:', weeklyReportId);
       console.log('Custom instructions:', customInstructions || instructions);
@@ -122,7 +131,7 @@ export const AIEnhancementButton: React.FC<AIEnhancementButtonProps> = ({
       await enhanceWeeklyReportWithAI(weeklyReportId, customInstructions || instructions);
       
       console.log('AI enhancement completed successfully');
-      showSuccess('Weekly report enhanced successfully! 🚀');
+      showSuccess('Weekly report enhanced successfully!');
       setShowModal(false);
       setInstructions('');
       
@@ -147,7 +156,6 @@ export const AIEnhancementButton: React.FC<AIEnhancementButtonProps> = ({
       clearInterval(progressInterval);
       setIsEnhancing(false);
       setEnhancementProgress(0);
-      setCurrentStep('');
     }
   };
 
@@ -179,10 +187,24 @@ export const AIEnhancementButton: React.FC<AIEnhancementButtonProps> = ({
   // Calculate token estimation when modal opens
   useEffect(() => {
     if (showModal) {
-      const estimation = calculateTokenEstimation(reportData);
-      setEstimatedTokens(estimation.tokens);
+      // Determine usage type based on daily reports count (backend specification)
+      let estimatedCost = 500; // Default for EMPTY (less than 3 days)
+      
+      if (reportData && reportData.daily_reports) {
+        const filledDaysCount = reportData.daily_reports.length;
+        
+        if (filledDaysCount >= 5) {
+          estimatedCost = 300; // FULLFILLED: 5 days filled
+        } else if (filledDaysCount >= 3) {
+          estimatedCost = 400; // PARTIAL: 3-4 days filled
+        } else {
+          estimatedCost = 500; // EMPTY: less than 3 days
+        }
+      }
+      
+      setEstimatedTokens(estimatedCost);
     }
-  }, [showModal, reportData, instructions]);
+  }, [showModal, reportData, instructions, paymentInfo]);
 
   return (
     <>
@@ -220,43 +242,92 @@ export const AIEnhancementButton: React.FC<AIEnhancementButtonProps> = ({
       {/* Enhanced AI Enhancement Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-lg lg:max-w-xl shadow-2xl">
             {/* Header */}
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
-                <div className={`w-10 h-10 bg-gradient-to-r from-${theme}-500 to-${theme}-600 rounded-full flex items-center justify-center`}>
-                  <Brain className="w-5 h-5 text-white" />
+                <div className={`w-12 h-12 lg:w-14 lg:h-14 bg-gradient-to-r from-${theme}-500 to-${theme}-600 rounded-full flex items-center justify-center`}>
+                  <Brain className="w-6 h-6 lg:w-7 lg:h-7 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">AI Enhancement</h3>
-                  <p className="text-sm text-gray-600">Make your report more professional</p>
+                  <h3 className="text-xl lg:text-2xl font-semibold text-gray-900 dark:text-white">AI Enhancement</h3>
+                  <p className="text-sm lg:text-base text-gray-600 dark:text-gray-400">Make your report more professional</p>
                 </div>
               </div>
               <button
                 onClick={() => setShowModal(false)}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
               >
-                <X className="w-5 h-5" />
+                <X className="w-6 h-6" />
               </button>
             </div>
 
-            {/* Token Estimation */}
-            <div className="mb-4 p-3 bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg border border-blue-200">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Coins className="w-4 h-4 text-blue-600" />
-                  <span className="text-sm font-medium text-gray-700">Estimated Tokens:</span>
+            {/* Token Balance and Estimation */}
+            <div className="mb-6 space-y-4">
+              {/* Current Balance */}
+              {userBalance && (
+                <div className="p-4 bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-900/30 dark:to-orange-800/30 rounded-lg border border-orange-200 dark:border-orange-700">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <Coins className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+                      <span className="text-sm lg:text-base font-medium text-gray-700 dark:text-gray-300">Your Balance:</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xl lg:text-2xl font-bold text-orange-600 dark:text-orange-400">{userBalance.available_tokens}</span>
+                      <span className="text-sm text-gray-500">tokens</span>
+                    </div>
+                  </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-lg font-bold text-blue-600">{estimatedTokens}</span>
-                  <span className="text-xs text-gray-500">tokens</span>
+              )}
+              
+              {/* Token Estimation */}
+              <div className={`p-4 rounded-lg border ${
+                userBalance && userBalance.available_tokens >= estimatedTokens 
+                  ? 'bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 border-green-200 dark:border-green-700' 
+                  : 'bg-gradient-to-r from-red-50 to-pink-50 dark:from-red-900/30 dark:to-pink-900/30 border-red-200 dark:border-red-700'
+              }`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <Coins className={`w-5 h-5 ${
+                      userBalance && userBalance.available_tokens >= estimatedTokens 
+                        ? 'text-green-600 dark:text-green-400' 
+                        : 'text-red-600 dark:text-red-400'
+                    }`} />
+                    <span className="text-sm lg:text-base font-medium text-gray-700 dark:text-gray-300">Estimated Cost:</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className={`text-xl lg:text-2xl font-bold ${
+                      userBalance && userBalance.available_tokens >= estimatedTokens 
+                        ? 'text-green-600 dark:text-green-400' 
+                        : 'text-red-600 dark:text-red-400'
+                    }`}>{estimatedTokens}</span>
+                    <span className="text-sm text-gray-500">tokens</span>
+                  </div>
                 </div>
-              </div>
-              <div className="mt-2 text-xs text-gray-600">
-                {reportData && !reportData.summary && !reportData.achievements ? 
-                  'Empty report detected - higher token usage for comprehensive enhancement' :
-                  'Partial content detected - moderate token usage for targeted improvements'
-                }
+                <div className="mt-2 text-xs lg:text-sm text-gray-600 dark:text-gray-300">
+                  {(() => {
+                    const daysCount = reportData?.daily_reports?.length || 0;
+                    if (daysCount >= 5) {
+                      return `${daysCount} days completed - Grammar, style, and formatting improvements`;
+                    } else if (daysCount >= 3) {
+                      return `${daysCount} days completed - Targeted improvements and content enhancement`;
+                    } else {
+                      return `${daysCount} days completed - Comprehensive enhancement with AI content generation`;
+                    }
+                  })()}
+                </div>
+                
+                {/* Insufficient balance warning */}
+                {userBalance && userBalance.available_tokens < estimatedTokens && (
+                  <div className="mt-2 p-2 bg-red-100 rounded border border-red-200">
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="w-4 h-4 text-red-600" />
+                      <span className="text-xs text-red-700 font-medium">
+                        Insufficient tokens. You need {estimatedTokens - userBalance.available_tokens} more tokens.
+                      </span>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 
@@ -301,101 +372,106 @@ export const AIEnhancementButton: React.FC<AIEnhancementButtonProps> = ({
 
             {/* Content */}
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Additional Instructions (Optional)
-              </label>
-              <textarea
-                value={instructions}
-                onChange={(e) => setInstructions(e.target.value)}
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Additional Instructions (Optional)
+                </label>
+                <textarea
+                  value={instructions}
+                  onChange={(e) => setInstructions(e.target.value)}
                 placeholder="E.g., 'Make it more technical', 'Focus on achievements', 'Use formal language'"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                rows={3}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                  rows={3}
                 disabled={isEnhancing}
-              />
+                />
               <div className="mt-1 text-xs text-gray-500">
                 Custom instructions may increase token usage
               </div>
-            </div>
+              </div>
 
             {/* Token Usage Explanation */}
-            <div className="mb-4 p-3 bg-gray-50 rounded-lg">
-              <h4 className="text-sm font-medium text-gray-700 mb-2">Token Usage Guide:</h4>
-              <div className="space-y-1 text-xs text-gray-600">
+            <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
+              <h4 className="text-sm lg:text-base font-medium text-gray-700 dark:text-gray-300 mb-3">Token Usage Guide:</h4>
+              <div className="space-y-2 text-xs lg:text-sm text-gray-600 dark:text-gray-400">
                 <div className="flex items-center gap-2">
-                  <FileText className="w-3 h-3 text-red-500" />
-                  <span>Empty report: ~2000 tokens</span>
+                  <FileText className="w-4 h-4 text-green-500" />
+                  <span><strong>5 days filled:</strong> 300 tokens (FULLFILLED)</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <FileText className="w-3 h-3 text-yellow-500" />
-                  <span>Partial content: ~1200 tokens</span>
+                  <FileText className="w-4 h-4 text-yellow-500" />
+                  <span><strong>3-4 days filled:</strong> 400 tokens (PARTIAL)</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <FileText className="w-3 h-3 text-green-500" />
-                  <span>Complete content: ~800 tokens</span>
+                  <FileText className="w-4 h-4 text-red-500" />
+                  <span><strong>Less than 3 days:</strong> 500 tokens (EMPTY)</span>
                 </div>
               </div>
             </div>
 
             {/* Action Buttons */}
             <div className="flex gap-3">
-              <button
-                onClick={() => setShowModal(false)}
-                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+               <button
+                 onClick={() => setShowModal(false)}
+                 className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
                 disabled={isEnhancing}
-              >
-                Cancel
-              </button>
-              
-              {/* Debug button - only show in development */}
-              {process.env.NODE_ENV === 'development' && (
-                <button
-                  onClick={handleDebugTest}
-                  className="px-3 py-2 bg-yellow-500 text-white rounded-lg font-medium hover:bg-yellow-600 transition-colors flex items-center gap-1"
-                  title="Debug AI Enhancement"
+               >
+                 Cancel
+               </button>
+               
+               {/* Debug button - only show in development */}
+               {process.env.NODE_ENV === 'development' && (
+                 <button
+                   onClick={handleDebugTest}
+                   className="px-3 py-2 bg-yellow-500 text-white rounded-lg font-medium hover:bg-yellow-600 transition-colors flex items-center gap-1"
+                   title="Debug AI Enhancement"
                   disabled={isEnhancing}
-                >
-                  <Bug className="w-4 h-4" />
-                  Debug
-                </button>
-              )}
+                 >
+                   <Bug className="w-4 h-4" />
+                   Debug
+                 </button>
+               )}
               
               <button
                 onClick={handleQuickEnhance}
-                disabled={isEnhancing}
+                disabled={isEnhancing || !!(userBalance && userBalance.available_tokens < estimatedTokens)}
                 className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all duration-300 flex items-center justify-center gap-2 ${
-                  isEnhancing
+                  isEnhancing || (userBalance && userBalance.available_tokens < estimatedTokens)
                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                     : `bg-gradient-to-r from-${theme}-500 to-${theme}-600 text-white hover:from-${theme}-600 hover:to-${theme}-700`
                 }`}
               >
-                {isEnhancing ? (
-                  <>
-                    <LoadingSpinner size="sm" inline color="white" />
-                    Enhancing...
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4" />
-                    Quick Enhance
-                  </>
-                )}
+                                 {isEnhancing ? (
+                   <>
+                     <LoadingSpinner size="sm" inline color="white" />
+                     Enhancing...
+                   </>
+                 ) : (userBalance && userBalance.available_tokens < estimatedTokens) ? (
+                   <>
+                     <AlertCircle className="w-4 h-4" />
+                     Insufficient Tokens
+                   </>
+                 ) : (
+                   <>
+                     <Sparkles className="w-4 h-4" />
+                     Quick Enhance
+                   </>
+                 )}
               </button>
               
               {instructions.trim() && (
                 <button
                   onClick={handleCustomEnhance}
-                  disabled={isEnhancing}
+                  disabled={isEnhancing || !!(userBalance && userBalance.available_tokens < estimatedTokens)}
                   className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 flex items-center justify-center gap-2 ${
-                    isEnhancing
+                    isEnhancing || (userBalance && userBalance.available_tokens < estimatedTokens)
                       ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                       : 'bg-green-500 text-white hover:bg-green-600'
                   }`}
                 >
-                  {isEnhancing ? (
-                    <LoadingSpinner size="sm" inline color="white" />
-                  ) : (
-                    <CheckCircle className="w-4 h-4" />
-                  )}
+                                   {isEnhancing ? (
+                   <LoadingSpinner size="sm" inline color="white" />
+                 ) : (
+                   <CheckCircle className="w-4 h-4" />
+                 )}
                 </button>
               )}
             </div>

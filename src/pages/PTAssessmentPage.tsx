@@ -37,6 +37,7 @@ export const PTAssessmentPage: React.FC = () => {
   const { theme } = useTheme();
   const [selectedPT, setSelectedPT] = useState<number>(1);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
+  const [showMarks, setShowMarks] = useState<{[key: string]: boolean}>({});
 
   const assessmentComponents: AssessmentComponent[] = [
     {
@@ -127,6 +128,54 @@ export const PTAssessmentPage: React.FC = () => {
     setExpandedSection(expandedSection === sectionName ? null : sectionName);
   };
 
+  const toggleMarks = (componentName: string) => {
+    setShowMarks(prev => ({
+      ...prev,
+      [componentName]: !prev[componentName]
+    }));
+  };
+
+  const getMarksDisplay = (componentName: string, marks: number) => {
+    if (componentName === 'Training Assessment' || componentName === 'Supervisor Assessment') {
+      if (showMarks[componentName]) {
+        return (
+          <div className="text-center">
+            <div className={`px-2 py-1 bg-${theme}-100 text-${theme}-700 rounded-full text-xs font-semibold`}>
+              {marks} marks
+            </div>
+            <button
+              onClick={() => toggleMarks(componentName)}
+              className="text-xs text-gray-500 hover:text-gray-700 mt-1"
+            >
+              Hide marks
+            </button>
+          </div>
+        );
+      } else {
+        return (
+          <div className="text-center">
+            <div className={`px-2 py-1 bg-${theme}-100 text-${theme}-700 rounded-full text-xs font-semibold`}>
+              5-15 marks
+            </div>
+            <p className="text-xs text-gray-500 mt-1">Range depends on department</p>
+            <button
+              onClick={() => toggleMarks(componentName)}
+              className="text-xs text-blue-600 hover:text-blue-800 mt-1"
+            >
+              Click to see marks
+            </button>
+          </div>
+        );
+      }
+    } else {
+      return (
+        <div className={`px-2 py-1 bg-${theme}-100 text-${theme}-700 rounded-full text-xs font-semibold`}>
+          {marks} marks
+        </div>
+      );
+    }
+  };
+
   return (
          <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
        <div className="p-4 max-w-7xl mx-auto">
@@ -201,9 +250,7 @@ export const PTAssessmentPage: React.FC = () => {
                      </div>
                    </div>
                    <div className="flex items-center gap-2">
-                     <div className={`px-2 py-1 bg-${theme}-100 text-${theme}-700 rounded-full text-xs font-semibold`}>
-                       {component.marks} marks
-                     </div>
+                     {getMarksDisplay(component.name, component.marks)}
                      <button
                        onClick={() => toggleSection(component.name)}
                        className="p-1 hover:bg-gray-100 rounded"
