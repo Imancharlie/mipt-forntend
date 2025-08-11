@@ -11,6 +11,7 @@ export interface RegisterData {
   last_name: string;
   password: string;
   password_confirm: string;
+  phone_number: string;
 }
 
 export interface LogoutData {
@@ -321,18 +322,20 @@ export interface LoadingState {
 // Form Types
 export interface RegistrationSteps {
   step1: {
-    email: string;
     first_name: string;
     last_name: string;
+    phone_number: string;
+  };
+  step2: {
+    email: string;
     password: string;
     password_confirm: string;
   };
-  step2: {
+  step3: {
     program: string;
     academic_year: number;
     area_of_field: string;
     region: string;
-    phone_number: string;
   };
 }
 
@@ -478,4 +481,59 @@ export interface ApiTransactionsResponse {
   next: any;
   previous: any;
   results: Transaction[];
+}
+
+// Resources and Reports Types
+export interface ReportResource {
+  id: number;
+  department: string;
+  report_type: 'daily' | 'weekly' | 'monthly' | 'final' | 'general';
+  document: string; // URL to the document
+  uploaded_at: string;
+  title?: string;
+  description?: string;
+  file_size?: string;
+  file_type?: string;
+}
+
+export interface ReportFilters {
+  department: string;
+  report_type: string;
+  search: string;
+}
+
+export interface Department {
+  id: number;
+  name: string;
+  code: string;
+  description: string;
+  coordinator: {
+    name: string;
+    email: string;
+    phone: string;
+    office_location: string;
+  };
+  documents: DepartmentDocument[];
+  whatsapp_group: {
+    name: string;
+    invite_link: string;
+  };
+}
+
+export interface DepartmentDocument {
+  id: number;
+  title: string;
+  description: string;
+  file_url: string;
+  file_type: string;
+  category: string;
+}
+
+export interface ResourcesData {
+  departments: Department[];
+  general_documents: DepartmentDocument[];
+  office_hours: {
+    weekdays: string;
+    location: string;
+  };
 } 

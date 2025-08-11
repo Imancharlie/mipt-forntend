@@ -2,35 +2,41 @@ import React, { useState } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { useAppStore } from '@/store';
 import { RegisterData, RegistrationSteps } from '@/types';
-import { Loader2, ArrowRight, ArrowLeft, User, GraduationCap, Building2 } from 'lucide-react';
+import { Loader2, ArrowRight, ArrowLeft, User, GraduationCap, Building2, Phone, Mail, Lock } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
 import { useNavigate } from 'react-router-dom';
+import { authService } from '@/api/services';
+import { useToastContext } from '@/contexts/ToastContext';
 
 import { storeRegistrationProfile } from '@/utils/registrationStorage';
 
-const stepTitles = ['Account Creation', 'User Profile'];
+const stepTitles = ['Personal Info', 'Account Details', 'Academic Info'];
 
 export const RegisterPage: React.FC = () => {
   const [step, setStep] = useState(0);
   const [formData, setFormData] = useState<RegistrationSteps>({
     step1: {
-      email: '',
       first_name: '',
       last_name: '',
+      phone_number: '',
+    },
+    step2: {
+      email: '',
       password: '',
       password_confirm: '',
     },
-    step2: {
+    step3: {
       program: '',
       academic_year: 1,
       area_of_field: '',
       region: '',
-      phone_number: '',
     },
   });
+  const [phoneChecking, setPhoneChecking] = useState(false);
   const { registerAndLogin, loading } = useAppStore();
   const { theme } = useTheme();
   const navigate = useNavigate();
+  const { showSuccess, showError } = useToastContext();
   
   // Create separate form methods for each step
   const step1Methods = useForm<RegistrationSteps["step1"]>({ 
@@ -39,23 +45,61 @@ export const RegisterPage: React.FC = () => {
   const step2Methods = useForm<RegistrationSteps["step2"]>({ 
     defaultValues: formData.step2 
   });
+  const step3Methods = useForm<RegistrationSteps["step3"]>({ 
+    defaultValues: formData.step3 
+  });
+
+  // Check phone number availability
+  const checkPhoneNumber = async (phoneNumber: string): Promise<boolean> => {
+    if (!phoneNumber || phoneNumber.length < 10) return false;
+    
+    setPhoneChecking(true);
+    try {
+      const result = await authService.checkPhoneNumberAvailability(phoneNumber);
+      if (!result.available) {
+        showError(`Phone number ${phoneNumber} is already registered. Please use a different number.`);
+        return false;
+      }
+      showSuccess('Phone number is available!');
+      return true;
+    } catch (error) {
+      console.error('Phone number check failed:', error);
+      showError('Failed to verify phone number. Please try again.');
+      return false;
+    } finally {
+      setPhoneChecking(false);
+    }
+  };
 
   const handleNext = async (data: any) => {
     if (step === 0) {
+      // Step 1: Validate names and check phone number
       setFormData((prev) => ({ ...prev, step1: data }));
+      
+      // Check phone number availability before proceeding
+      const isPhoneAvailable = await checkPhoneNumber(data.phone_number);
+      if (!isPhoneAvailable) {
+        return; // Don't proceed if phone number is not available
+      }
+      
       setStep(1);
     } else if (step === 1) {
+      // Step 2: Store email and password
       setFormData((prev) => ({ ...prev, step2: data }));
-      // Submit registration with all data
+      setStep(2);
+    } else if (step === 2) {
+      // Step 3: Complete registration
+      setFormData((prev) => ({ ...prev, step3: data }));
+      
       try {
-        // First, register and login the user with basic account data
+        // Submit registration with all data
         const registrationData: RegisterData = {
-          username: formData.step1.email, // Use email as username
-          email: formData.step1.email,
+          username: formData.step2.email, // Use email as username
+          email: formData.step2.email,
           first_name: formData.step1.first_name,
           last_name: formData.step1.last_name,
-          password: formData.step1.password,
-          password_confirm: formData.step1.password_confirm,
+          password: formData.step2.password,
+          password_confirm: formData.step2.password_confirm,
         };
         
         await registerAndLogin(registrationData);
@@ -67,7 +111,7 @@ export const RegisterPage: React.FC = () => {
           pt_phase: 'PT1', // Default to PT1
           company_name: data.area_of_field,
           region: data.region,
-          phone_number: data.phone_number,
+          phone_number: formData.step1.phone_number,
         };
         
         storeRegistrationProfile(profileData);
@@ -90,6 +134,7 @@ export const RegisterPage: React.FC = () => {
     switch (step) {
       case 0: return step1Methods;
       case 1: return step2Methods;
+      case 2: return step3Methods;
       default: return step1Methods;
     }
   };
@@ -109,37 +154,21 @@ export const RegisterPage: React.FC = () => {
             ))}
           </div>
           <p className="text-sm text-gray-600 text-center">
-            Step {step + 1} of 2: {stepTitles[step]}
+            Step {step + 1} of 3: {stepTitles[step]}
           </p>
         </div>
 
         <FormProvider {...(currentMethods as any)}>
           <form onSubmit={currentMethods.handleSubmit(handleNext)} className="space-y-5">
             
-                        {/* Step 1: Account Creation */}
+            {/* Step 1: Personal Information (Names + Phone) */}
             {step === 0 && (
               <>
                 <div className="flex items-center gap-2 mb-4">
                   <User className={`w-5 h-5 text-${theme}-500`} />
-                  <h3 className="font-semibold">Account Creation</h3>
+                  <h3 className="font-semibold">Personal Information</h3>
                 </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Email</label>
-                  <input 
-                    className="input-field" 
-                    type="email" 
-                    placeholder="your.email@example.com"
-                    {...(currentMethods as any).register('email', { 
-                      required: 'Email is required',
-                      pattern: {
-                        value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                        message: 'Invalid email address'
-                      }
-                    })} 
-                  />
-                                    {(currentMethods as any).formState.errors.email &&
-                    <p className="text-xs text-red-500 mt-1">{(currentMethods as any).formState.errors.email.message}</p>}
-                </div>
+                
                 <div className="flex gap-2">
                   <div className="flex-1">
                     <label className="block text-sm font-medium mb-1">First Name</label>
@@ -162,47 +191,111 @@ export const RegisterPage: React.FC = () => {
                       <p className="text-xs text-red-500 mt-1">{(currentMethods as any).formState.errors.last_name.message}</p>}
                   </div>
                 </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Phone Number</label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <input 
+                      className="input-field pl-10" 
+                      type="tel"
+                      placeholder="0712345678"
+                      {...(currentMethods as any).register('phone_number', { 
+                        required: 'Phone number is required',
+                        pattern: {
+                          value: /^(\+255|0)[1-9]\d{8}$/,
+                          message: 'Please enter a valid Tanzanian phone number'
+                        }
+                      })} 
+                    />
+                  </div>
+                  {(currentMethods as any).formState.errors.phone_number && 
+                    <p className="text-xs text-red-500 mt-1">{(currentMethods as any).formState.errors.phone_number.message}</p>}
+                  <p className="text-xs text-gray-500 mt-1">
+                    We'll verify this number isn't already registered
+                  </p>
+                </div>
+              </>
+            )}
+
+            {/* Step 2: Account Details (Email + Password) */}
+            {step === 1 && (
+              <>
+                <div className="flex items-center gap-2 mb-4">
+                  <Mail className={`w-5 h-5 text-${theme}-500`} />
+                  <h3 className="font-semibold">Account Details</h3>
+                </div>
+                
+                <div>
+                  <label className="block text-sm font-medium mb-1">Email Address</label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <input 
+                      className="input-field pl-10" 
+                      type="email" 
+                      placeholder="your.email@example.com"
+                      {...(currentMethods as any).register('email', { 
+                        required: 'Email is required',
+                        pattern: {
+                          value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                          message: 'Invalid email address'
+                        }
+                      })} 
+                    />
+                  </div>
+                  {(currentMethods as any).formState.errors.email &&
+                    <p className="text-xs text-red-500 mt-1">{(currentMethods as any).formState.errors.email.message}</p>}
+                </div>
+                
                 <div>
                   <label className="block text-sm font-medium mb-1">Password</label>
-                  <input 
-                    className="input-field" 
-                    type="password" 
-                    placeholder="Enter your password"
-                    {...(currentMethods as any).register('password', { 
-                      required: 'Password is required',
-                      minLength: { value: 8, message: 'Password must be at least 8 characters' }
-                    })} 
-                  />
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <input 
+                      className="input-field pl-10" 
+                      type="password" 
+                      placeholder="Enter your password"
+                      {...(currentMethods as any).register('password', { 
+                        required: 'Password is required',
+                        minLength: { value: 8, message: 'Password must be at least 8 characters' }
+                      })} 
+                    />
+                  </div>
                   {(currentMethods as any).formState.errors.password && 
                     <p className="text-xs text-red-500 mt-1">{(currentMethods as any).formState.errors.password.message}</p>}
                 </div>
+                
                 <div>
                   <label className="block text-sm font-medium mb-1">Confirm Password</label>
-                  <input 
-                    className="input-field" 
-                    type="password" 
-                    placeholder="Confirm your password"
-                    {...(currentMethods as any).register('password_confirm', { 
-                      required: 'Please confirm your password',
-                      validate: (value: any) => {
-                        const password = (currentMethods as any).getValues('password');
-                        return value === password || 'Passwords do not match';
-                      }
-                    })} 
-                  />
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                    <input 
+                      className="input-field pl-10" 
+                      type="password" 
+                      placeholder="Confirm your password"
+                      {...(currentMethods as any).register('password_confirm', { 
+                        required: 'Please confirm your password',
+                        validate: (value: any) => {
+                          const password = (currentMethods as any).getValues('password');
+                          return value === password || 'Passwords do not match';
+                        }
+                      })} 
+                    />
+                  </div>
                   {(currentMethods as any).formState.errors.password_confirm && 
                     <p className="text-xs text-red-500 mt-1">{(currentMethods as any).formState.errors.password_confirm.message}</p>}
                 </div>
               </>
             )}
 
-            {/* Step 2: User Profile */}
-            {step === 1 && (
+            {/* Step 3: Academic Information */}
+            {step === 2 && (
               <>
                 <div className="flex items-center gap-2 mb-4">
                   <GraduationCap className={`w-5 h-5 text-${theme}-500`} />
-                  <h3 className="font-semibold">User Profile</h3>
+                  <h3 className="font-semibold">Academic Information</h3>
                 </div>
+                
                 <div>
                   <label className="block text-sm font-medium mb-1">Program</label>
                   <select 
@@ -223,23 +316,25 @@ export const RegisterPage: React.FC = () => {
                   {(currentMethods as any).formState.errors.program && 
                     <p className="text-xs text-red-500 mt-1">{(currentMethods as any).formState.errors.program.message}</p>}
                 </div>
+                
                 <div>
                   <label className="block text-sm font-medium mb-1">Academic Year</label>
-                                      <select 
-                      className="input-field" 
-                      {...(currentMethods as any).register('academic_year', { 
-                        required: 'Academic year is required',
-                        valueAsNumber: true
-                      })} 
-                    >
-                      <option value="">Select academic year</option>
-                      {[1, 2, 3, 4].map(year => (
-                        <option key={year} value={year}>Year {year}</option>
-                      ))}
-                    </select>
+                  <select 
+                    className="input-field" 
+                    {...(currentMethods as any).register('academic_year', { 
+                      required: 'Academic year is required',
+                      valueAsNumber: true
+                    })} 
+                  >
+                    <option value="">Select academic year</option>
+                    {[1, 2, 3, 4].map(year => (
+                      <option key={year} value={year}>Year {year}</option>
+                    ))}
+                  </select>
                   {(currentMethods as any).formState.errors.academic_year && 
                     <p className="text-xs text-red-500 mt-1">{(currentMethods as any).formState.errors.academic_year.message}</p>}
                 </div>
+                
                 <div>
                   <label className="block text-sm font-medium mb-1">Area of Field (Company)</label>
                   <input 
@@ -250,6 +345,7 @@ export const RegisterPage: React.FC = () => {
                   {(currentMethods as any).formState.errors.area_of_field && 
                     <p className="text-xs text-red-500 mt-1">{(currentMethods as any).formState.errors.area_of_field.message}</p>}
                 </div>
+                
                 <div>
                   <label className="block text-sm font-medium mb-1">Region</label>
                   <input 
@@ -259,16 +355,6 @@ export const RegisterPage: React.FC = () => {
                   />
                   {(currentMethods as any).formState.errors.region && 
                     <p className="text-xs text-red-500 mt-1">{(currentMethods as any).formState.errors.region.message}</p>}
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Phone Number</label>
-                  <input 
-                    className="input-field" 
-                    placeholder="Enter your phone number"
-                    {...(currentMethods as any).register('phone_number', { required: 'Phone number is required' })} 
-                  />
-                  {(currentMethods as any).formState.errors.phone_number && 
-                    <p className="text-xs text-red-500 mt-1">{(currentMethods as any).formState.errors.phone_number.message}</p>}
                 </div>
               </>
             )}
@@ -287,10 +373,10 @@ export const RegisterPage: React.FC = () => {
               <button 
                 type="submit" 
                 className="btn-primary flex-1 flex items-center gap-2 justify-center" 
-                disabled={loading.isLoading}
+                disabled={loading.isLoading || phoneChecking}
               >
-                {loading.isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
-                {step < 1 ? 'Next' : 'Complete Registration'} <ArrowRight className="w-4 h-4" />
+                {loading.isLoading || phoneChecking ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                {step < 2 ? 'Next' : 'Complete Registration'} <ArrowRight className="w-4 h-4" />
               </button>
             </div>
           </form>

@@ -26,6 +26,7 @@ import {
   TokenUsage,
   BillingDashboardData,
   PaymentInfo,
+  ReportResource,
 } from '@/types';
 import {
   authService,
@@ -39,6 +40,7 @@ import {
   exportService,
   mainJobService,
   billingService,
+  resourcesService,
 } from '@/api/services';
 import { adminDashboardService } from '@/api/adminServices';
 import { isTokenExpired } from '@/utils/auth';
@@ -78,6 +80,17 @@ interface AppState {
   tokenUsageHistory: TokenUsage[];
   billingDashboard: BillingDashboardData | null;
   paymentInfo: PaymentInfo | null;
+  
+  // Resources & Reports
+  resources: {
+    reports: ReportResource[];
+    loading: boolean;
+    filters: {
+      department: string;
+      report_type: string;
+      search: string;
+    };
+  };
   
   // User Management (Admin)
   adminUsers: {
@@ -135,6 +148,7 @@ interface AppState {
   setDailyReportsLoading: (loading: boolean) => void;
   setWeeklyReportsLoading: (loading: boolean) => void;
   setError: (error: AppError | null) => void;
+  setResources: (resources: { reports: ReportResource[]; loading: boolean; filters: { department: string; report_type: string; search: string } }) => void;
   
   // API Actions
   login: (credentials: LoginData) => Promise<void>;
@@ -165,6 +179,11 @@ interface AppState {
   fetchBillingDashboard: () => Promise<void>;
   fetchPaymentInfo: () => Promise<void>;
   fetchTransactions: () => Promise<void>;
+  
+  // Resources Actions
+  fetchResources: (filters?: { department?: string; report_type?: string; search?: string }) => Promise<void>;
+  uploadReport: (data: FormData) => Promise<void>;
+  updateResourcesFilters: (filters: { department?: string; report_type?: string; search?: string }) => void;
   
   // User Management Actions (Admin)
   fetchAdminUsers: (filters?: {
@@ -241,6 +260,15 @@ export const useAppStore = create<AppState>()(
       tokenUsageHistory: [],
       billingDashboard: null,
       paymentInfo: null,
+      resources: {
+        reports: [],
+        loading: false,
+        filters: {
+          department: '',
+          report_type: '',
+          search: '',
+        },
+      },
       adminUsers: null,
       adminUserBalances: {},
       adminLoading: { users: false, userActions: false, userBalances: false },
@@ -286,6 +314,7 @@ export const useAppStore = create<AppState>()(
       setDailyReportsLoading: (loading) => set({ dailyReportsLoading: loading }),
       setWeeklyReportsLoading: (loading) => set({ weeklyReportsLoading: loading }),
       setError: (error) => set({ error }),
+      setResources: (resources: { reports: ReportResource[]; loading: boolean; filters: { department: string; report_type: string; search: string } }) => set({ resources }),
       setAdminUsers: (adminUsers: any) => set({ adminUsers }),
       setAdminUserBalances: (adminUserBalances: Record<number, UserBalance>) => set({ adminUserBalances }),
       setAdminLoading: (adminLoading: { users: boolean; userActions: boolean; userBalances: boolean }) => set({ adminLoading }),
@@ -1060,6 +1089,43 @@ export const useAppStore = create<AppState>()(
           });
           throw error;
         }
+      },
+
+      // Resources Actions
+      fetchResources: async (filters) => {
+        set({ resources: { ...get().resources, loading: true } });
+        try {
+          const response = await resourcesService.getReports(filters);
+          if (response.success) {
+            set({ resources: { ...get().resources, reports: response.data, loading: false } });
+          } else {
+            throw new Error('Failed to fetch resources');
+          }
+        } catch (error) {
+          set({ resources: { ...get().resources, loading: false } });
+          throw error;
+        }
+      },
+      uploadReport: async (data) => {
+        set({ loading: { isLoading: true, message: 'Uploading report...' } });
+        try {
+          const response = await resourcesService.uploadReport(data);
+          if (response.success) {
+            // Refresh resources list
+            await get().fetchResources();
+            set({ loading: { isLoading: false } });
+          } else {
+            throw new Error(response.message || 'Failed to upload report');
+          }
+        } catch (error) {
+          set({ loading: { isLoading: false } });
+          throw error;
+        }
+      },
+      updateResourcesFilters: (filters) => {
+        const currentFilters = get().resources.filters;
+        const newFilters = { ...currentFilters, ...filters };
+        set({ resources: { ...get().resources, filters: newFilters } });
       },
 
       // User Management Actions (Admin)

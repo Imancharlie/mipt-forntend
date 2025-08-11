@@ -37,6 +37,7 @@ import {
   TokenUsage,
   BillingDashboardData,
   PaymentInfo,
+  ReportResource,
 } from '@/types';
 
 // Authentication Services
@@ -75,11 +76,85 @@ export const authService = {
     }
   },
 
+  // Check if phone number is already registered
+  checkPhoneNumberAvailability: async (phoneNumber: string): Promise<{ available: boolean; message?: string }> => {
+    try {
+      console.log('📱 Checking phone number availability:', phoneNumber);
+      
+      const response = await apiClient.get('/auth/check-phone/', {
+        params: { phone_number: phoneNumber }
+      });
+      
+      console.log('✅ Phone number check response:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Phone number check error:', error);
+      
+      // Handle different error scenarios
+      if (error.response?.status === 404) {
+        console.log('⚠️ Phone number check endpoint not implemented yet, assuming available');
+        return { 
+          available: true, 
+          message: 'Phone number validation not available yet - proceeding with registration' 
+        };
+      } else if (error.response?.status === 400) {
+        console.log('⚠️ Invalid phone number format');
+        return { 
+          available: false, 
+          message: 'Invalid phone number format. Please use a valid Tanzanian phone number.' 
+        };
+      } else if (error.response?.status === 500) {
+        console.log('⚠️ Backend server error during phone validation');
+        return { 
+          available: true, 
+          message: 'Phone validation service temporarily unavailable - proceeding with registration' 
+        };
+      } else if (error.code === 'NETWORK_ERROR' || !error.response) {
+        console.log('⚠️ Network error during phone validation');
+        return { 
+          available: true, 
+          message: 'Network error during phone validation - proceeding with registration' 
+        };
+      }
+      
+      // For any other errors, assume available to not block registration
+      console.log('⚠️ Unexpected error during phone validation, assuming available');
+      return { 
+        available: true, 
+        message: 'Phone validation error - proceeding with registration' 
+      };
+    }
+  },
+
   register: async (data: RegisterData) => {
     try {
-      const response = await apiClient.post('/auth/register/', data);
+      console.log('📝 Sending registration request:', {
+        username: data.username,
+        email: data.email,
+        first_name: data.first_name,
+        last_name: data.last_name,
+        phone_number: data.phone_number,
+        password: '[HIDDEN]',
+        password_confirm: '[HIDDEN]'
+      });
+      
+      // Prepare the data for backend (remove password_confirm as it's not needed by backend)
+      const registrationData = {
+        username: data.username,
+        email: data.email,
+        first_name: data.first_name,
+        last_name: data.last_name,
+        password: data.password,
+        phone_number: data.phone_number
+      };
+      
+      const response = await apiClient.post('/auth/register/', registrationData);
+      console.log('✅ Registration response:', response.data);
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
+      console.error('❌ Registration error:', error);
+      console.error('❌ Response data:', error.response?.data);
+      console.error('❌ Response status:', error.response?.status);
       handleApiError(error as AxiosError);
       throw error;
     }
@@ -1116,6 +1191,66 @@ export const billingService = {
       }
     }
   }
+};
+
+// Resources and Reports Services
+export const resourcesService = {
+  // Get all reports with filtering
+  getReports: async (filters: {
+    department?: string;
+    report_type?: string;
+    search?: string;
+  } = {}): Promise<{ success: boolean; data: ReportResource[] }> => {
+    try {
+      const params = new URLSearchParams();
+      if (filters.department) params.append('department', filters.department);
+      if (filters.report_type) params.append('report_type', filters.report_type);
+      if (filters.search) params.append('search', filters.search);
+
+      const response = await apiClient.get(`/reports/?${params.toString()}`);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to fetch reports:', error);
+      throw handleApiError(error as AxiosError);
+    }
+  },
+
+  // Upload a new report
+  uploadReport: async (data: FormData): Promise<{ success: boolean; message: string; data?: ReportResource }> => {
+    try {
+      const response = await apiClient.post('/upload/', data, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Failed to upload report:', error);
+      throw handleApiError(error as AxiosError);
+    }
+  },
+
+  // Download a report
+  downloadReport: async (documentUrl: string, filename: string): Promise<void> => {
+    try {
+      const response = await apiClient.get(documentUrl, {
+        responseType: 'blob',
+      });
+      
+      const blob = new Blob([response.data]);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Failed to download report:', error);
+      throw handleApiError(error as AxiosError);
+    }
+  },
 };
 
 

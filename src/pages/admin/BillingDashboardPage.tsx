@@ -80,9 +80,9 @@ const BillingDashboardPage: React.FC = () => {
       
       if (!user.is_staff) {
         console.warn('⚠️ User does not have staff privileges');
-        showError('Access denied. Staff privileges required.');
-        navigate('/dashboard');
-        return;
+      showError('Access denied. Staff privileges required.');
+      navigate('/dashboard');
+      return;
       } else {
         console.log('✅ User has staff privileges, loading dashboard...');
         loadDashboardData();
@@ -582,19 +582,19 @@ const BillingDashboardPage: React.FC = () => {
             >
               <ChevronLeft className="w-4 h-4 sm:w-5 sm:h-5" />
             </button>
-            <Shield className="w-6 h-6 sm:w-8 sm:h-8 text-green-600" />
+            <Shield className="w-5 h-5 sm:w-6 sm:h-6 text-green-600" />
             <div>
-              <h1 className="text-xl sm:text-2xl lg:text-3xl font-bold text-gray-900 dark:text-white">
+              <h1 className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 dark:text-white">
                 Billing Dashboard
               </h1>
-              <p className="text-sm sm:text-base text-gray-600 dark:text-gray-400">
+              <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">
                 Manage transactions and user billing
               </p>
             </div>
           </div>
           <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-            <button
-              onClick={loadDashboardData}
+          <button
+            onClick={loadDashboardData}
               className="flex items-center justify-center gap-2 px-3 py-2 sm:px-4 sm:py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm"
             >
               <RefreshCw className="w-3 h-3 sm:w-4 sm:h-4" />
@@ -606,7 +606,7 @@ const BillingDashboardPage: React.FC = () => {
             >
               <CreditCard className="w-3 h-3 sm:w-4 sm:h-4" />
               <span className="hidden sm:inline">Create Transaction</span>
-            </button>
+          </button>
           </div>
         </div>
 
@@ -617,13 +617,13 @@ const BillingDashboardPage: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Pending Transactions</p>
-                  <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                  <p className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white mt-1">
                     {stats.pending_transactions}
                   </p>
-                  <p className="text-xs sm:text-sm text-yellow-600 mt-1">Awaiting approval</p>
+                  <p className="text-xs text-yellow-600 mt-1">Awaiting approval</p>
                 </div>
                 <div className="p-2 sm:p-3 rounded-full bg-yellow-500">
-                  <Clock className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
+                  <Clock className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                 </div>
               </div>
             </div>
@@ -632,13 +632,13 @@ const BillingDashboardPage: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Approved Transactions</p>
-                  <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                  <p className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white mt-1">
                     {stats.approved_transactions}
                   </p>
-                  <p className="text-xs sm:text-sm text-green-600 mt-1">Successfully processed</p>
+                  <p className="text-xs text-green-600 mt-1">Successfully processed</p>
                 </div>
                 <div className="p-2 sm:p-3 rounded-full bg-green-500">
-                  <CheckCircle className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
+                  <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                 </div>
               </div>
             </div>
@@ -647,13 +647,13 @@ const BillingDashboardPage: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Total Revenue</p>
-                  <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                  <p className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white mt-1">
                     {formatCurrency(stats.total_revenue)}
                   </p>
-                  <p className="text-xs sm:text-sm text-blue-600 mt-1">All time</p>
+                  <p className="text-xs text-blue-600 mt-1">All time</p>
                 </div>
                 <div className="p-2 sm:p-3 rounded-full bg-blue-500">
-                  <DollarSign className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
+                  <DollarSign className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                 </div>
               </div>
             </div>
@@ -662,13 +662,13 @@ const BillingDashboardPage: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Active Subscribers</p>
-                  <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                  <p className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white mt-1">
                     {stats.active_subscribers}
                   </p>
-                  <p className="text-xs sm:text-sm text-purple-600 mt-1">Paid users</p>
+                  <p className="text-xs text-purple-600 mt-1">Paid users</p>
                 </div>
                 <div className="p-2 sm:p-3 rounded-full bg-purple-500">
-                  <Users className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
+                  <Users className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                 </div>
               </div>
             </div>
@@ -677,13 +677,13 @@ const BillingDashboardPage: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Tokens Distributed</p>
-                  <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                  <p className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white mt-1">
                     {stats.total_tokens_distributed.toLocaleString()}
                   </p>
-                  <p className="text-xs sm:text-sm text-orange-600 mt-1">All time</p>
+                  <p className="text-xs text-orange-600 mt-1">All time</p>
                 </div>
                 <div className="p-2 sm:p-3 rounded-full bg-orange-500">
-                  <Coins className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
+                  <Coins className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                 </div>
               </div>
             </div>
@@ -692,13 +692,13 @@ const BillingDashboardPage: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-xs sm:text-sm font-medium text-gray-600 dark:text-gray-400">Rejected Transactions</p>
-                  <p className="text-xl sm:text-2xl font-bold text-gray-900 dark:text-white mt-1">
+                  <p className="text-lg sm:text-xl font-bold text-gray-900 dark:text-white mt-1">
                     {stats.rejected_transactions}
                   </p>
-                  <p className="text-xs sm:text-sm text-red-600 mt-1">Declined</p>
+                  <p className="text-xs text-red-600 mt-1">Declined</p>
                 </div>
                 <div className="p-2 sm:p-3 rounded-full bg-red-500">
-                  <XCircle className="w-4 h-4 sm:w-6 sm:h-6 text-white" />
+                  <XCircle className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                 </div>
               </div>
             </div>
@@ -855,10 +855,10 @@ const BillingDashboardPage: React.FC = () => {
                         </td>
                         <td className="px-3 sm:px-6 py-3 sm:py-4">
                           <div className="flex flex-col gap-1">
-                            {getPaymentMethodBadge(transaction.payment_method)}
-                            {transaction.wakala_name && (
+                          {getPaymentMethodBadge(transaction.payment_method)}
+                          {transaction.wakala_name && (
                               <p className="text-xs text-gray-500 truncate">via {transaction.wakala_name}</p>
-                            )}
+                          )}
                           </div>
                         </td>
                         <td className="px-3 sm:px-6 py-3 sm:py-4">
@@ -935,8 +935,8 @@ const BillingDashboardPage: React.FC = () => {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
               <div>
                 <h3 className="text-base sm:text-lg font-semibold text-gray-900 dark:text-white">
-                  All Transactions
-                </h3>
+                All Transactions
+              </h3>
                 <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400 mt-1">
                   Complete transaction history across all users in the system
                 </p>
@@ -1000,78 +1000,78 @@ const BillingDashboardPage: React.FC = () => {
                 </div>
               </div>
             ) : (
-              <table className="w-full">
-                <thead className="bg-gray-50 dark:bg-gray-700">
-                  <tr>
+            <table className="w-full">
+              <thead className="bg-gray-50 dark:bg-gray-700">
+                <tr>
                     <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">
-                      User
-                    </th>
+                    User
+                  </th>
                     <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Amount & Tokens
-                    </th>
+                    Amount & Tokens
+                  </th>
                     <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Payment Method
-                    </th>
+                    Payment Method
+                  </th>
                     <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Status
-                    </th>
+                    Status
+                  </th>
                     <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Date
-                    </th>
+                    Date
+                  </th>
                     <th className="px-3 sm:px-6 py-2 sm:py-3 text-left text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">
-                      Confirmed By
-                    </th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
-                  {(transactions || []).map((transaction) => (
-                    <tr key={transaction.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                    Confirmed By
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-gray-200 dark:divide-gray-700">
+                {(transactions || []).map((transaction) => (
+                  <tr key={transaction.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                       <td className="px-3 sm:px-6 py-3 sm:py-4">
                         <div className="flex items-center gap-2 sm:gap-3">
                           <div className="w-6 h-6 sm:w-8 sm:h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center flex-shrink-0">
                             <User className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
-                          </div>
+                        </div>
                           <div className="min-w-0 flex-1">
                             <p className="font-medium text-gray-900 dark:text-white text-xs sm:text-sm truncate">
-                              {transaction.user_full_name}
-                            </p>
+                            {transaction.user_full_name}
+                          </p>
                             <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
-                              {transaction.sender_name}
-                            </p>
-                          </div>
+                            {transaction.sender_name}
+                          </p>
                         </div>
-                      </td>
+                      </div>
+                    </td>
                       <td className="px-3 sm:px-6 py-3 sm:py-4">
-                        <div>
+                      <div>
                           <p className="font-medium text-gray-900 dark:text-white text-xs sm:text-sm">
-                            {formatCurrency(parseFloat(transaction.amount))}
-                          </p>
+                          {formatCurrency(parseFloat(transaction.amount))}
+                        </p>
                           <p className="text-xs text-gray-500">
-                            {transaction.tokens_generated} tokens generated
-                          </p>
-                        </div>
-                      </td>
+                          {transaction.tokens_generated} tokens generated
+                        </p>
+                      </div>
+                    </td>
                       <td className="px-3 sm:px-6 py-3 sm:py-4">
                         <div className="flex flex-col gap-1">
-                          {getPaymentMethodBadge(transaction.payment_method)}
-                          {transaction.wakala_name && (
+                      {getPaymentMethodBadge(transaction.payment_method)}
+                      {transaction.wakala_name && (
                             <p className="text-xs text-gray-500 truncate">via {transaction.wakala_name}</p>
-                          )}
+                      )}
                         </div>
-                      </td>
+                    </td>
                       <td className="px-3 sm:px-6 py-3 sm:py-4">
-                        {getStatusBadge(transaction.transaction_status)}
-                      </td>
+                      {getStatusBadge(transaction.transaction_status)}
+                    </td>
                       <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                        {new Date(transaction.created_at).toLocaleDateString()}
-                      </td>
+                      {new Date(transaction.created_at).toLocaleDateString()}
+                    </td>
                       <td className="px-3 sm:px-6 py-3 sm:py-4 text-xs sm:text-sm text-gray-600 dark:text-gray-400">
-                        {transaction.confirmed_by_name || '-'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+                      {transaction.confirmed_by_name || '-'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
             )}
           </div>
 

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAppStore } from '@/store';
 import { useToastContext } from '@/contexts/ToastContext';
+import { useTheme } from '@/components/ThemeProvider';
 import { CreateTransactionData } from '@/types';
 import { 
   Coins, 
@@ -43,6 +44,7 @@ const BillingPage: React.FC = () => {
     createTransaction
   } = useAppStore();
   const { showSuccess, showError } = useToastContext();
+  const { theme } = useTheme();
   
   const [showPaymentMethods, setShowPaymentMethods] = useState(false);
   const [showConfirmationModal, setShowConfirmationModal] = useState(false);
@@ -187,14 +189,15 @@ const BillingPage: React.FC = () => {
   return (
     <div className="p-4 lg:p-6 max-w-4xl mx-auto">
       {/* Header */}
-      <div className="mb-8">
-        <div className="bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 border border-orange-200 dark:border-orange-700 rounded-2xl p-6">
-          <h1 className="text-3xl lg:text-4xl font-bold text-orange-600 dark:text-orange-400 mb-2">
-            Billing & Payments
-          </h1>
-          <p className="text-gray-600 dark:text-gray-300 text-lg">Manage your tokens and make payments</p>
-        </div>
+      <div className="mb-6">
+        <h1 className={`text-lg lg:text-2xl font-bold text-${theme}-600 mb-2`}>
+          Billing & Payment
+        </h1>
+        <p className="text-gray-600 text-xs lg:text-sm">
+          Manage your account balance and purchase tokens for AI features
+        </p>
       </div>
+
 
       {/* Transaction Success Banner */}
       {transactionSuccess.show && (
@@ -277,75 +280,69 @@ const BillingPage: React.FC = () => {
       </div>
 
           {/* Token Calculator */}
-          <div className="mb-8">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <Calculator className="w-6 h-6 text-orange-600 dark:text-orange-400" />
-                <h2 className="text-xl font-bold text-gray-800 dark:text-white">Token Calculator</h2>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 lg:p-6 mb-6">
+            <div className="flex items-center gap-3 mb-4">
+              <div className={`p-2 bg-${theme}-100 dark:bg-${theme}-900 rounded-lg`}>
+                <Calculator className={`w-5 h-5 text-${theme}-600 dark:text-${theme}-400`} />
+              </div>
+              <div>
+                <h2 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white">
+                  Token Calculator
+                </h2>
+                <p className="text-xs lg:text-sm text-gray-600 dark:text-gray-400">
+                  Calculate how many tokens you'll get for your payment
+                </p>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                  Payment Amount (TSH)
+                </label>
+                <input
+                  type="number"
+                  value={calculatorAmount}
+                  onChange={(e) => setCalculatorAmount(Number(e.target.value))}
+                  min="2000"
+                  step="1000"
+                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-sm"
+                  placeholder="Enter amount in multiples of 1000"
+                />
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  Minimum: 2,000 TSH • Step: 1,000 TSH
+                </p>
               </div>
               
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                    Amount (TSH)
-          </label>
-                  <div className="relative">
-                    <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
-                    <input
-                      type="number"
-                      value={calculatorAmount}
-                      onChange={(e) => setCalculatorAmount(parseInt(e.target.value) || 0)}
-                      className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:border-orange-500 focus:outline-none transition-all duration-300"
-                      placeholder="Enter amount in TSH"
-                      min="2000"
-                      step="1000"
-                    />
+              <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-4">
+                <div className="text-center">
+                  <div className="text-lg lg:text-xl font-bold text-gray-900 dark:text-white mb-1">
+                    {calculateTokens(calculatorAmount)}
                   </div>
-        </div>
-
-                <div className="p-4 bg-orange-50 dark:bg-orange-900/20 rounded-xl border border-orange-200 dark:border-orange-700">
-        <div className="flex items-center justify-between">
-                    <span className="text-sm text-orange-700 dark:text-orange-300">Tokens you'll receive:</span>
-                    <span className="text-2xl font-bold text-orange-600 dark:text-orange-400">
-                      {calculateTokens(calculatorAmount)} tokens
-                    </span>
+                  <div className="text-xs text-gray-600 dark:text-gray-400">Tokens</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Rate: 0.3 tokens per TSH
                   </div>
-                </div>
-
-                <div className="text-sm text-gray-600 dark:text-gray-400 space-y-1">
-                  <p><strong>What you can do with {calculateTokens(calculatorAmount)} tokens:</strong></p>
-                  {paymentInfo?.usage_costs ? (
-                    <ul className="list-disc list-inside space-y-1 ml-4">
-                      <li>{paymentInfo.usage_costs.fullfilled}</li>
-                      <li>{paymentInfo.usage_costs.partial}</li>
-                      <li>{paymentInfo.usage_costs.empty}</li>
-                    </ul>
-                  ) : (
-                    <ul className="list-disc list-inside space-y-1 ml-4">
-                      <li>Enhance {Math.floor(calculateTokens(calculatorAmount) / 300)} complete week reports</li>
-                      <li>Or enhance {Math.floor(calculateTokens(calculatorAmount) / 500)} blank reports with AI</li>
-                      <li>Generate main job operations and steps</li>
-                    </ul>
-                  )}
                 </div>
               </div>
-        </div>
-      </div>
+            </div>
+            
+            <div className="mt-4">
+              <button
+                onClick={handleProceedToPayment}
+                className={`w-full px-4 py-2 bg-${theme}-600 hover:bg-${theme}-700 text-white font-medium rounded-lg transition-colors text-sm`}
+              >
+                Proceed to Payment
+              </button>
+            </div>
+          </div>
 
           {/* Proceed Button */}
           <div className="mb-8">
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
               <div className="text-center">
-                <button
-                  onClick={handleProceedToPayment}
-                  className="inline-flex items-center gap-2 px-8 py-4 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
-                >
-                  <ExternalLink className="w-5 h-5" />
-                  Proceed to Payment
-                </button>
-                <p className="text-sm text-gray-600 dark:text-gray-400 mt-3">
-                  You'll be redirected to payment methods
-                </p>
+                
+                
               </div>
             </div>
         </div>

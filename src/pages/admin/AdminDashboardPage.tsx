@@ -30,24 +30,24 @@ interface StatCardProps {
 }
 
 const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon, color, trend }) => (
-  <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg border border-gray-200 dark:border-gray-700">
+  <div className="bg-white dark:bg-gray-800 rounded-lg p-4 lg:p-6 shadow-lg border border-gray-200 dark:border-gray-700">
     <div className="flex items-center justify-between">
       <div>
-        <p className="text-sm font-medium text-gray-600 dark:text-gray-400">{title}</p>
-        <p className="text-2xl font-bold text-gray-900 dark:text-white mt-1">
+        <p className="text-xs lg:text-sm font-medium text-gray-600 dark:text-gray-400">{title}</p>
+        <p className="text-lg lg:text-xl font-bold text-gray-900 dark:text-white mt-1">
           {typeof value === 'number' ? value.toLocaleString() : value}
         </p>
         {trend && (
-          <div className={`flex items-center mt-2 text-sm ${
+          <div className={`flex items-center mt-2 text-xs ${
             trend.isPositive ? 'text-green-600' : 'text-red-600'
           }`}>
-            <TrendingUp className="w-4 h-4 mr-1" />
+            <TrendingUp className="w-3 h-3 mr-1" />
             {trend.value}% from last period
           </div>
         )}
       </div>
-      <div className={`p-3 rounded-full ${color}`}>
-        <Icon className="w-6 h-6 text-white" />
+      <div className={`p-2 lg:p-3 rounded-full ${color}`}>
+        <Icon className="w-5 h-5 lg:w-6 lg:h-6 text-white" />
       </div>
     </div>
   </div>
@@ -128,14 +128,14 @@ const AdminDashboardPage: React.FC = () => {
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
       <div className="p-6 max-w-7xl mx-auto">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-6">
           <div className="flex items-center gap-3 mb-2">
-            <Shield className="w-8 h-8 text-red-600" />
-            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">
+            <Shield className="w-6 h-6 text-red-600" />
+            <h1 className="text-lg lg:text-2xl font-bold text-gray-900 dark:text-white">
               Admin Dashboard
             </h1>
           </div>
-          <p className="text-gray-600 dark:text-gray-400">
+          <p className="text-gray-600 dark:text-gray-400 text-xs lg:text-sm">
             System overview and management tools
           </p>
         </div>
@@ -222,8 +222,8 @@ const AdminDashboardPage: React.FC = () => {
         {/* Recent Activity Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Recent Users */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 lg:p-6 shadow-lg border border-gray-200 dark:border-gray-700">
+            <h3 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Recent Users
             </h3>
             <div className="space-y-3">
@@ -248,8 +248,8 @@ const AdminDashboardPage: React.FC = () => {
           </div>
 
           {/* Recent AI Logs */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 lg:p-6 shadow-lg border border-gray-200 dark:border-gray-700">
+            <h3 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Recent AI Usage
             </h3>
             <div className="space-y-3">
@@ -278,8 +278,8 @@ const AdminDashboardPage: React.FC = () => {
 
         {/* Program Statistics */}
         {recentActivity.program_stats && recentActivity.program_stats.length > 0 && (
-          <div className="mt-6 bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-            <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          <div className="mt-6 bg-white dark:bg-gray-800 rounded-lg p-4 lg:p-6 shadow-lg border border-gray-200 dark:border-gray-700">
+            <h3 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Program Distribution
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">

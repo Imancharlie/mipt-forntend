@@ -108,7 +108,7 @@ export const DailyReportPage: React.FC = () => {
   const [weekDays, setWeekDays] = useState<DayData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  const { register, handleSubmit, formState: { errors, isSubmitting }, setValue } = useForm<CreateDailyReportData>();
+  const { register, handleSubmit, formState: { errors, isSubmitting }, setValue, trigger } = useForm<CreateDailyReportData>();
 
   // Get current day of week (0 = Sunday, 1 = Monday, etc.)
   const getCurrentDayOfWeek = () => {
@@ -300,6 +300,9 @@ export const DailyReportPage: React.FC = () => {
       setValue('date', selectedDay.date);
       setValue('hours_spent', selectedDay.hours);
       setValue('description', selectedDay.description);
+      
+      // Force form to update with new values
+      trigger(['date', 'hours_spent', 'description']);
     }
   };
 
@@ -378,16 +381,16 @@ export const DailyReportPage: React.FC = () => {
   return (
     <div className="p-3 lg:p-6 max-w-4xl mx-auto">
         {/* Header */}
-      <div className="mb-6">
-        <div className="flex items-center justify-between mb-4">
-              <div>
-            <h1 className={`text-2xl lg:text-3xl font-bold text-${theme}-600 mb-2`}>
-              Daily Reports
-            </h1>
-            <p className="text-gray-600">
-              Week {selectedWeek} • {getWeekDateRange(selectedWeek)}
-            </p>
-                  </div>
+        <div className="mb-6">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h1 className={`text-lg lg:text-2xl font-bold text-${theme}-600 mb-2`}>
+                Daily Reports
+              </h1>
+              <p className="text-gray-600 text-xs lg:text-sm">
+                Week {selectedWeek} • {getWeekDateRange(selectedWeek)}
+              </p>
+            </div>
                 
           <div className="flex items-center gap-3">
                   <button
@@ -405,23 +408,25 @@ export const DailyReportPage: React.FC = () => {
       <div className="mb-6">
         <div className="bg-white/80 backdrop-blur-sm border border-gray-200 rounded-2xl p-4">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-800">Week {selectedWeek} Days</h2>
+            <h2 className="text-base lg:text-lg font-semibold text-gray-800">Week {selectedWeek} Days</h2>
             <div className="flex items-center gap-2">
-                <button 
+              <button 
                 onClick={() => setSelectedWeek(Math.max(1, selectedWeek - 1))}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                >
-              <ChevronLeft className="w-4 h-4" />
-                </button>
+                disabled={selectedWeek <= 1}
+                className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </button>
               <span className="text-sm font-medium text-gray-600">Week {selectedWeek}</span>
-                  <button 
-                onClick={() => setSelectedWeek(selectedWeek + 1)}
-                className="p-2 rounded-lg hover:bg-gray-100 transition-colors"
-                  >
+              <button 
+                onClick={() => setSelectedWeek(Math.min(8, selectedWeek + 1))}
+                disabled={selectedWeek >= 8}
+                className="p-2 rounded-lg hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
                 <ChevronRight className="w-4 h-4" />
-                  </button>
+              </button>
+            </div>
           </div>
-        </div>
 
           {/* Enhanced Day Cards */}
           <div className="grid grid-cols-5 gap-1">
@@ -488,7 +493,7 @@ export const DailyReportPage: React.FC = () => {
           </div>
 
       {/* Current Day Form */}
-          {weekDays[currentDayIndex] && (
+      {weekDays[currentDayIndex] && (
         <div className="bg-white/80 backdrop-blur-sm border border-gray-200 rounded-2xl p-6 mb-6">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
@@ -507,16 +512,16 @@ export const DailyReportPage: React.FC = () => {
                   <Calendar className="w-5 h-5" />
                 )}
               </div>
-                  <div>
-                <h2 className="text-xl font-semibold text-gray-800">
-                      {weekDays[currentDayIndex].dayName} - {getFormattedDate(weekDays[currentDayIndex].date)}
-                    </h2>
-                <p className="text-sm text-gray-600">
+              <div>
+                <h2 className="text-base lg:text-lg font-semibold text-gray-800">
+                  {weekDays[currentDayIndex].dayName} - {getFormattedDate(weekDays[currentDayIndex].date)}
+                </h2>
+                <p className="text-xs lg:text-sm text-gray-600">
                   {weekDays[currentDayIndex].isCurrentDay ? 'Today\'s Log' : 
                    weekDays[currentDayIndex].isCompleted ? 'Completed' : 'Pending'}
                 </p>
-                  </div>
-                </div>
+              </div>
+            </div>
             
                 {weekDays[currentDayIndex].isCompleted && (
               <span className="px-3 py-1 text-sm rounded-full bg-green-100 text-green-800 font-medium">
