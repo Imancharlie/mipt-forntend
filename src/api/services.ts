@@ -50,6 +50,10 @@ export const authService = {
       };
       
       console.log('🔐 Sending login request:', loginData);
+      console.log('🔐 Login endpoint:', '/auth/login/');
+      console.log('🔐 Request headers:', {
+        'Content-Type': 'application/json'
+      });
       
       const response = await apiClient.post('/auth/login/', loginData, {
         headers: {
@@ -58,9 +62,14 @@ export const authService = {
       });
       
       console.log('✅ Login response:', response.data);
+      console.log('✅ Response status:', response.status);
+      console.log('✅ Response headers:', response.headers);
       return response.data;
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Login error:', error);
+      console.error('❌ Response data:', error.response?.data);
+      console.error('❌ Response status:', error.response?.status);
+      console.error('❌ Response headers:', error.response?.headers);
       handleApiError(error as AxiosError);
       throw error;
     }
@@ -80,9 +89,11 @@ export const authService = {
     try {
       const response = await apiClient.post('/auth/logout/', data);
       return response.data;
-    } catch (error) {
-      handleApiError(error as AxiosError);
-      throw error;
+    } catch (error: any) {
+      // Logout should always succeed, even if token is expired
+      console.log('⚠️ Logout API call failed (token may be expired), but proceeding with local cleanup');
+      // Don't throw error - logout should always work
+      return { success: true, message: 'Logged out successfully' };
     }
   },
 
@@ -124,6 +135,7 @@ export const profileService = {
       const formData = new FormData();
       formData.append('profile_picture', file);
       
+      // Use the correct endpoint structure based on backend
       const response = await apiClient.post('/auth/profile/upload-picture/', formData, {
         headers: {
           'Content-Type': 'multipart/form-data',
@@ -138,6 +150,7 @@ export const profileService = {
 
   removeProfilePicture: async (): Promise<{ success: boolean; message: string }> => {
     try {
+      // Use the correct endpoint structure based on backend
       const response = await apiClient.delete('/auth/profile/remove-picture/');
       return response.data;
     } catch (error) {
@@ -356,9 +369,9 @@ export const weeklyReportService = {
     }
   },
 
-  submitWeeklyReport: async (id: number): Promise<WeeklyReport> => {
+  submitWeeklyReport: async (weekNumber: number): Promise<WeeklyReport> => {
     try {
-      const response = await apiClient.patch(`/reports/weekly/week/${id}/submit/`);
+      const response = await apiClient.patch(`/reports/weekly/week/${weekNumber}/submit/`);
       return response.data;
     } catch (error) {
       handleApiError(error as AxiosError);
@@ -417,7 +430,6 @@ export const weeklyReportService = {
       console.log('Sending AI enhancement request to backend...');
       console.log('Week Number:', weekNumber);
       console.log('Additional Instructions:', additionalInstructions || 'None');
-      console.log('Request URL:', `/reports/weekly/enhance/${weekNumber}/`);
       
       // First, check if the weekly report exists
       try {
@@ -430,8 +442,8 @@ export const weeklyReportService = {
         }
       }
       
-      // Try to call the backend API with proper error handling
-      const response = await apiClient.post(`/reports/weekly/enhance/${weekNumber}/`, {
+      // Use the correct endpoint: /enhance_with_ai/ instead of /enhance/
+      const response = await apiClient.post(`/reports/weekly/week/${weekNumber}/enhance_with_ai/`, {
         additional_instructions: additionalInstructions || ''
       });
       
@@ -717,6 +729,20 @@ export const aiService = {
   },
 };
 
+// Feedback Service
+export const feedbackService = {
+  submitFeedback: async (data: { type: string; subject: string; message: string }): Promise<{ success?: boolean; id?: number }> => {
+    try {
+      // Backend route lives under user app: api/auth/feedback/
+      const response = await apiClient.post('/auth/feedback/', data);
+      return response.data;
+    } catch (error) {
+      handleApiError(error as AxiosError);
+      throw error;
+    }
+  },
+};
+
 // Export Services
 export const exportService = {
   exportWeeklyPDF: async (id: number): Promise<Blob> => {
@@ -941,6 +967,7 @@ export const billingService = {
   // Get user balance
   getBalance: async (): Promise<{ success: boolean; data: UserBalance }> => {
     try {
+      // Try the correct endpoint structure
       const response = await apiClient.get('/billing/balance/my_balance/');
       return response.data;
     } catch (error) {
@@ -952,6 +979,7 @@ export const billingService = {
   // Create transaction
   createTransaction: async (data: CreateTransactionData): Promise<{ success: boolean; message: string; data: Transaction }> => {
     try {
+      // Use the correct endpoint structure
       const response = await apiClient.post('/billing/transactions/', data);
       return response.data;
     } catch (error) {
@@ -963,6 +991,7 @@ export const billingService = {
   // Verify payment details
   verifyPayment: async (transactionId: number, data: { user_phone_number: string; sender_name: string; amount: number }): Promise<{ success: boolean; message: string }> => {
     try {
+      // Use the correct endpoint structure
       const response = await apiClient.post(`/billing/transactions/${transactionId}/verify_payment/`, data);
       return response.data;
     } catch (error) {
@@ -971,11 +1000,10 @@ export const billingService = {
     }
   },
 
-
-
   // Get usage history
   getUsageHistory: async (): Promise<{ success: boolean; data: TokenUsage[] }> => {
     try {
+      // Use the correct endpoint structure
       const response = await apiClient.get('/billing/token-usage/usage_history/');
       return response.data;
     } catch (error) {
@@ -987,6 +1015,7 @@ export const billingService = {
   // Get billing dashboard data
   getDashboardData: async (): Promise<{ success: boolean; data: BillingDashboardData }> => {
     try {
+      // Use the correct endpoint structure
       const response = await apiClient.get('/billing/dashboard/dashboard_data/');
       return response.data;
     } catch (error) {
@@ -998,6 +1027,7 @@ export const billingService = {
   // Get payment information
   getPaymentInfo: async (): Promise<{ success: boolean; data: PaymentInfo }> => {
     try {
+      // Use the correct endpoint structure
       const response = await apiClient.get('/billing/dashboard/payment_info/');
       return response.data;
     } catch (error) {
@@ -1009,6 +1039,7 @@ export const billingService = {
   // Get user transactions
   getTransactions: async (): Promise<{ success: boolean; data: Transaction[] }> => {
     try {
+      // Use the correct endpoint structure
       const response = await apiClient.get('/billing/transactions/');
       return response.data;
     } catch (error) {

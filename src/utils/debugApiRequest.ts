@@ -46,7 +46,8 @@ export const debugApiRequest = async () => {
     }
   ];
   
-  const endpoint = 'http://127.0.0.1:8000/api/auth/login/';
+  const baseUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api';
+  const endpoint = `${baseUrl}/auth/login/`;
   
   for (const testCase of testCases) {
     try {
@@ -93,7 +94,8 @@ export const debugApiMethods = async () => {
   console.log('🔍 Debugging API HTTP Methods...');
   
   const methods = ['POST', 'PUT', 'PATCH'];
-  const endpoint = 'http://127.0.0.1:8000/api/auth/login/';
+  const baseUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api';
+  const endpoint = `${baseUrl}/auth/login/`;
   const testData = { username: 'testuser', password: 'testpass' };
   
   for (const method of methods) {
@@ -128,15 +130,16 @@ export const debugApiMethods = async () => {
 export const checkApiEndpoints = async () => {
   console.log('🔍 Checking API Endpoint Structure...');
   
+  const baseUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api';
   const possibleEndpoints = [
-    'http://127.0.0.1:8000/api/auth/login/',
-    'http://127.0.0.1:8000/api/auth/login',
-    'http://127.0.0.1:8000/api/login/',
-    'http://127.0.0.1:8000/api/login',
-    'http://127.0.0.1:8000/auth/login/',
-    'http://127.0.0.1:8000/auth/login',
-    'http://127.0.0.1:8000/login/',
-    'http://127.0.0.1:8000/login'
+    `${baseUrl}/auth/login/`,
+    `${baseUrl}/auth/login`,
+    `${baseUrl}/login/`,
+    `${baseUrl}/login`,
+    `${baseUrl.replace('/api', '')}/auth/login/`,
+    `${baseUrl.replace('/api', '')}/auth/login`,
+    `${baseUrl.replace('/api', '')}/login/`,
+    `${baseUrl.replace('/api', '')}/login`
   ];
   
   for (const endpoint of possibleEndpoints) {

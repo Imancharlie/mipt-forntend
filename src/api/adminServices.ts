@@ -1,6 +1,6 @@
 import apiClient, { handleApiError } from './client';
 import { AxiosError } from 'axios';
-import { Transaction, UserBalance } from '@/types';
+import { Transaction, UserBalance, BillingStats } from '@/types';
 
 // Types
 export interface DashboardStats {
@@ -196,7 +196,7 @@ export const adminDashboardService = {
   getDashboardStats: async (): Promise<DashboardStats> => {
     try {
       const response = await apiClient.get('/admin-dashboard/api/dashboard/stats/');
-      return response.data;
+      return response.data.data; // Extract the data property
     } catch (error) {
       handleApiError(error as AxiosError);
       throw error;
@@ -213,7 +213,7 @@ export const adminDashboardService = {
   } = {}): Promise<UsersResponse> => {
     try {
       const response = await apiClient.get('/admin-dashboard/api/users/', { params });
-      return response.data;
+      return response.data.data; // Extract the data property
     } catch (error) {
       handleApiError(error as AxiosError);
       throw error;
@@ -223,7 +223,7 @@ export const adminDashboardService = {
   performUserAction: async (actionData: UserActionRequest): Promise<{ success: boolean; message: string }> => {
     try {
       const response = await apiClient.post('/admin-dashboard/api/users/actions/', actionData);
-      return response.data;
+      return response.data.data || response.data; // Extract data property if it exists, otherwise use response.data
     } catch (error) {
       handleApiError(error as AxiosError);
       throw error;
@@ -236,7 +236,7 @@ export const adminDashboardService = {
       const response = await apiClient.get('/admin-dashboard/api/tokens/analytics/', {
         params: { days }
       });
-      return response.data;
+      return response.data.data; // Extract the data property
     } catch (error) {
       handleApiError(error as AxiosError);
       throw error;
@@ -249,7 +249,7 @@ export const adminDashboardService = {
       const response = await apiClient.get('/admin-dashboard/api/reports/analytics/', {
         params: { days }
       });
-      return response.data;
+      return response.data.data; // Extract the data property
     } catch (error) {
       handleApiError(error as AxiosError);
       throw error;
@@ -260,7 +260,7 @@ export const adminDashboardService = {
   getRecentActivity: async (): Promise<RecentActivity> => {
     try {
       const response = await apiClient.get('/admin-dashboard/api/recent-activity/');
-      return response.data;
+      return response.data.data; // Extract the data property
     } catch (error) {
       handleApiError(error as AxiosError);
       throw error;
@@ -384,18 +384,7 @@ export const adminDashboardService = {
 
   // Billing System Integration
   billing: {
-    // Get pending transactions for approval
-    getPendingTransactions: async (): Promise<{ success: boolean; data: Transaction[] }> => {
-      try {
-        const response = await apiClient.get('/billing/staff/transactions/pending_transactions/');
-        return response.data;
-      } catch (error) {
-        handleApiError(error as AxiosError);
-        throw error;
-      }
-    },
-
-    // Get all transactions with filters
+    // Get all transactions with filters (staff only - returns all transactions across all users)
     getTransactions: async (params?: {
       status?: 'PENDING' | 'APPROVED' | 'REJECTED';
       payment_method?: 'DIRECT' | 'WAKALA';
@@ -403,9 +392,72 @@ export const adminDashboardService = {
       user_id?: number;
     }): Promise<{ success: boolean; data: Transaction[]; pagination?: any }> => {
       try {
+        // This endpoint requires staff privileges and returns ALL transactions
         const response = await apiClient.get('/billing/staff/transactions/', { params });
+        console.log('Staff transactions API response:', response.data);
+        
+        // Handle the actual backend response structure
+        if (response.data && typeof response.data === 'object') {
+          // Backend returns: { count, next, previous, results: [...] }
+          if ('results' in response.data && Array.isArray(response.data.results)) {
+            return {
+              success: true,
+              data: response.data.results,
+              pagination: {
+                count: response.data.count,
+                next: response.data.next,
+                previous: response.data.previous
+              }
+            };
+          }
+          // If it's already an array, wrap it
+          if (Array.isArray(response.data)) {
+            return {
+              success: true,
+              data: response.data,
+              pagination: {}
+            };
+          }
+        }
+        
+        // Fallback to original structure
         return response.data;
       } catch (error) {
+        console.error('Failed to get staff transactions:', error);
+        handleApiError(error as AxiosError);
+        throw error;
+      }
+    },
+
+    // Get pending transactions for approval (staff only - returns pending transactions across all users)
+    getPendingTransactions: async (): Promise<{ success: boolean; data: Transaction[] }> => {
+      try {
+        // This endpoint requires staff privileges and returns ALL pending transactions
+        const response = await apiClient.get('/billing/staff/transactions/pending_transactions/');
+        console.log('Staff pending transactions API response:', response.data);
+        
+        // Handle the actual backend response structure
+        if (response.data && typeof response.data === 'object') {
+          // Backend returns: { count, next, previous, results: [...] }
+          if ('results' in response.data && Array.isArray(response.data.results)) {
+            return {
+              success: true,
+              data: response.data.results
+            };
+          }
+          // If it's already an array, wrap it
+          if (Array.isArray(response.data)) {
+            return {
+              success: true,
+              data: response.data
+            };
+          }
+        }
+        
+        // Fallback to original structure
+        return response.data;
+      } catch (error) {
+        console.error('Failed to get staff pending transactions:', error);
         handleApiError(error as AxiosError);
         throw error;
       }
@@ -454,7 +506,7 @@ export const adminDashboardService = {
     // Get user balance
     getUserBalance: async (userId: number): Promise<{ success: boolean; data: UserBalance }> => {
       try {
-        const response = await apiClient.get(`/billing/balance/user/${userId}/`);
+        const response = await apiClient.get(`/billing/balance/${userId}/`);
         return response.data;
       } catch (error) {
         handleApiError(error as AxiosError);
@@ -462,107 +514,73 @@ export const adminDashboardService = {
       }
     },
 
-    // Get billing statistics (calculated from transactions)
-    getBillingStats: async (): Promise<{
-      total_revenue: number;
-      pending_transactions: number;
-      approved_transactions: number;
-      rejected_transactions: number;
-      total_tokens_distributed: number;
-      active_subscribers: number;
-    }> => {
+    // Get billing statistics from the new backend endpoint
+    getBillingStats: async (): Promise<{ success: boolean; data: any }> => {
       try {
-        console.log('Fetching billing stats from API...');
-        console.log('API Base URL:', apiClient.defaults.baseURL);
-        
-        // Try multiple possible endpoints
-        let transactions = [];
-        let response;
-        
-        try {
-          // First try the staff transactions endpoint
-          console.log('Trying endpoint: /billing/staff/transactions/');
-          response = await apiClient.get('/billing/staff/transactions/');
-          console.log('Staff transactions API response:', response);
-          transactions = response.data?.data || response.data || [];
-        } catch (staffError) {
-          console.log('Staff transactions endpoint failed:', staffError);
-          
-          try {
-            // Try alternative endpoint
-            console.log('Trying alternative endpoint: /billing/transactions/');
-            response = await apiClient.get('/billing/transactions/');
-            console.log('Alternative transactions API response:', response);
-            transactions = response.data?.data || response.data || [];
-          } catch (altError) {
-            console.log('Alternative endpoint also failed:', altError);
-            console.log('Using empty transactions array');
-            transactions = [];
-          }
-        }
-        
-        console.log('Final transactions data:', transactions);
-        console.log('Transactions array length:', transactions.length);
-        
-        // Calculate stats from transactions
-        const stats = {
-          total_revenue: 0,
-          pending_transactions: 0,
-          approved_transactions: 0,
-          rejected_transactions: 0,
-          total_tokens_distributed: 0,
-          active_subscribers: 0
-        };
-
-        if (Array.isArray(transactions) && transactions.length > 0) {
-          transactions.forEach((transaction: any) => {
-            console.log('Processing transaction:', transaction);
-            switch (transaction.transaction_status) {
-              case 'PENDING':
-                stats.pending_transactions++;
-                break;
-              case 'APPROVED':
-                stats.approved_transactions++;
-                stats.total_revenue += parseFloat(transaction.amount || 0);
-                stats.total_tokens_distributed += transaction.tokens_generated || 0;
-                break;
-              case 'REJECTED':
-                stats.rejected_transactions++;
-                break;
-            }
-          });
-        } else {
-          console.log('No transactions found or transactions is not an array');
-        }
-
-        // For active subscribers, we'll need to count unique users with approved transactions
-        const uniqueUsers = new Set();
-        if (Array.isArray(transactions)) {
-          transactions.forEach((transaction: any) => {
-            if (transaction.transaction_status === 'APPROVED' && transaction.user) {
-              uniqueUsers.add(transaction.user);
-            }
-          });
-        }
-        stats.active_subscribers = uniqueUsers.size;
-
-        console.log('Calculated billing stats:', stats);
-        return stats;
+        const response = await apiClient.get('/billing/staff/stats/');
+        return response.data;
       } catch (error) {
-        console.error('Failed to load billing stats from API:', error);
-        
-        // Return fallback data for development/testing
-        console.log('Returning fallback billing stats...');
-        return {
-          total_revenue: 15000,
-          pending_transactions: 2,
-          approved_transactions: 25,
-          rejected_transactions: 3,
-          total_tokens_distributed: 4500,
-          active_subscribers: 18
-        };
+        console.error('Failed to get billing stats:', error);
+        throw handleApiError(error as AxiosError);
       }
-    }
+    },
+
+    // Get all user balances for staff view
+    getUserBalances: async (): Promise<{ success: boolean; data: any }> => {
+      try {
+        const response = await apiClient.get('/billing/staff/user_balances/');
+        return response.data;
+      } catch (error) {
+        console.error('Failed to get user balances:', error);
+        throw handleApiError(error as AxiosError);
+      }
+    },
+
+    // Get token usage statistics
+    getTokenUsageStats: async (days: number = 30): Promise<{ success: boolean; data: any }> => {
+      try {
+        const response = await apiClient.get('/billing/staff/token_usage/', {
+          params: { days }
+        });
+        return response.data;
+      } catch (error) {
+        console.error('Failed to get token usage stats:', error);
+        throw handleApiError(error as AxiosError);
+      }
+    },
+
+    // Get dashboard data for users
+    getDashboardData: async (): Promise<{ success: boolean; data: any }> => {
+      try {
+        const response = await apiClient.get('/billing/dashboard/dashboard_data/');
+        return response.data;
+      } catch (error) {
+        console.error('Failed to get dashboard data:', error);
+        throw handleApiError(error as AxiosError);
+      }
+    },
+
+    // Get payment info
+    getPaymentInfo: async (): Promise<{ success: boolean; data: any }> => {
+      try {
+        const response = await apiClient.get('/billing/dashboard/payment_info/');
+        return response.data;
+      } catch (error) {
+        console.error('Failed to get payment info:', error);
+        throw handleApiError(error as AxiosError);
+      }
+    },
+
+    // Get usage history
+    getUsageHistory: async (): Promise<{ success: boolean; data: any }> => {
+      try {
+        const response = await apiClient.get('/billing/token-usage/usage_history/');
+        return response.data;
+      } catch (error) {
+        console.error('Failed to get usage history:', error);
+        throw handleApiError(error as AxiosError);
+      }
+    },
   },
 
   // User export functionality

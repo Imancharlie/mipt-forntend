@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAppStore } from '@/store';
 import { useTheme } from '@/components/ThemeProvider';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
-import { PlusCircle, Calendar, BookOpen, Star, MapPin } from 'lucide-react';
+import { PlusCircle, Calendar, BookOpen, Star, MapPin, Coins } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getWeekDates, getCurrentWeek, TOTAL_WEEKS } from '@/utils/dateUtils';
 
@@ -521,15 +521,15 @@ export const DashboardPage: React.FC = () => {
           
           <button
             className={`w-full card p-3 lg:p-4 text-left hover:shadow-md transition-all duration-200 border border-transparent hover:border-${theme}-200`}
-            onClick={() => navigate('/weekly-report')}
+            onClick={() => navigate('/billing')}
           >
             <div className="flex items-center gap-3">
               <div className={`w-6 h-6 lg:w-8 lg:h-8 bg-${theme}-100 rounded-full flex items-center justify-center`}>
-                <Calendar className={`w-4 h-4 lg:w-5 lg:h-5 text-${theme}-600`} />
+                <Coins className={`w-4 h-4 lg:w-5 lg:h-5 text-${theme}-600`} />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900 text-sm lg:text-base">Current Week Report</h3>
-                <p className="text-xs lg:text-sm text-gray-600">View this week's report</p>
+                <h3 className="font-semibold text-gray-900 text-sm lg:text-base">Get Tokens</h3>
+                <p className="text-xs lg:text-sm text-gray-600">Access premium features</p>
               </div>
             </div>
           </button>
@@ -568,11 +568,15 @@ export const DashboardPage: React.FC = () => {
             {safeDailyReports.slice(0, 3).map((report) => {
               const isCompleted = report.hours_spent > 0 && report.description && report.description.length > 20;
               return (
-                <div key={report.id} className={`flex items-center gap-2 p-2 rounded transition-all duration-200 ${
-                  isCompleted 
-                    ? 'bg-green-50 border border-green-200' 
-                    : 'bg-gray-50 border border-gray-200 opacity-75'
-                }`}>
+                <button
+                  key={report.id}
+                  onClick={() => navigate(`/daily-report?week=${report.week_number}&date=${report.date}`)}
+                  className={`w-full text-left flex items-center gap-2 p-2 rounded transition-all duration-200 hover:shadow-sm ${
+                    isCompleted 
+                      ? 'bg-green-50 border border-green-200 hover:bg-green-100' 
+                      : 'bg-gray-50 border border-gray-200 opacity-75 hover:bg-gray-100'
+                  }`}
+                >
                   <div className={`w-1 h-1 rounded-full ${
                     isCompleted ? `bg-${theme}-500` : 'bg-gray-400'
                   }`}></div>
@@ -587,7 +591,7 @@ export const DashboardPage: React.FC = () => {
                   <span className={`text-xs lg:text-sm flex-shrink-0 ${
                     isCompleted ? 'text-gray-500' : 'text-gray-400'
                   }`}>{report.hours_spent}h</span>
-                </div>
+                </button>
               );
             })}
             {safeDailyReports.length === 0 && (
@@ -612,7 +616,11 @@ export const DashboardPage: React.FC = () => {
           </div>
           <div className="space-y-2">
             {safeWeeklyReports.slice(0, 3).map((report) => (
-              <div key={report.id} className="flex items-center gap-2 p-2 rounded bg-gray-50">
+              <button
+                key={report.id}
+                onClick={() => navigate(`/weekly-report/${report.week_number}`)}
+                className="w-full text-left flex items-center gap-2 p-2 rounded bg-gray-50 hover:bg-gray-100 hover:shadow-sm transition-all duration-200"
+              >
                 <div className={`w-1 h-1 bg-${theme}-500 rounded-full`}></div>
                 <div className="flex-1 min-w-0">
                   <p className="text-xs lg:text-sm font-medium text-gray-900">Week {report.week_number}</p>
@@ -625,7 +633,7 @@ export const DashboardPage: React.FC = () => {
                 }`}>
                   {report.status || 'DRAFT'}
                 </span>
-              </div>
+              </button>
             ))}
             {safeWeeklyReports.length === 0 && (
               <p className="text-gray-500 text-center py-3 text-xs lg:text-sm">No weekly reports yet</p>

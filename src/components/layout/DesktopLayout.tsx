@@ -25,7 +25,7 @@ interface DesktopLayoutProps {
 export const DesktopLayout: React.FC<DesktopLayoutProps> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout, userBalance, fetchUserBalance } = useAppStore();
+  const { user, logout, userBalance, fetchUserBalance, balanceLoading } = useAppStore();
   const { theme, setTheme, colorMode } = useTheme();
 
   // Fetch user balance on mount - only when user exists and balance is missing
@@ -107,12 +107,26 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({ children }) => {
               </div>
               
               {/* Token Display */}
-              {userBalance && (
+              {balanceLoading ? (
+                <div className="flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-full border border-gray-200 dark:border-gray-600">
+                  <div className="w-3 h-3 border-2 border-gray-300 border-t-transparent rounded-full animate-spin"></div>
+                  <span className="text-xs text-gray-500 dark:text-gray-400">Loading...</span>
+                </div>
+              ) : userBalance ? (
                 <div className="flex items-center gap-1 px-2 py-1 bg-orange-100 dark:bg-orange-900/30 rounded-full border border-orange-200 dark:border-orange-700">
                   <Coins className="w-3 h-3 text-orange-600 dark:text-orange-400" />
                   <span className="text-xs font-medium text-orange-700 dark:text-orange-300">{userBalance.available_tokens}</span>
                   <span className="text-xs text-orange-500 dark:text-orange-400">tokens</span>
                 </div>
+              ) : (
+                <button
+                  onClick={() => fetchUserBalance().catch(console.error)}
+                  className="flex items-center gap-1 px-2 py-1 bg-yellow-100 dark:bg-yellow-900/30 rounded-full border border-yellow-200 dark:border-yellow-700 hover:bg-yellow-200 dark:hover:bg-yellow-800/40 transition-colors"
+                  title="Click to refresh balance"
+                >
+                  <div className="w-3 h-3 text-yellow-600 dark:text-yellow-400">↻</div>
+                  <span className="text-xs text-yellow-700 dark:text-yellow-300">Refresh</span>
+                </button>
               )}
             </button>
           </div>

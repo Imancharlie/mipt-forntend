@@ -23,7 +23,8 @@ export const testApiConnection = async () => {
     
     // Test if backend is reachable
     try {
-      const testResponse = await fetch('http://localhost:8000/api/auth/health/');
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api';
+      const testResponse = await fetch(`${baseUrl}/auth/health/`);
       console.log('Direct fetch test:', testResponse.status, testResponse.statusText);
     } catch (fetchError) {
       console.error('Direct fetch also failed:', fetchError);
@@ -59,7 +60,8 @@ export const testAIEnhancementEndpoint = async (weeklyReportId: number) => {
     // Test 1: Check if report exists
     console.log('📋 Test 1: Checking if weekly report exists...');
     try {
-      const response = await fetch(`http://localhost:8000/api/reports/weekly/week/${weeklyReportId}/`, {
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api';
+      const response = await fetch(`${baseUrl}/reports/weekly/week/${weeklyReportId}/`, {
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
           'Content-Type': 'application/json'
@@ -81,7 +83,8 @@ export const testAIEnhancementEndpoint = async (weeklyReportId: number) => {
     // Test 2: Test AI enhancement endpoint
     console.log('🤖 Test 2: Testing AI enhancement endpoint...');
     try {
-      const response = await fetch(`http://localhost:8000/api/reports/weekly/enhance/${weeklyReportId}/`, {
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api';
+      const response = await fetch(`${baseUrl}/reports/weekly/week/${weeklyReportId}/enhance_with_ai/`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${localStorage.getItem('access_token')}`,

@@ -446,4 +446,36 @@ export interface PaymentInfo {
     partial: string;
     empty: string;
   };
+}
+
+export interface BillingStats {
+  total_revenue: number;
+  pending_transactions: number;
+  approved_transactions: number;
+  rejected_transactions: number;
+  total_tokens_distributed: number;
+  active_subscribers: number;
+}
+
+// API Response interfaces for billing
+export interface ApiBillingStatsResponse {
+  transactions: {
+    pending: number;
+    approved: number;
+    rejected: number;
+    active_subscribers: number;
+  };
+  revenue: {
+    total: number;
+  };
+  tokens: {
+    total: number;
+  };
+}
+
+export interface ApiTransactionsResponse {
+  count: number;
+  next: any;
+  previous: any;
+  results: Transaction[];
 } 

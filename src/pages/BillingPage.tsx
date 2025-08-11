@@ -37,6 +37,7 @@ const BillingPage: React.FC = () => {
   const { 
     userBalance, 
     paymentInfo, 
+    profile,
     fetchUserBalance, 
     fetchPaymentInfo, 
     createTransaction
@@ -53,6 +54,11 @@ const BillingPage: React.FC = () => {
     confirmationType: 'own'
   });
   const [calculatorAmount, setCalculatorAmount] = useState<number>(2000);
+  const [transactionSuccess, setTransactionSuccess] = useState<{
+    show: boolean;
+    transactionId?: number;
+    amount?: number;
+  }>({ show: false });
 
   useEffect(() => {
     fetchUserBalance();
@@ -63,18 +69,18 @@ const BillingPage: React.FC = () => {
     {
       id: 'mpesa',
       name: 'M-Pesa',
-      description: 'Pay using M-Pesa mobile money',
+      description: 'LiPA NAMBA',
       icon: <Phone className="w-6 h-6" />,
-      number: paymentInfo?.payment_number || '4556432',
-      accountName: 'MIPT Training'
+      number: paymentInfo?.payment_number || '5356432',
+      accountName: 'MIPT Softwares'
     },
     {
       id: 'airtel',
       name: 'Airtel Money',
-      description: 'Pay using Airtel Money',
+      description: 'LiPA NAMBA',
       icon: <Phone className="w-6 h-6" />,
       number: '4556432',
-      accountName: 'MIPT Training'
+      accountName: 'MIPT Softwares'
     }
   ];
 
@@ -92,12 +98,19 @@ const BillingPage: React.FC = () => {
       showError('Payment amount must be in multiples of 1000 TSH');
       return;
     }
+    // Clear any previous success state
+    setTransactionSuccess({ show: false });
     setShowPaymentMethods(true);
   };
 
   const handleSubmitConfirmation = async () => {
     if (!paymentDetails.amount || paymentDetails.amount <= 0) {
       showError('Please enter a valid amount');
+      return;
+    }
+
+    if (confirmationType === 'own' && !profile?.phone_number) {
+      showError('Your profile phone number is missing. Please update your profile first.');
       return;
     }
 
@@ -108,13 +121,15 @@ const BillingPage: React.FC = () => {
 
     if (confirmationType === 'wakala' && !paymentDetails.wakalaName) {
       showError('Please enter the wakala name');
-        return;
-      }
+      return;
+    }
 
     try {
-      // Create transaction data based on confirmation type
+      // Create transaction data based on payment method
       const transactionData: CreateTransactionData = {
-        user_phone_number: paymentDetails.phoneNumber || paymentInfo?.payment_number || '',
+        user_phone_number: confirmationType === 'own' 
+          ? (profile?.phone_number || '') 
+          : (paymentDetails.phoneNumber || ''),
         sender_name: paymentDetails.name,
         payment_method: confirmationType === 'wakala' ? 'WAKALA' : 'DIRECT',
         amount: paymentDetails.amount,
@@ -124,14 +139,48 @@ const BillingPage: React.FC = () => {
         transactionData.wakala_name = paymentDetails.wakalaName;
       }
 
-      await createTransaction(transactionData);
+      // Debug logging
+      console.log('Transaction data being sent:', transactionData);
+      console.log('Profile phone number:', profile?.phone_number);
+      console.log('Confirmation type:', confirmationType);
+      console.log('About to call createTransaction...');
 
-      showSuccess('Payment confirmation submitted! Staff will verify and add tokens to your account.');
+      const transaction = await createTransaction(transactionData);
+
+      console.log('✅ Transaction created successfully:', transaction);
+
+      // Show success message
+      showSuccess('Transaction created successfully! Staff will verify your payment and add tokens to your account. You can view your transaction status in the admin panel.');
+      
+      // Set success state for visual confirmation
+      setTransactionSuccess({
+        show: true,
+        transactionId: transaction.id,
+        amount: parseFloat(transaction.amount) || paymentDetails.amount
+      });
+      
+      // Close modal and reset form
       setShowConfirmationModal(false);
       setConfirmationType('');
       setPaymentDetails({ method: '', amount: 0, name: '', confirmationType: 'own' });
+      
+      // Show a visual confirmation before refreshing
+      setTimeout(() => {
+        // Try to refresh user balance, but don't fail if it doesn't work
+        try {
+          if (userBalance) {
+            console.log('🔄 Refreshing page to show updated balance...');
+            // Trigger a refresh of the balance
+            window.location.reload();
+          }
+        } catch (refreshError) {
+          console.warn('Failed to refresh balance after transaction:', refreshError);
+          // Transaction was successful, so this is not critical
+        }
+      }, 3000); // Wait 3 seconds to ensure success message is visible
     } catch (error) {
-      showError('Failed to submit payment confirmation. Please try again.');
+      console.error('Transaction creation error:', error);
+      showError('Failed to submit transaction. Please try again.');
     }
   };
 
@@ -146,6 +195,42 @@ const BillingPage: React.FC = () => {
           <p className="text-gray-600 dark:text-gray-300 text-lg">Manage your tokens and make payments</p>
         </div>
       </div>
+
+      {/* Transaction Success Banner */}
+      {transactionSuccess.show && (
+        <div className="mb-6">
+          <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-2xl p-6">
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0">
+                <div className="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-full flex items-center justify-center">
+                  <svg className="w-6 h-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
+                </div>
+              </div>
+              <div className="flex-1">
+                <h3 className="text-lg font-semibold text-green-800 dark:text-green-200 mb-1">
+                  Transaction Submitted Successfully! 🎉
+                </h3>
+                <div className="text-sm text-green-700 dark:text-green-300 space-y-1">
+                  <p><strong>Transaction ID:</strong> #{transactionSuccess.transactionId}</p>
+                  <p><strong>Amount:</strong> {transactionSuccess.amount?.toLocaleString()} TSH</p>
+                  <p><strong>Status:</strong> Pending staff verification</p>
+                  <p className="text-xs mt-2">Your payment will be verified by staff and tokens will be added to your account shortly.</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setTransactionSuccess({ show: false })}
+                className="flex-shrink-0 text-green-600 dark:text-green-400 hover:text-green-800 dark:hover:text-green-200"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Current Tokens */}
       <div className="mb-8">
@@ -306,14 +391,17 @@ const BillingPage: React.FC = () => {
             <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
               <div className="text-center">
                 <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">
-                  After making your payment, click below to submit for confirmation
+                  After making your payment, click below to submit your transaction
                 </h3>
                 <button
-                  onClick={() => setShowConfirmationModal(true)}
+                  onClick={() => {
+                    setTransactionSuccess({ show: false });
+                    setShowConfirmationModal(true);
+                  }}
                   className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
                 >
                   <ExternalLink className="w-5 h-5" />
-                  Click here to submit for confirmation
+                  Submit Transaction
                 </button>
                 <p className="text-sm text-gray-600 dark:text-gray-400 mt-3">
                   Staff will verify your payment and add tokens to your account
@@ -329,7 +417,7 @@ const BillingPage: React.FC = () => {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-gray-800 dark:text-white">Payment Confirmation</h3>
+              <h3 className="text-xl font-bold text-gray-800 dark:text-white">Submit Transaction</h3>
               <button
                 onClick={() => {
                   setShowConfirmationModal(false);
@@ -422,6 +510,11 @@ const BillingPage: React.FC = () => {
 
                   {confirmationType === 'wakala' && (
                     <div>
+                      <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
+                        <p className="text-sm text-blue-700 dark:text-blue-300">
+                          <strong>Phone Number:</strong> {profile?.phone_number || 'Not set in profile'}
+                        </p>
+                      </div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Wakala/Agent Name
                       </label>
@@ -451,8 +544,15 @@ const BillingPage: React.FC = () => {
                     </div>
                   </div>
 
-                  {confirmationType !== 'wakala' && (
+                  {(confirmationType === 'own' || confirmationType === 'different') && (
                     <div>
+                      {confirmationType === 'own' && (
+                        <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
+                          <p className="text-sm text-blue-700 dark:text-blue-300">
+                            <strong>Phone Number:</strong> {profile?.phone_number || 'Not set in profile'}
+                          </p>
+                        </div>
+                      )}
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
                         Name on Phone Number
                       </label>
@@ -471,7 +571,7 @@ const BillingPage: React.FC = () => {
                     className="w-full px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2"
                   >
                     <Send className="w-4 h-4" />
-                    Submit for Confirmation
+                    Submit Transaction
                   </button>
                 </div>
               )}

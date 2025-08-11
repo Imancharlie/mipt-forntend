@@ -80,10 +80,19 @@ const AdminDashboardPage: React.FC = () => {
         adminDashboardService.getDashboardStats(),
         adminDashboardService.getRecentActivity()
       ]);
+      
+      console.log('Dashboard stats:', statsData);
+      console.log('Recent activity:', activityData);
+      console.log('Stats type:', typeof statsData, 'Activity type:', typeof activityData);
+      
       setStats(statsData);
       setRecentActivity(activityData);
     } catch (error) {
+      console.error('Admin dashboard error:', error);
       showError('Failed to load admin dashboard data');
+      // Reset data to prevent rendering with null values
+      setStats(null);
+      setRecentActivity(null);
     } finally {
       setLoading(false);
     }
@@ -101,6 +110,9 @@ const AdminDashboardPage: React.FC = () => {
           <h2 className="text-xl font-semibold text-gray-900 dark:text-white mb-2">
             Failed to Load Dashboard
           </h2>
+          <p className="text-gray-600 dark:text-gray-400 mb-4">
+            There was an error loading the admin dashboard data. Please check your connection and try again.
+          </p>
           <button
             onClick={loadDashboardData}
             className="btn-primary"
@@ -207,28 +219,6 @@ const AdminDashboardPage: React.FC = () => {
           />
         </div>
 
-        {/* Secondary Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <StatCard
-            title="Companies"
-            value={stats.total_companies}
-            icon={Building}
-            color="bg-indigo-500"
-          />
-          <StatCard
-            title="New Users This Week"
-            value={stats.new_users_this_week}
-            icon={Calendar}
-            color="bg-pink-500"
-          />
-          <StatCard
-            title="Reports This Month"
-            value={stats.reports_this_month}
-            icon={FileText}
-            color="bg-teal-500"
-          />
-        </div>
-
         {/* Recent Activity Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Recent Users */}
@@ -237,7 +227,7 @@ const AdminDashboardPage: React.FC = () => {
               Recent Users
             </h3>
             <div className="space-y-3">
-              {recentActivity.recent_users.slice(0, 5).map((user) => (
+              {recentActivity.recent_users?.slice(0, 5).map((user) => (
                 <div key={user.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                   <div>
                     <p className="font-medium text-gray-900 dark:text-white">
@@ -249,7 +239,11 @@ const AdminDashboardPage: React.FC = () => {
                     {new Date(user.date_joined).toLocaleDateString()}
                   </span>
                 </div>
-              ))}
+              )) || (
+                <div className="text-center py-4 text-gray-500">
+                  No recent users data available
+                </div>
+              )}
             </div>
           </div>
 
@@ -259,7 +253,7 @@ const AdminDashboardPage: React.FC = () => {
               Recent AI Usage
             </h3>
             <div className="space-y-3">
-              {recentActivity.recent_ai_logs.slice(0, 5).map((log, index) => (
+              {recentActivity.recent_ai_logs?.slice(0, 5).map((log, index) => (
                 <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
                   <div>
                     <p className="font-medium text-gray-900 dark:text-white">
@@ -273,13 +267,17 @@ const AdminDashboardPage: React.FC = () => {
                     {new Date(log.created_at).toLocaleDateString()}
                   </span>
                 </div>
-              ))}
+              )) || (
+                <div className="text-center py-4 text-gray-500">
+                  No recent AI usage data available
+                </div>
+              )}
             </div>
           </div>
         </div>
 
         {/* Program Statistics */}
-        {recentActivity.program_stats.length > 0 && (
+        {recentActivity.program_stats && recentActivity.program_stats.length > 0 && (
           <div className="mt-6 bg-white dark:bg-gray-800 rounded-lg p-6 shadow-lg border border-gray-200 dark:border-gray-700">
             <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
               Program Distribution

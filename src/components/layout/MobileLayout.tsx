@@ -9,7 +9,7 @@ interface MobileLayoutProps {
 
 export const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { user, logout, theme, userBalance, fetchUserBalance, loading } = useAppStore();
+  const { user, logout, theme, userBalance, fetchUserBalance, balanceLoading } = useAppStore();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -49,7 +49,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
 
   // Render token display with different states
   const renderTokenDisplay = () => {
-    if (loading?.userBalance) {
+    if (balanceLoading) {
       return (
         <div className="flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-700 rounded-full border border-gray-200 dark:border-gray-600">
           <Loader2 className="w-3 h-3 text-gray-500 animate-spin" />

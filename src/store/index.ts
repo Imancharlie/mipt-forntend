@@ -104,6 +104,10 @@ interface AppState {
   // UI State
   theme: Theme;
   loading: LoadingState;
+  balanceLoading: boolean;
+  dashboardLoading: boolean;
+  dailyReportsLoading: boolean;
+  weeklyReportsLoading: boolean;
   error: AppError | null;
   
   // Actions
@@ -126,6 +130,10 @@ interface AppState {
   setPaymentInfo: (info: PaymentInfo | null) => void;
   setTheme: (theme: Theme) => void;
   setLoading: (loading: LoadingState) => void;
+  setBalanceLoading: (loading: boolean) => void;
+  setDashboardLoading: (loading: boolean) => void;
+  setDailyReportsLoading: (loading: boolean) => void;
+  setWeeklyReportsLoading: (loading: boolean) => void;
   setError: (error: AppError | null) => void;
   
   // API Actions
@@ -178,6 +186,8 @@ interface AppState {
   clearError: () => void;
   clearLoading: () => void;
   initializeAuth: () => Promise<void>;
+  setupAuthListener: () => (() => void);
+  silentTokenRefresh: () => Promise<boolean>;
 }
 
 export const useAppStore = create<AppState>()(
@@ -236,6 +246,10 @@ export const useAppStore = create<AppState>()(
       adminLoading: { users: false, userActions: false, userBalances: false },
       theme: 'orange',
       loading: { isLoading: false },
+      balanceLoading: false,
+      dashboardLoading: false,
+      dailyReportsLoading: false,
+      weeklyReportsLoading: false,
       error: null,
 
       // Setters
@@ -267,6 +281,10 @@ export const useAppStore = create<AppState>()(
       setPaymentInfo: (paymentInfo) => set({ paymentInfo }),
       setTheme: (theme) => set({ theme }),
       setLoading: (loading) => set({ loading }),
+      setBalanceLoading: (loading) => set({ balanceLoading: loading }),
+      setDashboardLoading: (loading) => set({ dashboardLoading: loading }),
+      setDailyReportsLoading: (loading) => set({ dailyReportsLoading: loading }),
+      setWeeklyReportsLoading: (loading) => set({ weeklyReportsLoading: loading }),
       setError: (error) => set({ error }),
       setAdminUsers: (adminUsers: any) => set({ adminUsers }),
       setAdminUserBalances: (adminUserBalances: Record<number, UserBalance>) => set({ adminUserBalances }),
@@ -432,7 +450,13 @@ export const useAppStore = create<AppState>()(
           
           // Clear the token from apiClient and localStorage
           setAuthToken(null);
+          localStorage.removeItem('access_token');
           localStorage.removeItem('refresh_token');
+          
+          // Smooth redirect to login
+          if (window.location.pathname !== '/login') {
+            window.location.href = '/login';
+          }
         } catch (error) {
           // Even if there's an error, clear the auth state
           set({ 
@@ -447,7 +471,13 @@ export const useAppStore = create<AppState>()(
           
           // Clear the token from apiClient and localStorage
           setAuthToken(null);
+          localStorage.removeItem('access_token');
           localStorage.removeItem('refresh_token');
+          
+          // Smooth redirect to login even on error
+          if (window.location.pathname !== '/login') {
+            window.location.href = '/login';
+          }
         }
       },
 
@@ -592,29 +622,29 @@ export const useAppStore = create<AppState>()(
       },
 
       fetchDashboard: async () => {
-        set({ loading: { isLoading: true, message: 'Loading dashboard...' } });
+        set({ dashboardLoading: true });
         try {
           const dashboardStats = await dashboardService.getDashboard();
-          set({ dashboardStats, loading: { isLoading: false } });
+          set({ dashboardStats, dashboardLoading: false });
         } catch (error) {
           console.warn('Using mock data for dashboard');
           set({ 
             dashboardStats: null,
-            loading: { isLoading: false }
+            dashboardLoading: false
           });
         }
       },
 
       fetchDailyReports: async () => {
-        set({ loading: { isLoading: true, message: 'Loading daily reports...' } });
+        set({ dailyReportsLoading: true });
         try {
           const dailyReports = await dailyReportService.getDailyReports();
-          set({ dailyReports, loading: { isLoading: false } });
+          set({ dailyReports, dailyReportsLoading: false });
         } catch (error) {
           console.warn('Using mock data for daily reports');
           set({ 
             dailyReports: [],
-            loading: { isLoading: false }
+            dailyReportsLoading: false
           });
         }
       },
@@ -657,15 +687,15 @@ export const useAppStore = create<AppState>()(
       },
 
       fetchWeeklyReports: async () => {
-        set({ loading: { isLoading: true, message: 'Loading weekly reports...' } });
+        set({ weeklyReportsLoading: true });
         try {
           const weeklyReports = await weeklyReportService.getWeeklyReports();
-          set({ weeklyReports, loading: { isLoading: false } });
+          set({ weeklyReports, weeklyReportsLoading: false });
         } catch (error) {
           console.warn('Using mock data for weekly reports');
           set({ 
             weeklyReports: [],
-            loading: { isLoading: false }
+            weeklyReportsLoading: false
           });
         }
       },
@@ -898,18 +928,18 @@ export const useAppStore = create<AppState>()(
 
       // Billing Actions
       fetchUserBalance: async () => {
-        set({ loading: { isLoading: true, message: 'Fetching balance...' } });
+        set({ balanceLoading: true });
         try {
           const response = await billingService.getBalance();
           if (response.success) {
-            set({ userBalance: response.data, loading: { isLoading: false } });
+            set({ userBalance: response.data, balanceLoading: false });
           } else {
             throw new Error('Failed to fetch balance');
           }
         } catch (error) {
           set({ 
             error: { message: 'Failed to fetch balance', type: 'network' },
-            loading: { isLoading: false }
+            balanceLoading: false
           });
           throw error;
         }
@@ -920,8 +950,13 @@ export const useAppStore = create<AppState>()(
         try {
           const response = await billingService.createTransaction(data);
           if (response.success) {
-            // Refresh transactions
-            await get().fetchTransactions();
+            // Try to refresh transactions, but don't fail if it doesn't work
+            try {
+              await get().fetchTransactions();
+            } catch (refreshError) {
+              console.warn('Failed to refresh transactions after creation:', refreshError);
+              // Don't let this break the transaction creation success
+            }
             set({ loading: { isLoading: false } });
             return response.data;
           } else {
@@ -1164,6 +1199,50 @@ export const useAppStore = create<AppState>()(
             setAuthToken(null);
             localStorage.removeItem('refresh_token');
           }
+        }
+      },
+
+      // Global authentication state manager
+      setupAuthListener: () => {
+        // Listen for token expiration events from API client
+        const handleTokenExpired = () => {
+          console.log('🔄 Global auth listener: Token expired, clearing authentication state');
+          get().logout(); // This will clear everything and redirect to login
+        };
+
+        // Add event listener
+        window.addEventListener('auth:token-expired', handleTokenExpired);
+        
+        // Return cleanup function
+        return () => {
+          window.removeEventListener('auth:token-expired', handleTokenExpired);
+        };
+      },
+
+      // Silent token refresh (called automatically by API client)
+      silentTokenRefresh: async () => {
+        const refreshToken = get().tokens.refresh;
+        if (!refreshToken) {
+          console.warn('No refresh token available for silent refresh');
+          return false;
+        }
+
+        try {
+          const response = await authService.refreshToken({ refresh: refreshToken });
+          const newTokens = { access: response.access, refresh: response.refresh || refreshToken };
+          
+          set({ tokens: newTokens });
+          setAuthToken(newTokens.access);
+          
+          if (newTokens.refresh) {
+            localStorage.setItem('refresh_token', newTokens.refresh);
+          }
+          
+          console.log('🔄 Silent token refresh successful');
+          return true;
+        } catch (error) {
+          console.warn('Silent token refresh failed:', error);
+          return false;
         }
       },
     }),

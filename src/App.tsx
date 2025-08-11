@@ -61,12 +61,18 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 };
 
 const App: React.FC = () => {
-  const { theme, loading, initializeAuth } = useAppStore();
+  const { theme, loading, initializeAuth, setupAuthListener } = useAppStore();
 
   // Initialize authentication state on app startup
   React.useEffect(() => {
     initializeAuth();
   }, [initializeAuth]);
+
+  // Setup global authentication listener
+  React.useEffect(() => {
+    const cleanup = setupAuthListener();
+    return cleanup;
+  }, [setupAuthListener]);
 
   return (
     <ErrorBoundary>

@@ -192,7 +192,7 @@ export const ProfilePage: React.FC = () => {
             onClick={() => setIsEditing(!isEditing)}
           >
             <Edit className="w-4 h-4" />
-            {isEditing ? 'Cancel Edit' : 'Edit Profile'}
+            {isEditing ? 'Cancel' : 'Edit'}
           </button>
         </div>
 
@@ -273,7 +273,20 @@ export const ProfilePage: React.FC = () => {
       {/* Profile Form */}
       <div className="card">
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-          {/* Personal Information */}
+          {/* Personal Information */} 
+          {/* Save Button */}
+          {isEditing && (
+            <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
+              <button 
+                type="submit" 
+                className="btn-primary flex items-center gap-2"
+                disabled={isSubmitting || loading.isLoading}
+              >
+                {(isSubmitting || loading.isLoading) ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                Save 
+              </button>
+            </div>
+          )}
           <div>
             <h2 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <User className="w-5 h-5" />
@@ -411,19 +424,7 @@ export const ProfilePage: React.FC = () => {
             </div>
           </div>
 
-          {/* Save Button */}
-          {isEditing && (
-            <div className="flex justify-end pt-4 border-t border-gray-200 dark:border-gray-700">
-              <button 
-                type="submit" 
-                className="btn-primary flex items-center gap-2"
-                disabled={isSubmitting || loading.isLoading}
-              >
-                {(isSubmitting || loading.isLoading) ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                Save Changes
-              </button>
-            </div>
-          )}
+         
         </form>
       </div>
 

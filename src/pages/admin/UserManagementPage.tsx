@@ -2,7 +2,9 @@ import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/store';
 import { useToastContext } from '@/contexts/ToastContext';
-import { adminDashboardService, UsersResponse, UserBalance } from '@/api/adminServices';
+import { adminDashboardService, UsersResponse } from '@/api/adminServices';
+import { UserBalance } from '@/types';
+import { setAuthToken } from '@/api/client';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { 
   Users, 
@@ -203,11 +205,12 @@ const UserManagementPage: React.FC = () => {
     adminLoading,
     fetchAdminUsers, 
     performAdminUserAction, 
-    fetchAdminUserBalance 
+    fetchAdminUserBalance,
+    initializeAuth
   } = useAppStore();
   
   const navigate = useNavigate();
-  const { showToast } = useToastContext();
+  const { showError, showSuccess, showWarning } = useToastContext();
   
   // Local state for UI
   const [selectedUsers, setSelectedUsers] = useState<number[]>([]);
@@ -232,7 +235,7 @@ const UserManagementPage: React.FC = () => {
       await fetchAdminUsers(filters);
     } catch (error) {
       console.error('Failed to load users:', error);
-      showToast('Failed to load users. Please try again.', 'error');
+      showError('Failed to load users. Please try again.');
     }
   };
 
@@ -240,24 +243,62 @@ const UserManagementPage: React.FC = () => {
   const loadUserBalance = async (userId: number) => {
     if (adminUserBalances[userId] || adminLoading.userBalances) return;
     
+    // Debug authentication before API call
+    console.log('loadUserBalance - Before API call:', {
+      userId,
+      accessToken: localStorage.getItem('access_token') ? 'Present' : 'Missing',
+      accessTokenValue: localStorage.getItem('access_token')?.substring(0, 20) + '...',
+      user: user?.username,
+      isStaff: user?.is_staff
+    });
+    
+    // Ensure token is set in API client
+    const accessToken = localStorage.getItem('access_token');
+    if (!accessToken) {
+      showError('No access token found. Please log in again.');
+      return;
+    }
+    
+    // Set the token in the API client
+    setAuthToken(accessToken);
+    
     try {
       await fetchAdminUserBalance(userId);
     } catch (error) {
       console.error(`Failed to load balance for user ${userId}:`, error);
-      showToast(`Failed to load balance for user ${userId}`, 'error');
+      showError(`Failed to load balance for user ${userId}`);
     }
   };
 
   useEffect(() => {
     // Check if user is staff
     if (!user?.is_staff) {
-      showToast('Access denied. Staff privileges required.', 'error');
+      showError('Access denied. Staff privileges required.');
       navigate('/dashboard');
       return;
     }
 
+    // Debug authentication state
+    console.log('UserManagementPage - Authentication state:', {
+      user: user,
+      isStaff: user?.is_staff,
+      tokens: localStorage.getItem('access_token') ? 'Present' : 'Missing',
+      isAuthenticated: user ? 'Yes' : 'No'
+    });
+
+    // Ensure authentication is initialized
+    if (user && !localStorage.getItem('access_token')) {
+      console.warn('No access token found, attempting to re-authenticate...');
+      // Try to initialize authentication
+      initializeAuth().catch(() => {
+        showError('Authentication token missing. Please log in again.');
+        navigate('/login');
+      });
+      return;
+    }
+
     loadUsers();
-  }, [user, navigate, showToast, filters]);
+  }, [user, navigate, showError, filters, initializeAuth]); // Added initializeAuth to dependency array
 
   const handleFilterChange = (key: keyof UserFilters, value: string | number) => {
     setFilters(prev => ({
@@ -305,7 +346,7 @@ const UserManagementPage: React.FC = () => {
 
   const handleBulkAction = async (action: 'BAN' | 'UNBAN' | 'DELETE' | 'ACTIVATE', reason: string = '') => {
     if (selectedUsers.length === 0) {
-      showToast('Please select users first', 'warning');
+      showWarning('Please select users first');
       return;
     }
 
@@ -320,12 +361,12 @@ const UserManagementPage: React.FC = () => {
         reason: reason || `Bulk ${action.toLowerCase()} action`
       });
       
-      showToast(`Successfully ${action.toLowerCase()}ned ${selectedUsers.length} user(s)`);
+      showSuccess(`Successfully ${action.toLowerCase()}ned ${selectedUsers.length} user(s)`);
       setSelectedUsers([]);
       setShowBulkActions(false);
       loadUsers();
     } catch (error) {
-      showToast(`Failed to ${action.toLowerCase()} users`);
+      showError(`Failed to ${action.toLowerCase()} users`);
     } finally {
       setActionLoading(false);
     }
@@ -348,10 +389,10 @@ const UserManagementPage: React.FC = () => {
         reason: reason || `${actionText} action by admin`
       });
       
-      showToast(`Successfully ${actionText}ed ${userData.first_name} ${userData.last_name}`);
+      showSuccess(`Successfully ${actionText}ed ${userData.first_name} ${userData.last_name}`);
       loadUsers(); // Refresh the user list
     } catch (error) {
-      showToast(`Failed to ${actionText} user`);
+      showError(`Failed to ${actionText} user`);
     } finally {
       setActionLoading(false);
     }
@@ -360,7 +401,7 @@ const UserManagementPage: React.FC = () => {
   // Export users to CSV
   const exportUsersToCSV = async () => {
     if (!adminUsers?.users.length) {
-      showToast('No users to export', 'warning');
+      showWarning('No users to export');
       return;
     }
 
@@ -383,11 +424,11 @@ const UserManagementPage: React.FC = () => {
         window.URL.revokeObjectURL(url);
         document.body.removeChild(a);
         
-        showToast('Users exported successfully!', 'success');
+        showSuccess('Users exported successfully!');
       }
     } catch (error) {
       console.error('Export failed:', error);
-      showToast('Failed to export users. Please try again.', 'error');
+      showError('Failed to export users. Please try again.');
     } finally {
       setExportLoading(false);
     }
@@ -437,25 +478,25 @@ const UserManagementPage: React.FC = () => {
             <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border">
               <p className="text-sm text-gray-600 dark:text-gray-400">Total Users</p>
               <p className="text-2xl font-bold text-gray-900 dark:text-white">
-                {(adminUsers.total_users || 0).toLocaleString()}
+                {(adminUsers.totalUsers || 0).toLocaleString()}
               </p>
             </div>
             <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border">
               <p className="text-sm text-gray-600 dark:text-gray-400">Active Users</p>
               <p className="text-2xl font-bold text-green-600">
-                {(adminUsers.active_users || 0).toLocaleString()}
+                {(adminUsers.activeUsers || 0).toLocaleString()}
               </p>
             </div>
             <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border">
               <p className="text-sm text-gray-600 dark:text-gray-400">New This Week</p>
               <p className="text-2xl font-bold text-blue-600">
-                {(adminUsers.new_users_week || 0).toLocaleString()}
+                {(adminUsers.newUsersWeek || 0).toLocaleString()}
               </p>
             </div>
             <div className="bg-white dark:bg-gray-800 p-4 rounded-lg border">
               <p className="text-sm text-gray-600 dark:text-gray-400">New Today</p>
               <p className="text-2xl font-bold text-purple-600">
-                {(adminUsers.new_users_today || 0).toLocaleString()}
+                {(adminUsers.newUsersToday || 0).toLocaleString()}
               </p>
             </div>
           </div>
@@ -750,51 +791,24 @@ const UserManagementPage: React.FC = () => {
                               e.stopPropagation();
                               handleUserClick(userData);
                             }}
-                            className="p-1 text-gray-500 hover:text-blue-600 dark:text-gray-400 dark:hover:text-blue-400 transition-colors"
+                            className="p-1 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
                             title="View Details"
                           >
                             <Eye className="w-4 h-4" />
                           </button>
-                          
-                          {userData.is_active ? (
+                          <div className="relative">
                             <button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                handleIndividualUserAction(userData.id, 'BAN');
+                                // Logic for dropdown menu
                               }}
-                              disabled={actionLoading}
-                              className="p-1 text-gray-500 hover:text-red-600 dark:text-gray-400 dark:hover:text-red-400 transition-colors disabled:opacity-50"
-                              title="Ban User"
+                              className="p-1 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
+                              title="More actions"
                             >
-                              <Ban className="w-4 h-4" />
+                              <MoreVertical className="w-4 h-4" />
                             </button>
-                          ) : (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleIndividualUserAction(userData.id, 'ACTIVATE');
-                              }}
-                              disabled={actionLoading}
-                              className="p-1 text-gray-500 hover:text-green-600 dark:text-gray-400 dark:hover:text-green-400 transition-colors disabled:opacity-50"
-                              title="Activate User"
-                            >
-                              <UserCheck className="w-4 h-4" />
-                            </button>
-                          )}
-                          
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (window.confirm(`Are you sure you want to delete ${userData.first_name} ${userData.last_name}? This action cannot be undone.`)) {
-                                handleIndividualUserAction(userData.id, 'DELETE');
-                              }
-                            }}
-                            disabled={actionLoading}
-                            className="p-1 text-gray-500 hover:text-red-800 dark:text-gray-400 dark:hover:text-red-600 transition-colors disabled:opacity-50"
-                            title="Delete User"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                            {/* Dropdown content would go here */}
+                          </div>
                         </div>
                       </td>
                     </tr>
@@ -809,13 +823,13 @@ const UserManagementPage: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <p className="text-sm text-gray-600 dark:text-gray-400">
                     Showing {((adminUsers.pagination?.page || 1) - 1) * 50 + 1} to{' '}
-                    {Math.min((adminUsers.pagination?.page || 1) * 50, adminUsers.pagination?.total_count || 0)} of{' '}
-                    {adminUsers.pagination?.total_count || 0} users
+                    {Math.min((adminUsers.pagination?.page || 1) * 50, adminUsers.pagination?.totalCount || 0)} of{' '}
+                    {adminUsers.pagination?.totalCount || 0} users
                   </p>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleFilterChange('page', filters.page - 1)}
-                      disabled={!adminUsers.pagination?.has_previous}
+                      disabled={!adminUsers.pagination?.hasPrevious}
                       className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-600"
                     >
                       <ChevronLeft className="w-4 h-4" />
@@ -825,7 +839,7 @@ const UserManagementPage: React.FC = () => {
                     </span>
                     <button
                       onClick={() => handleFilterChange('page', filters.page + 1)}
-                      disabled={!adminUsers.pagination?.has_next}
+                      disabled={!adminUsers.pagination?.hasNext}
                       className="p-2 rounded-lg border border-gray-300 dark:border-gray-600 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-100 dark:hover:bg-gray-600"
                     >
                       <ChevronRight className="w-4 h-4" />
@@ -836,35 +850,19 @@ const UserManagementPage: React.FC = () => {
             )}
           </div>
         )}
-
-        {adminUsers && adminUsers.users.length === 0 && (
-          <div className="text-center py-12">
-            <Users className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-gray-900 dark:text-white mb-2">
-              No users found
-            </h3>
-            <p className="text-gray-600 dark:text-gray-400">
-              Try adjusting your search criteria or filters.
-            </p>
-          </div>
-        )}
       </div>
 
-      {/* User Detail Modal */}
-      <UserDetailModal
-        user={selectedUser}
-        isOpen={showUserDetail}
-        onClose={() => {
-          setShowUserDetail(false);
-          setSelectedUser(null);
-        }}
-        userBalance={adminUserBalances[selectedUser?.id] || null}
-        loadingBalance={adminLoading.userBalances}
-      />
+      {selectedUser && (
+        <UserDetailModal
+          user={selectedUser}
+          isOpen={showUserDetail}
+          onClose={() => setShowUserDetail(false)}
+          userBalance={adminUserBalances[selectedUser.id] || null}
+          loadingBalance={adminLoading.userBalances && !adminUserBalances[selectedUser.id]}
+        />
+      )}
     </div>
   );
 };
 
 export default UserManagementPage;
-
-

@@ -4,6 +4,7 @@ import { useTheme } from '@/components/ThemeProvider';
 import { DailyReport, CreateDailyReportData } from '@/types';
 import apiClient from '@/api/client';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { useSearchParams } from 'react-router-dom';
 import { 
   Calendar, 
   Clock, 
@@ -36,6 +37,7 @@ export const DailyReportPage: React.FC = () => {
   const { createDailyReport } = useAppStore();
   const { theme } = useTheme();
   const { showSuccess, showError } = useToastContext();
+  const [searchParams] = useSearchParams();
   
   // Calculate current week based on July 21, 2025 start date (Monday)
   const getCurrentWeekNumber = () => {
@@ -64,12 +66,36 @@ export const DailyReportPage: React.FC = () => {
     return Math.max(1, diffWeeks);
   };
   
-  const [selectedWeek, setSelectedWeek] = useState(getCurrentWeekNumber());
+  // Get initial week and date from URL params, or use current week
+  const getInitialWeekAndDate = () => {
+    const weekParam = searchParams.get('week');
+    const dateParam = searchParams.get('date');
+    
+    if (weekParam) {
+      const week = parseInt(weekParam);
+      if (week >= 1 && week <= 8) {
+        return { week: week, date: dateParam };
+      }
+    }
+    
+    return { week: getCurrentWeekNumber(), date: null };
+  };
+  
+  const [selectedWeek, setSelectedWeek] = useState(getInitialWeekAndDate().week);
+  const [targetDate, setTargetDate] = useState<string | null>(getInitialWeekAndDate().date);
   
 
   
   const [currentDayIndex, setCurrentDayIndex] = useState(0);
   const [showSettings, setShowSettings] = useState(false);
+  
+  // Find target day index when navigating from dashboard
+  const findTargetDayIndex = (targetDate: string | null, weekDays: DayData[]) => {
+    if (!targetDate || weekDays.length === 0) return 0;
+    
+    const targetIndex = weekDays.findIndex(day => day.date === targetDate);
+    return targetIndex >= 0 ? targetIndex : 0;
+  };
   const [reminderSettings, setReminderSettings] = useState({
     enabled: true,
     time: '18:00',
@@ -190,14 +216,24 @@ export const DailyReportPage: React.FC = () => {
           };
         });
         
-        setWeekDays(weekData);
+                setWeekDays(weekData);
+        
+        // Set current day index based on target date or current day
+        if (targetDate) {
+          const targetIndex = findTargetDayIndex(targetDate, weekData);
+          setCurrentDayIndex(targetIndex);
+        } else {
+          // Use current day of week if no target date
+          const currentDayOfWeek = getCurrentDayOfWeek();
+          setCurrentDayIndex(currentDayOfWeek >= 0 && currentDayOfWeek <= 4 ? currentDayOfWeek : 0);
+        }
         
         // Set form data for current day
         if (weekData[currentDayIndex]) {
           const currentDay = weekData[currentDayIndex];
-        setValue('date', currentDay.date);
+          setValue('date', currentDay.date);
           setValue('hours_spent', currentDay.hours);
-        setValue('description', currentDay.description);
+          setValue('description', currentDay.description);
         }
     } catch (error) {
       console.error('Failed to load week data:', error);
@@ -232,6 +268,16 @@ export const DailyReportPage: React.FC = () => {
         });
         
         setWeekDays(mockWeekData);
+        
+        // Set current day index based on target date or current day for mock data
+        if (targetDate) {
+          const targetIndex = findTargetDayIndex(targetDate, mockWeekData);
+          setCurrentDayIndex(targetIndex);
+        } else {
+          // Use current day of week if no target date
+          const currentDayOfWeek = getCurrentDayOfWeek();
+          setCurrentDayIndex(currentDayOfWeek >= 0 && currentDayOfWeek <= 4 ? currentDayOfWeek : 0);
+        }
     } finally {
       setIsLoading(false);
     }
@@ -239,6 +285,13 @@ export const DailyReportPage: React.FC = () => {
 
     loadWeekData();
   }, [selectedWeek, currentDayIndex, setValue]);
+  
+  // Clear target date after it's been used
+  useEffect(() => {
+    if (targetDate && weekDays.length > 0) {
+      setTargetDate(null);
+    }
+  }, [targetDate, weekDays.length]);
 
   const handleDayClick = (dayIndex: number) => {
     setCurrentDayIndex(dayIndex);

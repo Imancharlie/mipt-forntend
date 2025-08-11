@@ -2,7 +2,8 @@
 export const testLoginFormat = async () => {
   console.log('🔍 Testing Login Format for Backend...');
   
-  const endpoint = 'http://127.0.0.1:8000/api/auth/login/';
+  const baseUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api';
+  const endpoint = `${baseUrl}/auth/login/`;
   
   // Test the exact format your backend expects
   const testCases = [
@@ -80,7 +81,8 @@ export const testLoginFormat = async () => {
 export const testSpecificCredentials = async (username: string, password: string) => {
   console.log(`🔍 Testing specific credentials: ${username}`);
   
-  const endpoint = 'http://127.0.0.1:8000/api/auth/login/';
+  const baseUrl = import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api';
+  const endpoint = `${baseUrl}/auth/login/`;
   
   try {
     const response = await fetch(endpoint, {

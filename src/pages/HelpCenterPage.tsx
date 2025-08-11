@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { feedbackService } from '@/api/services';
+import { useToastContext } from '@/contexts/ToastContext';
 
 export const HelpCenterPage: React.FC = () => {
   const [feedback, setFeedback] = useState({
@@ -8,22 +10,27 @@ export const HelpCenterPage: React.FC = () => {
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const { showSuccess, showError } = useToastContext();
 
   const handleFeedbackSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-    
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    setSubmitted(true);
-    setIsSubmitting(false);
-    
-    // Reset form after 3 seconds
-    setTimeout(() => {
-      setSubmitted(false);
+    try {
+      // Send to backend: api/auth/feedback/
+      await feedbackService.submitFeedback({
+        type: feedback.type,
+        subject: feedback.subject,
+        message: feedback.message,
+      });
+      setSubmitted(true);
+      showSuccess('Thanks! Your feedback has been submitted.');
+      // Reset form after success
       setFeedback({ type: 'bug', subject: '', message: '' });
-    }, 3000);
+    } catch (err) {
+      showError('Failed to submit feedback. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleQuickHelp = () => {

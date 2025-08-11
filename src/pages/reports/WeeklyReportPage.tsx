@@ -39,27 +39,44 @@ export const WeeklyReportPage: React.FC = () => {
   const { showSuccess, showError } = useToastContext();
   const [isDownloading, setIsDownloading] = useState(false);
   const [dailyReportsData, setDailyReportsData] = useState<{[key: number]: any[]}>({});
+  const [isWeeklyLoading, setIsWeeklyLoading] = useState(false);
+  const [isDailyForWeeksLoading, setIsDailyForWeeksLoading] = useState(false);
 
   useEffect(() => {
-    fetchWeeklyReports();
-  }, []); // Removed fetchWeeklyReports from dependencies to prevent infinite loop
+    let mounted = true;
+    const load = async () => {
+      setIsWeeklyLoading(true);
+      try {
+        await fetchWeeklyReports();
+      } finally {
+        if (mounted) setIsWeeklyLoading(false);
+      }
+    };
+    load();
+    return () => {
+      mounted = false;
+    };
+  }, []); // load weekly reports with local loading state
 
   // Fetch daily reports for each week to get accurate counts
   useEffect(() => {
     const fetchDailyReportsForWeeks = async () => {
+      setIsDailyForWeeksLoading(true);
       const dailyData: {[key: number]: any[]} = {};
-      
-      for (let week = 1; week <= 8; week++) {
-        try {
-          const response = await apiClient.get(`/reports/daily/?week_number=${week}`);
-          dailyData[week] = response.data.results || [];
-        } catch (error) {
-          console.log(`No daily reports found for week ${week}`);
-          dailyData[week] = [];
+      try {
+        for (let week = 1; week <= 8; week++) {
+          try {
+            const response = await apiClient.get(`/reports/daily/?week_number=${week}`);
+            dailyData[week] = response.data.results || [];
+          } catch (error) {
+            console.log(`No daily reports found for week ${week}`);
+            dailyData[week] = [];
+          }
         }
+        setDailyReportsData(dailyData);
+      } finally {
+        setIsDailyForWeeksLoading(false);
       }
-      
-      setDailyReportsData(dailyData);
     };
 
     fetchDailyReportsForWeeks();
@@ -223,13 +240,7 @@ export const WeeklyReportPage: React.FC = () => {
     }
   };
 
-  if (loading.isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] p-4">
-        <LoadingSpinner size="lg" color="primary" message="Loading your training progress..." />
-      </div>
-    );
-  }
+  // Remove full-page loading. We'll show loading within specific sections instead.
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
@@ -330,104 +341,115 @@ export const WeeklyReportPage: React.FC = () => {
         </div>
 
         {/* Week Cards Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4 mb-8">
-          {weeksOverview.map((week, index) => (
-            <div 
-              key={week.weekNumber}
-              onClick={() => handleWeekClick(week.weekNumber)}
-              className={`group relative overflow-hidden bg-gradient-to-br ${getStatusColor(week.status)} backdrop-blur-sm border rounded-2xl p-3 cursor-pointer transition-all duration-500 hover:scale-105 hover:shadow-xl hover:shadow-blue-500/10 animate-in slide-in-from-bottom-4`}
-              style={{ animationDelay: `${index * 100}ms` }}
-            >
-              {/* Status indicator */}
-              <div className="flex items-center justify-between mb-2">
-                <div className="flex items-center gap-2">
-                  {getStatusIcon(week.status)}
-                  <span className="text-xs font-semibold text-slate-700">Week {week.weekNumber}</span>
-                </div>
-                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 group-hover:translate-x-1 transition-all duration-300" />
-              </div>
-
-              {/* Progress Circle */}
-              <div className="flex justify-center mb-2">
-                <div className="relative w-10 h-10">
-                  <svg className="w-10 h-10 transform -rotate-90" viewBox="0 0 36 36">
-                    <path
-                      className="text-slate-200"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      fill="none"
-                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                    />
-                    <path
-                      className={getProgressColor(week.status)}
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      fill="none"
-                      strokeDasharray={`${week.completionPercentage}, 100`}
-                      d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                    />
-                  </svg>
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <span className="text-xs font-bold text-slate-700">
-                      {week.completionPercentage.toFixed(0)}%
-                    </span>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Date Range */}
-              <div className="text-center mb-2">
-                <p className="text-xs text-slate-600 font-medium">
-                  {new Date(week.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date(week.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
-                </p>
-              </div>
-
-              {/* Progress Breakdown */}
-              {week.report && (
-                <div className="text-center mb-2">
-                  <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
-                    <Clock className="w-3 h-3" />
-                    <span>{week.dailyReportsCount}/5 days</span>
-                    <span className="text-slate-400">•</span>
-                    <FileText className="w-3 h-3" />
-                    <span>{week.report.main_job?.operations?.length || 0} jobs</span>
-                  </div>
-
-                </div>
-              )}
-
-              {/* Action Buttons */}
-              <div className="mt-2 space-y-1">
-                {week.report ? (
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleWeekClick(week.weekNumber);
-                    }}
-                    className="w-full bg-white/50 hover:bg-white/80 backdrop-blur-sm border border-white/30 text-slate-700 rounded-lg py-1 px-2 text-xs font-medium transition-all duration-300 flex items-center justify-center gap-1"
-                  >
-                    <Eye className="w-3 h-3" />
-                    View
-                  </button>
-                ) : (
-                  <button 
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleWeekClick(week.weekNumber);
-                    }}
-                    className="w-full bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 backdrop-blur-sm border border-blue-200/30 text-slate-700 rounded-lg py-1 px-2 text-xs font-medium transition-all duration-300 flex items-center justify-center gap-1"
-                  >
-                    <Play className="w-3 h-3" />
-                    Start
-                  </button>
-                )}
+        <div className="mb-8">
+          {isWeeklyLoading ? (
+            <div className="flex items-center justify-center py-10">
+              <div className="flex items-center gap-2 text-slate-500">
+                <Loader2 className="w-5 h-5 animate-spin" />
+                <span className="text-sm">Loading weekly reports...</span>
               </div>
             </div>
-          ))}
+          ) : (
+            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
+              {weeksOverview.map((week, index) => (
+                <div 
+                  key={week.weekNumber}
+                  onClick={() => handleWeekClick(week.weekNumber)}
+                  className={`group relative overflow-hidden bg-gradient-to-br ${getStatusColor(week.status)} backdrop-blur-sm border rounded-2xl p-3 cursor-pointer transition-all duration-500 hover:scale-105 hover:shadow-xl hover:shadow-blue-500/10 animate-in slide-in-from-bottom-4`}
+                  style={{ animationDelay: `${index * 100}ms` }}
+                >
+                  {/* Status indicator */}
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center gap-2">
+                      {getStatusIcon(week.status)}
+                      <span className="text-xs font-semibold text-slate-700">Week {week.weekNumber}</span>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-slate-400 group-hover:text-slate-600 group-hover:translate-x-1 transition-all duration-300" />
+                  </div>
+
+                  {/* Progress Circle */}
+                  <div className="flex justify-center mb-2">
+                    <div className="relative w-10 h-10">
+                      <svg className="w-10 h-10 transform -rotate-90" viewBox="0 0 36 36">
+                        <path
+                          className="text-slate-200"
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          fill="none"
+                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                        />
+                        <path
+                          className={getProgressColor(week.status)}
+                          stroke="currentColor"
+                          strokeWidth="2"
+                          fill="none"
+                          strokeDasharray={`${week.completionPercentage}, 100`}
+                          d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
+                        />
+                      </svg>
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-xs font-bold text-slate-700">
+                          {week.completionPercentage.toFixed(0)}%
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Date Range */}
+                  <div className="text-center mb-2">
+                    <p className="text-xs text-slate-600 font-medium">
+                      {new Date(week.startDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date(week.endDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                    </p>
+                  </div>
+
+                  {/* Progress Breakdown */}
+                  {week.report && (
+                    <div className="text-center mb-2">
+                      <div className="flex items-center justify-center gap-1 text-xs text-slate-500">
+                        <Clock className="w-3 h-3" />
+                        <span>{week.dailyReportsCount}/5 days</span>
+                        <span className="text-slate-400">•</span>
+                        <FileText className="w-3 h-3" />
+                        <span>{week.report.main_job?.operations?.length || 0} jobs</span>
+                      </div>
+
+                    </div>
+                  )}
+
+                  {/* Action Buttons */}
+                  <div className="mt-2 space-y-1">
+                    {week.report ? (
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleWeekClick(week.weekNumber);
+                        }}
+                        className="w-full bg-white/50 hover:bg-white/80 backdrop-blur-sm border border-white/30 text-slate-700 rounded-lg py-1 px-2 text-xs font-medium transition-all duration-300 flex items-center justify-center gap-1"
+                      >
+                        <Eye className="w-3 h-3" />
+                        View
+                      </button>
+                    ) : (
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleWeekClick(week.weekNumber);
+                        }}
+                        className="w-full bg-gradient-to-r from-blue-500/20 to-purple-500/20 hover:from-blue-500/30 hover:to-purple-500/30 backdrop-blur-sm border border-blue-200/30 text-slate-700 rounded-lg py-1 px-2 text-xs font-medium transition-all duration-300 flex items-center justify-center gap-1"
+                      >
+                        <Play className="w-3 h-3" />
+                        Start
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Empty State */}
-        {weeklyReports.length === 0 && !loading.isLoading && (
+        {weeklyReports.length === 0 && !isWeeklyLoading && (
           <div className="relative overflow-hidden bg-white/70 backdrop-blur-xl border border-white/20 rounded-3xl p-12 text-center shadow-2xl shadow-blue-500/10">
             <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 via-purple-600/5 to-emerald-600/5"></div>
             <div className="relative z-10">

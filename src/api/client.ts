@@ -40,7 +40,7 @@ initializeToken();
 
 // Axios instance for API calls
 const apiClient = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || 'http://127.0.0.1:8000/api',
+  baseURL: 'https://mipt.pythonanywhere.com/api',
   headers: {
     'Content-Type': 'application/json',
   },
@@ -86,7 +86,7 @@ apiClient.interceptors.response.use(
       
       if (refreshToken) {
         try {
-          const response = await axios.post('http://127.0.0.1:8000/api/auth/refresh', {
+          const response = await axios.post('https://mipt.pythonanywhere.com/api/auth/refresh', {
             refresh: refreshToken
           });
           
@@ -106,7 +106,11 @@ apiClient.interceptors.response.use(
           setAuthToken(null);
           localStorage.removeItem('refresh_token');
           
-          // Instead of redirecting, let the store handle the authentication failure
+          // Dispatch a custom event to notify the app about auth failure
+          window.dispatchEvent(new CustomEvent('auth:token-expired', { 
+            detail: { error: refreshError } 
+          }));
+          
           console.warn('Token refresh failed, authentication state should be cleared by store');
           
           return Promise.reject(refreshError);
