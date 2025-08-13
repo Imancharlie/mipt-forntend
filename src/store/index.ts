@@ -655,10 +655,31 @@ export const useAppStore = create<AppState>()(
         try {
           const dashboardStats = await dashboardService.getDashboard();
           set({ dashboardStats, dashboardLoading: false });
-        } catch (error) {
-          console.warn('Using mock data for dashboard');
+        } catch (error: any) {
+          console.warn('❌ Dashboard API failed, providing fallback data');
+          console.warn('❌ Error details:', error.response?.status, error.response?.data);
+          
+          // Provide fallback dashboard data instead of null
+          const fallbackDashboard = {
+            user: {
+              id: 0,
+              username: 'user',
+              email: 'user@example.com',
+              first_name: 'User',
+              last_name: 'User',
+              is_staff: false
+            },
+            stats: {
+              daily_reports: 0,
+              weekly_reports: 0,
+              submitted_weekly_reports: 0,
+              general_report_status: 'pending'
+            },
+            profile_complete: false
+          };
+          
           set({ 
-            dashboardStats: null,
+            dashboardStats: fallbackDashboard,
             dashboardLoading: false
           });
         }

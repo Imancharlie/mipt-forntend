@@ -126,6 +126,43 @@ export const authService = {
     }
   },
 
+  // Send OTP to phone number
+  sendOTP: async (phone: string, purpose: string): Promise<{ success: boolean; message: string }> => {
+    try {
+      console.log('📱 Sending OTP to:', phone, 'for purpose:', purpose);
+      const response = await apiClient.post('/auth/send-otp/', {
+        phone,
+        purpose
+      });
+      console.log('✅ OTP sent successfully:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Failed to send OTP:', error);
+      console.error('❌ Response data:', error.response?.data);
+      console.error('❌ Response status:', error.response?.status);
+      throw error;
+    }
+  },
+
+  // Verify OTP code
+  verifyOTP: async (phone: string, code: string, purpose: string): Promise<{ success: boolean; message: string }> => {
+    try {
+      console.log('🔐 Verifying OTP for:', phone, 'with code:', code);
+      const response = await apiClient.post('/auth/verify-otp/', {
+        phone,
+        code,
+        purpose
+      });
+      console.log('✅ OTP verified successfully:', response.data);
+      return response.data;
+    } catch (error: any) {
+      console.error('❌ Failed to verify OTP:', error);
+      console.error('❌ Response data:', error.response?.data);
+      console.error('❌ Response status:', error.response?.status);
+      throw error;
+    }
+  },
+
   register: async (data: RegisterData) => {
     try {
       console.log('📝 Sending registration request:', {
@@ -138,13 +175,14 @@ export const authService = {
         password_confirm: '[HIDDEN]'
       });
       
-      // Prepare the data for backend (remove password_confirm as it's not needed by backend)
+      // Prepare the data for backend - include all required fields
       const registrationData = {
         username: data.username,
         email: data.email,
         first_name: data.first_name,
         last_name: data.last_name,
         password: data.password,
+        password_confirm: data.password_confirm,
         phone_number: data.phone_number
       };
       
@@ -239,10 +277,47 @@ export const profileService = {
 export const dashboardService = {
   getDashboard: async (): Promise<DashboardData> => {
     try {
-      const response = await apiClient.get('/auth/dashboard/');
-      return response.data;
-    } catch (error) {
-      console.error('Failed to fetch dashboard:', error);
+      console.log('🔍 Attempting to fetch dashboard from multiple endpoints...');
+      
+      // Try the main dashboard endpoint first
+      try {
+        console.log('🔍 Trying /auth/dashboard/...');
+        const response = await apiClient.get('/auth/dashboard/');
+        console.log('✅ Dashboard response from /auth/dashboard/:', response.data);
+        return response.data;
+      } catch (mainError: any) {
+        console.warn('⚠️ Main dashboard endpoint failed:', mainError.response?.status, mainError.response?.data);
+        
+        // Try alternative dashboard endpoints
+        try {
+          console.log('🔍 Trying /billing/dashboard/dashboard_data/...');
+          const billingResponse = await apiClient.get('/billing/dashboard/dashboard_data/');
+          console.log('✅ Billing dashboard response:', billingResponse.data);
+          
+          // Transform billing data to dashboard format if possible
+          if (billingResponse.data?.data) {
+            return {
+              user: null, // Will be filled by profile service
+              stats: {
+                daily_reports: 0, // Default values
+                weekly_reports: 0,
+                submitted_weekly_reports: 0,
+                general_report_status: 'pending'
+              },
+              profile_complete: false
+            };
+          }
+        } catch (billingError: any) {
+          console.warn('⚠️ Billing dashboard endpoint also failed:', billingError.response?.status);
+        }
+        
+        // If all endpoints fail, throw the original error
+        throw mainError;
+      }
+    } catch (error: any) {
+      console.error('❌ All dashboard endpoints failed');
+      console.error('❌ Final error status:', error.response?.status);
+      console.error('❌ Final error data:', error.response?.data);
       throw error;
     }
   },

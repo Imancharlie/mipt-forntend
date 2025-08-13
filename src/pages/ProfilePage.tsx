@@ -321,7 +321,9 @@ export const ProfilePage: React.FC = () => {
                   {...register('program')} 
                 >
                   <option value="">Select a program</option>
-                  {Object.entries(PROGRAM_MAPPING).filter(([key]) => key.includes('BSc.')).map(([displayName, value]) => (
+                  {Object.entries(PROGRAM_MAPPING)
+                    .filter(([key]) => key.includes('BSc.') || key.includes('Bachelor'))
+                    .map(([displayName, value]) => (
                     <option key={value} value={displayName}>
                       {displayName}
                     </option>
@@ -384,12 +386,12 @@ export const ProfilePage: React.FC = () => {
               <div>
                 <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Phone Number</label>
                 <input 
-                  className="input-field" 
-                  placeholder="Enter your phone number"
-                  disabled={!isEditing}
+                  className="input-field bg-gray-100 dark:bg-gray-700 cursor-not-allowed" 
+                  placeholder="Phone number cannot be edited"
+                  disabled={true}
                   {...register('phone_number')} 
                 />
-                {errors.phone_number && <p className="text-xs text-red-500 mt-1">{errors.phone_number.message}</p>}
+                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Phone number cannot be changed after registration</p>
               </div>
             </div>
           </div>
