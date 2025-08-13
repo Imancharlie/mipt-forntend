@@ -100,6 +100,7 @@ export const RegisterPage: React.FC = () => {
           last_name: formData.step1.last_name,
           password: formData.step2.password,
           password_confirm: formData.step2.password_confirm,
+          phone_number: formData.step1.phone_number,
         };
         
         await registerAndLogin(registrationData);
