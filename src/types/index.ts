@@ -12,6 +12,15 @@ export interface RegisterData {
   password: string;
   password_confirm: string;
   phone_number: string;
+  student_id?: string;
+  program: 'MECHANICAL' | 'ELECTRICAL' | 'CIVIL' | 'COMPUTER' | 'CHEMICAL' | 'TEXTILE_DESIGN' | 'TEXTILE_ENGINEERING' | 'INDUSTRIAL' | 'GEOMATIC' | 'ARCHITECTURE' | 'QUANTITY_SURVEYING';
+  pt_phase: 'PT1' | 'PT2' | 'PT3';
+  year_of_study: number;
+  department: string;
+  supervisor_name?: string;
+  supervisor_email?: string;
+  company_name?: string;
+  company_region?: string;
 }
 
 export interface LogoutData {
@@ -332,8 +341,12 @@ export interface RegistrationSteps {
     password_confirm: string;
   };
   step3: {
+    student_id: string;
     program: string;
+    pt_phase: 'PT1' | 'PT2' | 'PT3';
     academic_year: number;
+    supervisor_name: string;
+    supervisor_email?: string;
     area_of_field: string;
     region: string;
   };

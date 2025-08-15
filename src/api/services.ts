@@ -171,11 +171,20 @@ export const authService = {
         first_name: data.first_name,
         last_name: data.last_name,
         phone_number: data.phone_number,
+        student_id: data.student_id,
+        program: data.program,
+        pt_phase: data.pt_phase,
+        year_of_study: data.year_of_study,
+        department: data.department,
+        supervisor_name: data.supervisor_name,
+        supervisor_email: data.supervisor_email,
+        company_name: data.company_name,
+        company_region: data.company_region,
         password: '[HIDDEN]',
         password_confirm: '[HIDDEN]'
       });
       
-      // Prepare the data for backend - include all required fields
+      // Log the exact JSON being sent
       const registrationData = {
         username: data.username,
         email: data.email,
@@ -183,8 +192,19 @@ export const authService = {
         last_name: data.last_name,
         password: data.password,
         password_confirm: data.password_confirm,
-        phone_number: data.phone_number
+        phone_number: data.phone_number,
+        student_id: data.student_id,
+        program: data.program,
+        year_of_study: data.year_of_study,
+        pt_phase: data.pt_phase,
+        department: data.department,
+        supervisor_name: data.supervisor_name,
+        supervisor_email: data.supervisor_email,
+        company_name: data.company_name,
+        company_region: data.company_region
       };
+      
+      console.log('📤 Exact JSON being sent to backend:', JSON.stringify(registrationData, null, 2));
       
       const response = await apiClient.post('/auth/register/', registrationData);
       console.log('✅ Registration response:', response.data);

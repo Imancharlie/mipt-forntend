@@ -533,7 +533,7 @@ export const AIEnhancementButton: React.FC<AIEnhancementButtonProps> = ({
                   <>
                     <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4" />
                     Instructions Required
-                  </>
+                   </>
                  ) : (
                    <>
                     <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />

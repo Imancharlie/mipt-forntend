@@ -26,8 +26,12 @@ export const RegisterPage: React.FC = () => {
       password_confirm: '',
     },
     step3: {
+      student_id: '',
       program: '',
+      pt_phase: 'PT1',
       academic_year: 1,
+      supervisor_name: '',
+      supervisor_email: '',
       area_of_field: '',
       region: '',
     },
@@ -38,6 +42,24 @@ export const RegisterPage: React.FC = () => {
   const navigate = useNavigate();
   const { showSuccess, showError } = useToastContext();
   
+  // Function to auto-determine department based on program
+  const getDepartmentByProgram = (program: string): string => {
+    const departmentMap: { [key: string]: string } = {
+      'MECHANICAL': 'Mechanical Engineering Department',
+      'ELECTRICAL': 'Electrical Engineering Department',
+      'CIVIL': 'Civil Engineering Department',
+      'COMPUTER': 'Computer Science Department',
+      'CHEMICAL': 'Chemical Engineering Department',
+      'TEXTILE_DESIGN': 'Textile Design Department',
+      'TEXTILE_ENGINEERING': 'Textile Engineering Department',
+      'INDUSTRIAL': 'Industrial Engineering Department',
+      'GEOMATIC': 'Geomatic Engineering Department',
+      'ARCHITECTURE': 'Architecture Department',
+      'QUANTITY_SURVEYING': 'Quantity Surveying Department'
+    };
+    return departmentMap[program] || 'General Engineering Department';
+  };
+
   // Create separate form methods for each step
   const step1Methods = useForm<RegistrationSteps["step1"]>({ 
     defaultValues: formData.step1 
@@ -101,6 +123,15 @@ export const RegisterPage: React.FC = () => {
           password: formData.step2.password,
           password_confirm: formData.step2.password_confirm,
           phone_number: formData.step1.phone_number,
+          student_id: data.student_id || '',
+          program: data.program,
+          year_of_study: data.academic_year,
+          pt_phase: data.pt_phase,
+          department: getDepartmentByProgram(data.program),
+          supervisor_name: data.supervisor_name || '',
+          supervisor_email: data.supervisor_email || '',
+          company_name: data.area_of_field,
+          company_region: data.region,
         };
         
         await registerAndLogin(registrationData);
@@ -246,8 +277,11 @@ export const RegisterPage: React.FC = () => {
                   </div>
                   {(currentMethods as any).formState.errors.email &&
                     <p className="text-xs text-red-500 mt-1">{(currentMethods as any).formState.errors.email.message}</p>}
+                  <p className="text-xs text-gray-500 mt-1">
+                    This email will also be your username for logging in
+                  </p>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium mb-1">Password</label>
                   <div className="relative">
@@ -298,24 +332,52 @@ export const RegisterPage: React.FC = () => {
                 </div>
                 
                 <div>
+                  <label className="block text-sm font-medium mb-1">Student ID</label>
+                  <input 
+                    className="input-field" 
+                    placeholder="Enter your student ID (optional)"
+                    {...(currentMethods as any).register('student_id')} 
+                  />
+                  {(currentMethods as any).formState.errors.student_id && 
+                    <p className="text-xs text-red-500 mt-1">{(currentMethods as any).formState.errors.student_id.message}</p>}
+                </div>
+
+                <div>
                   <label className="block text-sm font-medium mb-1">Program</label>
                   <select 
                     className="input-field" 
                     {...(currentMethods as any).register('program', { required: 'Program is required' })} 
                   >
                     <option value="">Select a program</option>
-                    <option value="BSc. Mechanical Engineering">BSc. Mechanical Engineering</option>
-                    <option value="BSc. Electrical Engineering">BSc. Electrical Engineering</option>
-                    <option value="BSc. Civil Engineering">BSc. Civil Engineering</option>
-                    <option value="BSc. Computer Science">BSc. Computer Science</option>
-                    <option value="BSc. Chemical Engineering">BSc. Chemical Engineering</option>
-                    <option value="BSc. Textile Design">BSc. Textile Design</option>
-                    <option value="BSc. Textile Engineering">BSc. Textile Engineering</option>
-                    <option value="BSc. Industrial Engineering">BSc. Industrial Engineering</option>
-                    <option value="BSc. Geomatic Engineering">BSc. Geomatic Engineering</option>
+                    <option value="MECHANICAL">BSc. Mechanical Engineering</option>
+                    <option value="ELECTRICAL">BSc. Electrical Engineering</option>
+                    <option value="CIVIL">BSc. Civil Engineering</option>
+                    <option value="COMPUTER">BSc. Computer Science</option>
+                    <option value="CHEMICAL">BSc. Chemical Engineering</option>
+                    <option value="TEXTILE_DESIGN">BSc. Textile Design</option>
+                    <option value="TEXTILE_ENGINEERING">BSc. Textile Engineering</option>
+                    <option value="INDUSTRIAL">BSc. Industrial Engineering</option>
+                    <option value="GEOMATIC">BSc. Geomatic Engineering</option>
+                    <option value="ARCHITECTURE">BSc. Architecture</option>
+                    <option value="QUANTITY_SURVEYING">BSc. Quantity Surveying</option>
                   </select>
                   {(currentMethods as any).formState.errors.program && 
                     <p className="text-xs text-red-500 mt-1">{(currentMethods as any).formState.errors.program.message}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">PT Phase</label>
+                  <select 
+                    className="input-field" 
+                    {...(currentMethods as any).register('pt_phase', { required: 'PT Phase is required' })} 
+                  >
+                    <option value="">Select PT Phase</option>
+                    <option value="PT1">PT1</option>
+                    <option value="PT2">PT2</option>
+                    <option value="PT3">PT3</option>
+                  </select>
+                  {(currentMethods as any).formState.errors.pt_phase && 
+                    <p className="text-xs text-red-500 mt-1">{(currentMethods as any).formState.errors.pt_phase.message}</p>}
                 </div>
                 
                 <div>
@@ -334,6 +396,28 @@ export const RegisterPage: React.FC = () => {
                   </select>
                   {(currentMethods as any).formState.errors.academic_year && 
                     <p className="text-xs text-red-500 mt-1">{(currentMethods as any).formState.errors.academic_year.message}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Supervisor Name</label>
+                  <input 
+                    className="input-field" 
+                    placeholder="Enter your supervisor's name (optional)"
+                    {...(currentMethods as any).register('supervisor_name')} 
+                  />
+                  {(currentMethods as any).formState.errors.supervisor_name && 
+                    <p className="text-xs text-red-500 mt-1">{(currentMethods as any).formState.errors.supervisor_name.message}</p>}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-1">Supervisor Email</label>
+                  <input 
+                    className="input-field" 
+                    placeholder="Enter your supervisor's email (optional)"
+                    {...(currentMethods as any).register('supervisor_email')} 
+                  />
+                  {(currentMethods as any).formState.errors.supervisor_email && 
+                    <p className="text-xs text-red-500 mt-1">{(currentMethods as any).formState.errors.supervisor_email.message}</p>}
                 </div>
                 
                 <div>
