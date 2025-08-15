@@ -267,7 +267,7 @@ export const WeeklyReportDetailPage: React.FC = () => {
           }
         }
         
-        showSuccess('Report saved successfully to backend!');
+        showSuccess('Report saved successfully!');
       } catch (backendError) {
         console.warn('Backend save failed, saving locally:', backendError);
         // Save locally when backend is unavailable

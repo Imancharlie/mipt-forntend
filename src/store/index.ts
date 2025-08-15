@@ -43,8 +43,16 @@ import {
   resourcesService,
 } from '@/api/services';
 import { adminDashboardService } from '@/api/adminServices';
-import { isTokenExpired } from '@/utils/auth';
+import { 
+  isTokenExpired, 
+  shouldRefreshToken, 
+  shouldMaintainSession, 
+  updateLastActivity, 
+  getLastActivity,
+  shouldAutoLogout 
+} from '@/utils/auth';
 import { setAuthToken } from '@/api/client';
+import { OfflineQueue } from '@/utils/offlineQueue';
 
 interface AppState {
   // Authentication
@@ -324,6 +332,10 @@ export const useAppStore = create<AppState>()(
         set({ loading: { isLoading: true, message: 'Logging in...' } });
         try {
           const response = await authService.login(credentials);
+          
+          // Update last activity timestamp
+          updateLastActivity();
+          
           set({ 
             user: response.user,
             tokens: { access: response.access, refresh: response.refresh },
@@ -459,6 +471,7 @@ export const useAppStore = create<AppState>()(
         try {
           const { tokens } = get();
           
+          // Try to logout from backend if token is still valid
           if (tokens.refresh && !isTokenExpired(tokens.refresh)) {
             try {
               await authService.logout({ refresh: tokens.refresh });
@@ -466,6 +479,13 @@ export const useAppStore = create<AppState>()(
               // If logout API fails, we still want to clear local state
               console.warn('Logout API call failed, but clearing local state:', logoutError);
             }
+          }
+          
+          // Clear all offline actions when logging out
+          try {
+            await OfflineQueue.clearAll();
+          } catch (error) {
+            console.warn('Failed to clear offline actions:', error);
           }
           
           set({ 
@@ -481,6 +501,7 @@ export const useAppStore = create<AppState>()(
           setAuthToken(null);
           localStorage.removeItem('access_token');
           localStorage.removeItem('refresh_token');
+          localStorage.removeItem('last_activity');
           
           // Smooth redirect to login
           if (window.location.pathname !== '/login') {
@@ -502,6 +523,7 @@ export const useAppStore = create<AppState>()(
           setAuthToken(null);
           localStorage.removeItem('access_token');
           localStorage.removeItem('refresh_token');
+          localStorage.removeItem('last_activity');
           
           // Smooth redirect to login even on error
           if (window.location.pathname !== '/login') {
@@ -1242,13 +1264,30 @@ export const useAppStore = create<AppState>()(
           set({ loading: { isLoading: true, message: 'Initializing authentication...' } });
           
           try {
+            // Check if user should be auto-logged out due to inactivity
+            if (shouldAutoLogout()) {
+              console.log('🕐 User inactive for too long, auto-logging out');
+              await get().logout();
+              return;
+            }
+            
+            // Check if token should be maintained (within 7 days)
+            if (!shouldMaintainSession(state.tokens.access)) {
+              console.log('🕐 Session too old, requiring re-login');
+              await get().logout();
+              return;
+            }
+            
             // Set the token in apiClient
             setAuthToken(state.tokens.access);
+            
+            // Update last activity
+            updateLastActivity();
             
             // Try to fetch profile to verify token is still valid
             await get().fetchProfile();
             set({ isAuthenticated: true, loading: { isLoading: false } });
-            console.log('Authentication restored successfully');
+            console.log('✅ Authentication restored successfully');
           } catch (error) {
             console.warn('Token validation failed, attempting refresh...');
             

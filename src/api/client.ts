@@ -1,4 +1,5 @@
 import axios, { AxiosError } from 'axios';
+import { OfflineQueue } from '@/utils/offlineQueue';
 
 // Token manager to handle authentication tokens
 let currentToken: string | null = null;
@@ -29,38 +30,37 @@ export const setAuthToken = (token: string | null) => {
 
 // Initialize token from localStorage on module load
 const initializeToken = () => {
-  const storedToken = localStorage.getItem('access_token');
-  if (storedToken) {
-    currentToken = storedToken;
+  const token = localStorage.getItem('access_token');
+  if (token) {
+    currentToken = token;
   }
 };
 
-// Call initialization
 initializeToken();
 
-// Axios instance for API calls
-const apiClient = axios.create({
-  baseURL: 'https://mipt.pythonanywhere.com/api',
+// Create axios instance with base configuration
+export const apiClient = axios.create({
+  baseURL: import.meta.env.VITE_API_URL || 'https://mipt.pythonanywhere.com/api',
+  timeout: 30000, // 30 second timeout
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true,
 });
 
-// Log the effective base URL for debugging
-console.log('API Client initialized with baseURL:', apiClient.defaults.baseURL);
-console.log('Environment VITE_API_URL:', import.meta.env.VITE_API_URL);
-
-// Attach bearer token if present
-apiClient.interceptors.request.use((config) => {
-  try {
-    if (currentToken) {
-      if (!config.headers) config.headers = {} as any;
-      (config.headers as any).Authorization = `Bearer ${currentToken}`;
-    }
-  } catch {}
-  return config;
-});
+// Request interceptor to add auth token
+apiClient.interceptors.request.use(
+  (config) => {
+    try {
+      if (currentToken) {
+        config.headers.Authorization = `Bearer ${currentToken}`;
+      }
+    } catch {}
+    return config;
+  },
+  (error) => {
+    return Promise.reject(error);
+  }
+);
 
 // Response interceptor to handle token refresh
 apiClient.interceptors.response.use(
@@ -129,9 +129,201 @@ apiClient.interceptors.response.use(
   }
 );
 
+// Enhanced API client with offline support
+export const apiClientWithOfflineSupport = {
+  ...apiClient,
+  
+  // Enhanced GET method with offline caching
+  async get(url: string, config?: any) {
+    try {
+      return await apiClient.get(url, config);
+    } catch (error: any) {
+      // If offline, try to get from cache or return offline data
+      if (!navigator.onLine) {
+        console.log('📴 Offline mode: Attempting to get cached data for', url);
+        // You can implement cache logic here
+        throw new Error('Offline mode: Data not available in cache');
+      }
+      throw error;
+    }
+  },
+  
+  // Enhanced POST method with offline queuing
+  async post(url: string, data?: any, config?: any) {
+    try {
+      return await apiClient.post(url, data, config);
+    } catch (error: any) {
+      // If offline, queue the request
+      if (!navigator.onLine) {
+        console.log('📴 Offline mode: Queuing POST request for', url);
+        
+        // Determine action type and resource type from URL
+        const actionType = determineActionType(url, 'POST');
+        const resourceType = determineResourceType(url);
+        const description = generateDescription(actionType, resourceType, data);
+        
+        // Add to offline queue
+        await OfflineQueue.add({
+          url: apiClient.defaults.baseURL + url,
+          method: 'POST',
+          body: data,
+          actionType,
+          resourceType,
+          description,
+          userFriendlyMessage: generateUserFriendlyMessage(actionType, resourceType),
+          maxRetries: 3
+        });
+        
+        // Return a mock success response for offline mode
+        return {
+          data: { 
+            success: true, 
+            message: 'Action saved offline and will be synced when connection is restored',
+            offline: true 
+          },
+          status: 200,
+          statusText: 'OK'
+        };
+      }
+      throw error;
+    }
+  },
+  
+  // Enhanced PUT method with offline queuing
+  async put(url: string, data?: any, config?: any) {
+    try {
+      return await apiClient.put(url, data, config);
+    } catch (error: any) {
+      // If offline, queue the request
+      if (!navigator.onLine) {
+        console.log('📴 Offline mode: Queuing PUT request for', url);
+        
+        const actionType = determineActionType(url, 'PUT');
+        const resourceType = determineResourceType(url);
+        const description = generateDescription(actionType, resourceType, data);
+        
+        await OfflineQueue.add({
+          url: apiClient.defaults.baseURL + url,
+          method: 'PUT',
+          body: data,
+          actionType,
+          resourceType,
+          description,
+          userFriendlyMessage: generateUserFriendlyMessage(actionType, resourceType),
+          maxRetries: 3
+        });
+        
+        return {
+          data: { 
+            success: true, 
+            message: 'Update saved offline and will be synced when connection is restored',
+            offline: true 
+          },
+          status: 200,
+          statusText: 'OK'
+        };
+      }
+      throw error;
+    }
+  },
+  
+  // Enhanced DELETE method with offline queuing
+  async delete(url: string, config?: any) {
+    try {
+      return await apiClient.delete(url, config);
+    } catch (error: any) {
+      // If offline, queue the request
+      if (!navigator.onLine) {
+        console.log('📴 Offline mode: Queuing DELETE request for', url);
+        
+        const actionType = 'delete';
+        const resourceType = determineResourceType(url);
+        const description = generateDescription(actionType, resourceType, null);
+        
+        await OfflineQueue.add({
+          url: apiClient.defaults.baseURL + url,
+          method: 'DELETE',
+          body: null,
+          actionType,
+          resourceType,
+          description,
+          userFriendlyMessage: generateUserFriendlyMessage(actionType, resourceType),
+          maxRetries: 3
+        });
+        
+        return {
+          data: { 
+            success: true, 
+            message: 'Delete action saved offline and will be synced when connection is restored',
+            offline: true 
+          },
+          status: 200,
+          statusText: 'OK'
+        };
+      }
+      throw error;
+    }
+  }
+};
+
+// Helper functions for offline support
+function determineActionType(url: string, method: string): 'create' | 'update' | 'delete' | 'enhance' {
+  if (method === 'POST') {
+    if (url.includes('enhance')) return 'enhance';
+    return 'create';
+  }
+  if (method === 'PUT') return 'update';
+  if (method === 'DELETE') return 'delete';
+  return 'create';
+}
+
+function determineResourceType(url: string): 'daily_report' | 'weekly_report' | 'general_report' | 'profile' | 'other' {
+  if (url.includes('daily')) return 'daily_report';
+  if (url.includes('weekly')) return 'weekly_report';
+  if (url.includes('general')) return 'general_report';
+  if (url.includes('profile')) return 'profile';
+  return 'other';
+}
+
+function generateDescription(actionType: string, resourceType: string, data?: any): string {
+  const resourceNames = {
+    daily_report: 'Daily Report',
+    weekly_report: 'Weekly Report',
+    general_report: 'General Report',
+    profile: 'Profile',
+    other: 'Data'
+  };
+  
+  const actionNames = {
+    create: 'Created',
+    update: 'Updated',
+    delete: 'Deleted',
+    enhance: 'Enhanced'
+  };
+  
+  return `${actionNames[actionType as keyof typeof actionNames] || 'Modified'} ${resourceNames[resourceType as keyof typeof resourceNames]}`;
+}
+
+function generateUserFriendlyMessage(actionType: string, resourceType: string): string {
+  const resourceNames = {
+    daily_report: 'Daily Report',
+    weekly_report: 'Weekly Report',
+    general_report: 'General Report',
+    profile: 'Profile',
+    other: 'Data'
+  };
+  
+  const actionMessages = {
+    create: `Created ${resourceNames[resourceType as keyof typeof resourceNames]}`,
+    update: `Updated ${resourceNames[resourceType as keyof typeof resourceNames]}`,
+    delete: `Deleted ${resourceNames[resourceType as keyof typeof resourceNames]}`,
+    enhance: `Enhanced ${resourceNames[resourceType as keyof typeof resourceNames]} with AI`
+  };
+  
+  return actionMessages[actionType as keyof typeof actionMessages] || 'Modified data';
+}
+
 export function handleApiError(error: AxiosError): never {
   // Centralized error passthrough (extend as needed)
   throw error;
 }
-
-export default apiClient;

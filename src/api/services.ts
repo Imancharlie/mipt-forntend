@@ -1,4 +1,4 @@
-import apiClient, { handleApiError } from './client';
+import { apiClient, handleApiError } from './client';
 import { AxiosError } from 'axios';
 import {
   LoginData,
@@ -274,19 +274,20 @@ export const profileService = {
 };
 
 // Dashboard Services
+// NOTE: Main dashboard endpoint /auth/dashboard/ is temporarily disabled due to backend serializer error:
+// "The field 'profile_picture' was declared on serializer UserSerializer, but has not been included in the 'fields' option."
 export const dashboardService = {
   getDashboard: async (): Promise<DashboardData> => {
     try {
       console.log('🔍 Attempting to fetch dashboard from multiple endpoints...');
       
-      // Try the main dashboard endpoint first
+      // Try the main dashboard endpoint first (TEMPORARILY DISABLED due to backend serializer error)
       try {
-        console.log('🔍 Trying /auth/dashboard/...');
-        const response = await apiClient.get('/auth/dashboard/');
-        console.log('✅ Dashboard response from /auth/dashboard/:', response.data);
-        return response.data;
+        console.log('🔍 Main dashboard endpoint /auth/dashboard/ is temporarily disabled due to backend serializer error');
+        console.log('🔍 Skipping to alternative endpoints...');
+        throw new Error('Main dashboard endpoint temporarily disabled');
       } catch (mainError: any) {
-        console.warn('⚠️ Main dashboard endpoint failed:', mainError.response?.status, mainError.response?.data);
+        console.warn('⚠️ Main dashboard endpoint skipped:', mainError.message);
         
         // Try alternative dashboard endpoints
         try {
@@ -311,8 +312,18 @@ export const dashboardService = {
           console.warn('⚠️ Billing dashboard endpoint also failed:', billingError.response?.status);
         }
         
-        // If all endpoints fail, throw the original error
-        throw mainError;
+        // If all endpoints fail, provide fallback data instead of throwing error
+        console.warn('⚠️ All dashboard endpoints failed, providing fallback data');
+        return {
+          user: null, // Will be filled by profile service
+          stats: {
+            daily_reports: 0,
+            weekly_reports: 0,
+            submitted_weekly_reports: 0,
+            general_report_status: 'pending'
+          },
+          profile_complete: false
+        };
       }
     } catch (error: any) {
       console.error('❌ All dashboard endpoints failed');
@@ -1033,10 +1044,37 @@ export const mainJobService = {
 
   getOperations: async (mainJobId: number): Promise<MainJobOperation[]> => {
     try {
-      const response = await apiClient.get(`/reports/main-jobs/${mainJobId}/operations/`);
-      return response.data.results || response.data;
+      // Add timeout to prevent hanging requests
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+      
+      try {
+        const response = await apiClient.get(`/reports/main-jobs/${mainJobId}/operations/`, {
+          signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        return response.data.results || response.data;
+      } catch (error: any) {
+        clearTimeout(timeoutId);
+        if (error.name === 'AbortError') {
+          throw new Error('Request timeout - operations endpoint took too long to respond');
+        }
+        throw error;
+      }
     } catch (error) {
-      console.error('Failed to fetch operations:', error);
+      console.error('Failed to fetch operations for main job', mainJobId, ':', error);
+      
+      // Provide more specific error information
+      if (error instanceof Error) {
+        if (error.message.includes('timeout')) {
+          throw new Error(`Operations fetch timed out for main job ${mainJobId}`);
+        } else if (error.message.includes('500')) {
+          throw new Error(`Server error (500) when fetching operations for main job ${mainJobId}`);
+        } else if (error.message.includes('404')) {
+          throw new Error(`Operations not found for main job ${mainJobId}`);
+        }
+      }
+      
       throw error;
     }
   },

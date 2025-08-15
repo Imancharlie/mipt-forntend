@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAppStore } from '@/store';
 import { useTheme } from '@/components/ThemeProvider';
 import { DailyReport, CreateDailyReportData } from '@/types';
-import apiClient from '@/api/client';
+import { apiClient } from '@/api/client';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { useSearchParams } from 'react-router-dom';
 import { 

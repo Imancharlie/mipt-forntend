@@ -3,8 +3,7 @@ import { useAppStore } from '@/store';
 import { useTheme } from '@/components/ThemeProvider';
 import { useToastContext } from '@/contexts/ToastContext';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
-import { Sparkles, X, CheckCircle, Bug, Coins, Brain, FileText, Clock, AlertCircle } from 'lucide-react';
-import { testAIEnhancementEndpoint } from '@/utils/debug';
+import { Sparkles, X, CheckCircle, Coins, Brain, FileText, Clock, AlertCircle, Info } from 'lucide-react';
 
 interface AIEnhancementButtonProps {
   weeklyReportId: number;
@@ -28,48 +27,43 @@ export const AIEnhancementButton: React.FC<AIEnhancementButtonProps> = ({
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [enhancementProgress, setEnhancementProgress] = useState(0);
   const [currentStep, setCurrentStep] = useState('');
-  const [estimatedTokens, setEstimatedTokens] = useState(0);
+  const [isResetting, setIsResetting] = useState(false);
+  const [canReset, setCanReset] = useState(false);
 
-  // Calculate token estimation based on report completeness
-  const calculateTokenEstimation = (report: any) => {
-    if (!report) return { tokens: 1500, complexity: 'high' };
+  // Fixed cost: 300 tokens regardless of report completeness
+  const FIXED_COST = 300;
+  
+  // Check if report can be enhanced (not currently being enhanced and has sufficient tokens)
+  const canEnhance = userBalance && 
+                    userBalance.available_tokens >= FIXED_COST && 
+                    !isEnhancing && 
+                    !isResetting;
+
+  // Determine report quality and provide appropriate messaging
+  const getReportQualityInfo = (report: any) => {
+    if (!report) return { quality: 'unknown', message: '', daysCount: 0 };
     
-    let baseTokens = 500;
-    let complexity = 'low';
+    const daysCount = report.daily_reports?.length || 0;
     
-    // Check if report is empty
-    const isEmpty = !report.summary && !report.achievements && !report.challenges && !report.lessons_learned;
-    
-    if (isEmpty) {
-      baseTokens = 2000; // More tokens for empty reports
-      complexity = 'high';
+    if (daysCount === 0) {
+      return {
+        quality: 'empty',
+        message: 'Your report is completely empty. AI will generate comprehensive content based on your additional description.',
+        daysCount: 0
+      };
+    } else if (daysCount < 3) {
+      return {
+        quality: 'minimal',
+        message: `Your report only has ${daysCount} day${daysCount === 1 ? '' : 's'} filled. AI will enhance what you have and generate additional content based on your description.`,
+        daysCount: daysCount
+      };
     } else {
-      // Check content completeness
-      const hasSummary = report.summary && report.summary.length > 50;
-      const hasAchievements = report.achievements && report.achievements.length > 30;
-      const hasChallenges = report.challenges && report.challenges.length > 30;
-      const hasLessons = report.lessons_learned && report.lessons_learned.length > 30;
-      
-      const completedSections = [hasSummary, hasAchievements, hasChallenges, hasLessons].filter(Boolean).length;
-      
-      if (completedSections === 0) {
-        baseTokens = 2000;
-        complexity = 'high';
-      } else if (completedSections <= 2) {
-        baseTokens = 1200;
-        complexity = 'medium';
-      } else {
-        baseTokens = 800;
-        complexity = 'low';
-      }
+      return {
+        quality: 'good',
+        message: `Your report has ${daysCount} days filled. AI will enhance your existing content and improve the overall quality.`,
+        daysCount: daysCount
+      };
     }
-    
-    // Add tokens for custom instructions
-    if (instructions.trim()) {
-      baseTokens += Math.ceil(instructions.length / 10) * 50;
-    }
-    
-    return { tokens: baseTokens, complexity };
   };
 
   const handleEnhance = async () => {
@@ -77,13 +71,95 @@ export const AIEnhancementButton: React.FC<AIEnhancementButtonProps> = ({
     console.log('Current instructions:', instructions);
     console.log('Is processing:', isProcessing);
     
-    // Calculate token estimation
-    const estimation = calculateTokenEstimation(reportData);
-    setEstimatedTokens(estimation.tokens);
-    
     // Always open the modal first
     setShowModal(true);
   };
+
+  const handleReset = async () => {
+    if (!canReset) return;
+    
+    // Show confirmation dialog
+    const confirmed = window.confirm(
+      '⚠️ WARNING: This action will permanently reset your enhanced report to the original state.\n\n' +
+      '• All AI enhancements will be lost\n' +
+      '• The report will return to your original input\n' +
+      '• This action cannot be undone\n\n' +
+      'Are you sure you want to continue?'
+    );
+    
+    if (!confirmed) return;
+    
+    setIsResetting(true);
+    try {
+      // Get access token from localStorage
+      const accessToken = localStorage.getItem('access_token');
+      if (!accessToken) {
+        throw new Error('No access token found. Please log in again.');
+      }
+      
+      // Make the reset API call
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/weekly-reports/${weeklyReportId}/reset_to_original/`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${accessToken}`,
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.message || `HTTP ${response.status}: ${response.statusText}`);
+      }
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        showSuccess('✅ Weekly report successfully reset to original state!');
+        
+        // Call the callback if provided
+        if (onEnhancementComplete) {
+          onEnhancementComplete({ success: true, action: 'reset' });
+        }
+        
+        // Don't close modal or hide reset button - keep it available for future use
+        // The button should remain visible as long as the report was ever enhanced
+      } else {
+        throw new Error(result.message || 'Reset failed');
+      }
+    } catch (error: any) {
+      console.error('Reset failed:', error);
+      showError(`Failed to reset report: ${error.message}`);
+    } finally {
+      setIsResetting(false);
+    }
+  };
+
+  // Check if reset is available when component mounts or reportData changes
+  useEffect(() => {
+    if (reportData) {
+      // Check if the report has been enhanced (has AI-generated content)
+      // This logic depends on how your backend tracks enhanced vs original reports
+      const hasEnhancedContent = reportData.is_enhanced || 
+                                reportData.enhancement_date || 
+                                reportData.enhanced_at ||
+                                reportData.ai_enhanced ||
+                                reportData.enhancement_count > 0 ||
+                                reportData.enhanced_with_ai ||
+                                reportData.ai_enhancement_date ||
+                                // Check if there's a difference between original and current content
+                                (reportData.original_content && reportData.original_content !== reportData.content) ||
+                                (reportData.original_daily_reports && reportData.original_daily_reports.length !== reportData.daily_reports.length);
+      
+      setCanReset(!!hasEnhancedContent);
+      
+      // Log for debugging
+      console.log('Report enhancement status:', {
+        reportData,
+        hasEnhancedContent,
+        canReset: !!hasEnhancedContent
+      });
+    }
+  }, [reportData]);
 
   const performEnhancement = async (customInstructions?: string) => {
     setIsEnhancing(true);
@@ -167,44 +243,10 @@ export const AIEnhancementButton: React.FC<AIEnhancementButtonProps> = ({
     performEnhancement(instructions);
   };
 
-  const handleDebugTest = async () => {
-    console.log('🔧 Running debug test for weekly report:', weeklyReportId);
-    const result = await testAIEnhancementEndpoint(weeklyReportId);
-    if (result) {
-      showSuccess('Debug test passed! Check console for details.');
-    } else {
-      showError('Debug test failed! Check console for details.');
-    }
-  };
+  const isProcessing = isEnhancing || isResetting || loading.isLoading;
 
-  const isProcessing = isEnhancing || loading.isLoading;
-
-  // Debug modal state
-  useEffect(() => {
-    console.log('Modal state changed:', { showModal, isProcessing, isEnhancing });
-  }, [showModal, isProcessing, isEnhancing]);
-
-  // Calculate token estimation when modal opens
-  useEffect(() => {
-    if (showModal) {
-      // Determine usage type based on daily reports count (backend specification)
-      let estimatedCost = 500; // Default for EMPTY (less than 3 days)
-      
-      if (reportData && reportData.daily_reports) {
-        const filledDaysCount = reportData.daily_reports.length;
-        
-        if (filledDaysCount >= 5) {
-          estimatedCost = 300; // FULLFILLED: 5 days filled
-        } else if (filledDaysCount >= 3) {
-          estimatedCost = 400; // PARTIAL: 3-4 days filled
-        } else {
-          estimatedCost = 500; // EMPTY: less than 3 days
-        }
-      }
-      
-      setEstimatedTokens(estimatedCost);
-    }
-  }, [showModal, reportData, instructions, paymentInfo]);
+  // Get report quality information
+  const reportQuality = getReportQualityInfo(reportData);
 
   return (
     <>
@@ -242,104 +284,126 @@ export const AIEnhancementButton: React.FC<AIEnhancementButtonProps> = ({
       {/* Enhanced AI Enhancement Modal */}
       {showModal && (
         <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl p-6 w-full max-w-lg lg:max-w-xl shadow-2xl">
+          <div className="bg-white dark:bg-gray-800 rounded-2xl p-4 sm:p-6 w-full max-w-md lg:max-w-lg xl:max-w-xl shadow-2xl max-h-[90vh] overflow-y-auto">
             {/* Header */}
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-4 sm:mb-6">
               <div className="flex items-center gap-3">
-                <div className={`w-12 h-12 lg:w-14 lg:h-14 bg-gradient-to-r from-${theme}-500 to-${theme}-600 rounded-full flex items-center justify-center`}>
-                  <Brain className="w-6 h-6 lg:w-7 lg:h-7 text-white" />
+                <div className={`w-10 h-10 sm:w-12 sm:h-12 bg-gradient-to-r from-${theme}-500 to-${theme}-600 rounded-full flex items-center justify-center`}>
+                  <Brain className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                 </div>
                 <div>
-                  <h3 className="text-xl lg:text-2xl font-semibold text-gray-900 dark:text-white">AI Enhancement</h3>
-                  <p className="text-sm lg:text-base text-gray-600 dark:text-gray-400">Make your report more professional</p>
+                  <h3 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-white">AI Enhancement</h3>
+                  <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Professional report enhancement</p>
                 </div>
               </div>
               <button
                 onClick={() => setShowModal(false)}
-                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
+                className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors p-1"
               >
-                <X className="w-6 h-6" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
-            {/* Token Balance and Estimation */}
-            <div className="mb-6 space-y-4">
+            {/* Report Quality Information */}
+            <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-700">
+              <div className="flex items-start gap-2">
+                <Info className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
+                <div className="text-xs sm:text-sm">
+                  <p className="font-medium text-blue-800 dark:text-blue-200 mb-1">
+                    {reportQuality.quality === 'empty' ? 'Empty Report Detected' : 
+                     reportQuality.quality === 'minimal' ? 'Minimal Content Detected' : 
+                     'Good Content Detected'}
+                  </p>
+                  <p className="text-blue-700 dark:text-blue-300 leading-relaxed">
+                    {reportQuality.message}
+                  </p>
+                  {reportQuality.quality !== 'good' && (
+                    <p className="text-blue-600 dark:text-blue-400 font-medium mt-2">
+                      💡 <strong>Tip:</strong> Provide detailed additional instructions to help AI generate exactly what you need!
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Token Balance and Cost */}
+            <div className="mb-4 sm:mb-6 space-y-3">
               {/* Current Balance */}
               {userBalance && (
-                <div className="p-4 bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-900/30 dark:to-orange-800/30 rounded-lg border border-orange-200 dark:border-orange-700">
+                <div className={`p-3 sm:p-4 rounded-lg border ${
+                  userBalance.available_tokens >= FIXED_COST 
+                    ? 'bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 border-green-200 dark:border-green-700'
+                    : 'bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-900/30 dark:to-orange-800/30 border-orange-200 dark:border-orange-700'
+                }`}>
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Coins className="w-5 h-5 text-orange-600 dark:text-orange-400" />
-                      <span className="text-sm lg:text-base font-medium text-gray-700 dark:text-gray-300">Your Balance:</span>
+                      <Coins className={`w-4 h-4 sm:w-5 sm:h-5 ${
+                        userBalance.available_tokens >= FIXED_COST 
+                          ? 'text-green-600 dark:text-green-400' 
+                          : 'text-orange-600 dark:text-orange-400'
+                      }`} />
+                      <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">Your Balance:</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="text-xl lg:text-2xl font-bold text-orange-600 dark:text-orange-400">{userBalance.available_tokens}</span>
-                      <span className="text-sm text-gray-500">tokens</span>
+                      <span className={`text-lg sm:text-xl font-bold ${
+                        userBalance.available_tokens >= FIXED_COST 
+                          ? 'text-green-600 dark:text-green-400' 
+                          : 'text-orange-600 dark:text-orange-400'
+                      }`}>{userBalance.available_tokens}</span>
+                      <span className="text-xs text-gray-500">tokens</span>
                     </div>
                   </div>
                 </div>
               )}
               
-              {/* Token Estimation */}
-              <div className={`p-4 rounded-lg border ${
-                userBalance && userBalance.available_tokens >= estimatedTokens 
-                  ? 'bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 border-green-200 dark:border-green-700' 
-                  : 'bg-gradient-to-r from-red-50 to-pink-50 dark:from-red-900/30 dark:to-pink-900/30 border-red-200 dark:border-red-700'
-              }`}>
+              {/* Fixed Cost - Always 300 tokens */}
+              <div className="p-3 sm:p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 rounded-lg border border-green-200 dark:border-green-700">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <Coins className={`w-5 h-5 ${
-                      userBalance && userBalance.available_tokens >= estimatedTokens 
-                        ? 'text-green-600 dark:text-green-400' 
-                        : 'text-red-600 dark:text-red-400'
-                    }`} />
-                    <span className="text-sm lg:text-base font-medium text-gray-700 dark:text-gray-300">Estimated Cost:</span>
+                    <Coins className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 dark:text-green-400" />
+                    <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">Fixed Cost:</span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className={`text-xl lg:text-2xl font-bold ${
-                      userBalance && userBalance.available_tokens >= estimatedTokens 
-                        ? 'text-green-600 dark:text-green-400' 
-                        : 'text-red-600 dark:text-red-400'
-                    }`}>{estimatedTokens}</span>
-                    <span className="text-sm text-gray-500">tokens</span>
+                    <span className="text-lg sm:text-xl font-bold text-green-600 dark:text-green-400">{FIXED_COST}</span>
+                    <span className="text-xs text-gray-500">tokens</span>
                   </div>
                 </div>
-                <div className="mt-2 text-xs lg:text-sm text-gray-600 dark:text-gray-300">
-                  {(() => {
-                    const daysCount = reportData?.daily_reports?.length || 0;
-                    if (daysCount >= 5) {
-                      return `${daysCount} days completed - Grammar, style, and formatting improvements`;
-                    } else if (daysCount >= 3) {
-                      return `${daysCount} days completed - Targeted improvements and content enhancement`;
-                    } else {
-                      return `${daysCount} days completed - Comprehensive enhancement with AI content generation`;
-                    }
-                  })()}
+                <div className="mt-2 text-xs text-gray-600 dark:text-gray-300">
+                  Professional AI enhancement with grammar, style, and content improvements
+                </div>
                 </div>
                 
-                {/* Insufficient balance warning */}
-                {userBalance && userBalance.available_tokens < estimatedTokens && (
-                  <div className="mt-2 p-2 bg-red-100 rounded border border-red-200">
-                    <div className="flex items-center gap-2">
-                      <AlertCircle className="w-4 h-4 text-red-600" />
-                      <span className="text-xs text-red-700 font-medium">
-                        Insufficient tokens. You need {estimatedTokens - userBalance.available_tokens} more tokens.
-                      </span>
+              {/* Insufficient balance warning with billing link */}
+              {userBalance && userBalance.available_tokens < FIXED_COST && (
+                <div className="p-3 bg-red-50 dark:bg-red-900/30 rounded-lg border border-red-200 dark:border-red-700">
+                  <div className="flex items-start gap-2">
+                    <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 mt-0.5 flex-shrink-0" />
+                    <div className="flex-1">
+                      <p className="text-xs sm:text-sm text-red-700 dark:text-red-300 font-medium mb-2">
+                        Insufficient tokens. You need {FIXED_COST - userBalance.available_tokens} more tokens.
+                      </p>
+                      <a 
+                        href="/billing" 
+                        className="inline-flex items-center gap-2 text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-medium underline"
+                      >
+                        <Coins className="w-3 h-3 sm:w-4 sm:h-4" />
+                        Go to Billing Page
+                      </a>
+                    </div>
                     </div>
                   </div>
                 )}
-              </div>
             </div>
 
             {/* Enhancement Progress (when active) */}
             {isEnhancing && (
-              <div className="mb-4 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
+              <div className="mb-4 p-3 sm:p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
                 <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
-                    <Clock className="w-4 h-4 text-green-600 animate-spin" />
-                    <span className="text-sm font-medium text-gray-700">Enhancing Report...</span>
+                    <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-green-600 animate-spin" />
+                    <span className="text-xs sm:text-sm font-medium text-gray-700">Enhancing Report...</span>
                   </div>
-                  <span className="text-sm font-bold text-green-600">{enhancementProgress}%</span>
+                  <span className="text-xs sm:text-sm font-bold text-green-600">{enhancementProgress}%</span>
                 </div>
                 
                 {/* Progress Bar */}
@@ -354,87 +418,103 @@ export const AIEnhancementButton: React.FC<AIEnhancementButtonProps> = ({
                 <div className="text-xs text-gray-600 animate-pulse">
                   {currentStep}
                 </div>
-                
-                {/* Animated Processing Indicators */}
-                <div className="flex justify-center mt-3 space-x-1">
-                  {Array.from({length: 3}, (_, i) => (
-                    <div 
-                      key={i}
-                      className={`w-2 h-2 rounded-full animate-bounce ${
-                        i === 0 ? 'bg-blue-500' : i === 1 ? 'bg-green-500' : 'bg-purple-500'
-                      }`}
-                      style={{ animationDelay: `${i * 0.2}s` }}
-                    ></div>
-                  ))}
-                </div>
               </div>
             )}
 
-            {/* Content */}
-            <div className="mb-4">
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Additional Instructions (Optional)
+            {/* Additional Instructions */}
+            <div className="mb-4 sm:mb-6">
+              <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Additional Instructions 
+                {reportQuality.quality === 'empty' && <span className="text-red-600 font-semibold">(Required)</span>}
+                {reportQuality.quality === 'minimal' && <span className="text-orange-600 font-semibold">(Highly Recommended)</span>}
+                {reportQuality.quality === 'good' && <span className="text-green-600">(Optional)</span>}
                 </label>
                 <textarea
                   value={instructions}
                   onChange={(e) => setInstructions(e.target.value)}
-                placeholder="E.g., 'Make it more technical', 'Focus on achievements', 'Use formal language'"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
-                  rows={3}
+                placeholder={reportQuality.quality === 'empty' 
+                  ? "⚠️ REQUIRED: Describe your work week, achievements, challenges, and what you'd like the report to focus on..."
+                  : reportQuality.quality === 'minimal'
+                  ? "💡 RECOMMENDED: Provide additional context about your work, goals, and specific areas you'd like enhanced..."
+                  : "✨ OPTIONAL: E.g., 'Make it more technical', 'Focus on achievements', 'Use formal language'"
+                }
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-xs sm:text-sm ${
+                  reportQuality.quality === 'empty' && !instructions.trim()
+                    ? 'border-red-300 bg-red-50 dark:bg-red-900/20'
+                    : 'border-gray-300'
+                }`}
+                rows={4}
                 disabled={isEnhancing}
-                />
-              <div className="mt-1 text-xs text-gray-500">
-                Custom instructions may increase token usage
+                required={reportQuality.quality === 'empty'}
+              />
+              <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                {reportQuality.quality === 'empty' 
+                  ? "⚠️ Detailed instructions are required for empty reports to help AI generate comprehensive content!"
+                  : reportQuality.quality === 'minimal'
+                  ? "💡 Detailed instructions help AI generate exactly what you need!"
+                  : "✨ Custom instructions help tailor the enhancement to your preferences"
+                }
               </div>
               </div>
 
-            {/* Token Usage Explanation */}
-            <div className="mb-6 p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-              <h4 className="text-sm lg:text-base font-medium text-gray-700 dark:text-gray-300 mb-3">Token Usage Guide:</h4>
-              <div className="space-y-2 text-xs lg:text-sm text-gray-600 dark:text-gray-400">
-                <div className="flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-green-500" />
-                  <span><strong>5 days filled:</strong> 300 tokens (FULLFILLED)</span>
+            {/* Reset Button - Only visible when reset is available */}
+            {canReset && (
+              <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-amber-50 dark:bg-amber-900/30 rounded-lg border border-amber-200 dark:border-amber-700">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
+                  <div className="flex-1">
+                    <p className="text-xs sm:text-sm font-medium text-amber-800 dark:text-amber-200 mb-2">
+                      ⚠️ Reset to Original Available
+                    </p>
+                    <p className="text-xs text-amber-700 dark:text-amber-300 mb-3">
+                      This report has been enhanced with AI. You can reset it to your original input at any time.
+                    </p>
+                    <div className="mb-3 p-2 bg-red-50 dark:bg-red-900/20 rounded border border-red-200 dark:border-red-700">
+                      <p className="text-xs text-red-700 dark:text-red-300 font-medium">
+                        ⚠️ <strong>Warning:</strong> Resetting will permanently remove all AI enhancements and cannot be undone.
+                      </p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-yellow-500" />
-                  <span><strong>3-4 days filled:</strong> 400 tokens (PARTIAL)</span>
+                    <button
+                      onClick={handleReset}
+                      disabled={isResetting || isEnhancing}
+                      className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 flex items-center justify-center gap-2 text-xs sm:text-sm ${
+                        isResetting || isEnhancing
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                          : 'bg-amber-500 text-white hover:bg-amber-600'
+                      }`}
+                    >
+                      {isResetting ? (
+                        <>
+                          <LoadingSpinner size="sm" inline color="white" />
+                          Resetting...
+                        </>
+                      ) : (
+                        <>
+                          <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
+                          Reset to Original
+                        </>
+                      )}
+                    </button>
                 </div>
-                <div className="flex items-center gap-2">
-                  <FileText className="w-4 h-4 text-red-500" />
-                  <span><strong>Less than 3 days:</strong> 500 tokens (EMPTY)</span>
                 </div>
               </div>
-            </div>
+            )}
 
             {/* Action Buttons */}
-            <div className="flex gap-3">
+            <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                <button
                  onClick={() => setShowModal(false)}
-                 className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors"
+                className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-medium hover:bg-gray-50 transition-colors text-xs sm:text-sm"
                 disabled={isEnhancing}
                >
                  Cancel
                </button>
-               
-               {/* Debug button - only show in development */}
-               {process.env.NODE_ENV === 'development' && (
-                 <button
-                   onClick={handleDebugTest}
-                   className="px-3 py-2 bg-yellow-500 text-white rounded-lg font-medium hover:bg-yellow-600 transition-colors flex items-center gap-1"
-                   title="Debug AI Enhancement"
-                  disabled={isEnhancing}
-                 >
-                   <Bug className="w-4 h-4" />
-                   Debug
-                 </button>
-               )}
               
               <button
                 onClick={handleQuickEnhance}
-                disabled={isEnhancing || !!(userBalance && userBalance.available_tokens < estimatedTokens)}
-                className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all duration-300 flex items-center justify-center gap-2 ${
-                  isEnhancing || (userBalance && userBalance.available_tokens < estimatedTokens)
+                disabled={!canEnhance || (reportQuality.quality === 'empty' && !instructions.trim())}
+                className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all duration-300 flex items-center justify-center gap-2 text-xs sm:text-sm ${
+                  !canEnhance || (reportQuality.quality === 'empty' && !instructions.trim())
                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                     : `bg-gradient-to-r from-${theme}-500 to-${theme}-600 text-white hover:from-${theme}-600 hover:to-${theme}-700`
                 }`}
@@ -444,15 +524,20 @@ export const AIEnhancementButton: React.FC<AIEnhancementButtonProps> = ({
                      <LoadingSpinner size="sm" inline color="white" />
                      Enhancing...
                    </>
-                 ) : (userBalance && userBalance.available_tokens < estimatedTokens) ? (
+                ) : !userBalance || userBalance.available_tokens < FIXED_COST ? (
                    <>
-                     <AlertCircle className="w-4 h-4" />
+                    <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4" />
                      Insufficient Tokens
                    </>
+                ) : (reportQuality.quality === 'empty' && !instructions.trim()) ? (
+                  <>
+                    <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4" />
+                    Instructions Required
+                  </>
                  ) : (
                    <>
-                     <Sparkles className="w-4 h-4" />
-                     Quick Enhance
+                    <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
+                    Enhance Report
                    </>
                  )}
               </button>
@@ -460,9 +545,9 @@ export const AIEnhancementButton: React.FC<AIEnhancementButtonProps> = ({
               {instructions.trim() && (
                 <button
                   onClick={handleCustomEnhance}
-                  disabled={isEnhancing || !!(userBalance && userBalance.available_tokens < estimatedTokens)}
-                  className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 flex items-center justify-center gap-2 ${
-                    isEnhancing || (userBalance && userBalance.available_tokens < estimatedTokens)
+                  disabled={!canEnhance}
+                  className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 flex items-center justify-center gap-2 text-xs sm:text-sm ${
+                    !canEnhance
                       ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                       : 'bg-green-500 text-white hover:bg-green-600'
                   }`}
@@ -470,8 +555,9 @@ export const AIEnhancementButton: React.FC<AIEnhancementButtonProps> = ({
                                    {isEnhancing ? (
                    <LoadingSpinner size="sm" inline color="white" />
                  ) : (
-                   <CheckCircle className="w-4 h-4" />
+                    <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
                  )}
+                  Custom
                 </button>
               )}
             </div>

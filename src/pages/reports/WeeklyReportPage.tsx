@@ -4,7 +4,7 @@ import { useAppStore } from '@/store';
 import { useTheme } from '@/components/ThemeProvider';
 import { WeeklyReport } from '@/types';
 import { useToastContext } from '@/contexts/ToastContext';
-import apiClient from '@/api/client';
+import { apiClient } from '@/api/client';
 import { 
   Loader2, 
   CheckCircle, 
