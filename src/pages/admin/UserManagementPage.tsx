@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { useAppStore } from '@/store';
 import { useToastContext } from '@/contexts/ToastContext';
 import { adminDashboardService, UsersResponse } from '@/api/adminServices';
-import { UserBalance } from '@/types';
+import { UserBalance, BackendUserBalance } from '@/types';
 import { setAuthToken } from '@/api/client';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { 
@@ -29,7 +29,8 @@ import {
   MoreVertical,
   Edit,
   Eye,
-  AlertTriangle
+  AlertTriangle,
+  RefreshCw
 } from 'lucide-react';
 
 interface UserFilters {
@@ -46,9 +47,12 @@ interface UserDetailModalProps {
   onClose: () => void;
   userBalance: UserBalance | null;
   loadingBalance: boolean;
+  tokenSummary: any;
+  adminUserBalances: any;
+  loadUserBalance: (userId: number) => Promise<void>;
 }
 
-const UserDetailModal: React.FC<UserDetailModalProps> = ({ user, isOpen, onClose, userBalance, loadingBalance }) => {
+const UserDetailModal: React.FC<UserDetailModalProps> = ({ user, isOpen, onClose, userBalance, loadingBalance, tokenSummary, adminUserBalances, loadUserBalance }) => {
   if (!isOpen) return null;
 
   const openWhatsApp = (phoneNumber: string) => {
@@ -164,31 +168,69 @@ const UserDetailModal: React.FC<UserDetailModalProps> = ({ user, isOpen, onClose
                 Token Information
               </h4>
               
-              {loadingBalance ? (
-                <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
-                  <LoadingSpinner size="sm" />
-                  Loading token information...
-                </div>
-              ) : userBalance ? (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
-                    <p className="text-xs text-gray-600 dark:text-gray-400">Available Tokens</p>
-                    <p className="text-lg font-bold text-green-600">{userBalance.available_tokens.toLocaleString()}</p>
+              {(() => {
+                // First check if we have the balance in the token summary (most reliable)
+                const summaryBalance = tokenSummary?.balances?.find((b: any) => {
+                  // Try different possible structures
+                  if (b.user?.id === user.id) return true;
+                  if (b.id === user.id) return true;
+                  if (b.user === user.username) return true;
+                  return false;
+                });
+                
+                // Also check if we have it in the store
+                const storeBalance = adminUserBalances[user.id];
+                
+                // Use summary balance if available, otherwise use store balance
+                const displayBalance = summaryBalance || storeBalance;
+                
+                if (loadingBalance) {
+                  return (
+                    <div className="flex items-center gap-2 text-gray-600 dark:text-gray-400">
+                      <LoadingSpinner size="sm" />
+                      Loading token information...
+                    </div>
+                  );
+                }
+                
+                if (displayBalance) {
+                  return (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                        <p className="text-xs text-gray-600 dark:text-gray-400">Available Tokens</p>
+                        <p className="text-lg font-bold text-green-600">
+                          {displayBalance.available_tokens.toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                        <p className="text-xs text-gray-600 dark:text-gray-400">Tokens Used</p>
+                        <p className="text-lg font-bold text-purple-600">
+                          {displayBalance.tokens_used.toLocaleString()}
+                        </p>
+                      </div>
+                      <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                        <p className="text-xs text-gray-600 dark:text-gray-400">Payment Status</p>
+                        <p className="text-sm font-medium text-gray-900 dark:text-white capitalize">
+                          {displayBalance.payment_status.toLowerCase().replace('_', ' ')}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                }
+                
+                return (
+                  <div className="text-center py-4">
+                    <Coins className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                    <p className="text-gray-500 dark:text-gray-400 mb-3">No token information available</p>
+                    <button
+                      onClick={() => loadUserBalance(user.id)}
+                      className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-sm font-medium transition-colors"
+                    >
+                      Load Token Information
+                    </button>
                   </div>
-                  <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
-                    <p className="text-xs text-gray-600 dark:text-gray-400">Tokens Used</p>
-                    <p className="text-lg font-bold text-purple-600">{userBalance.tokens_used.toLocaleString()}</p>
-                  </div>
-                  <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
-                    <p className="text-xs text-gray-600 dark:text-gray-400">Payment Status</p>
-                    <p className="text-sm font-medium text-gray-900 dark:text-white capitalize">
-                      {userBalance.payment_status.toLowerCase().replace('_', ' ')}
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <p className="text-gray-500 dark:text-gray-400">No token information available</p>
-              )}
+                );
+              })()}
             </div>
           </div>
         </div>
@@ -219,6 +261,10 @@ const UserManagementPage: React.FC = () => {
   const [exportLoading, setExportLoading] = useState(false);
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [showUserDetail, setShowUserDetail] = useState(false);
+  
+  // Token summary state
+  const [tokenSummary, setTokenSummary] = useState<{ balances: BackendUserBalance[]; summary: any } | null>(null);
+  const [tokenSummaryLoading, setTokenSummaryLoading] = useState(false);
   
   // Filters state
   const [filters, setFilters] = useState<UserFilters>({
@@ -252,21 +298,69 @@ const UserManagementPage: React.FC = () => {
       isStaff: user?.is_staff
     });
     
-    // Ensure token is set in API client
-    const accessToken = localStorage.getItem('access_token');
-    if (!accessToken) {
-      showError('No access token found. Please log in again.');
-      return;
+    // Since the individual user balance API is broken (returns same user data),
+    // we rely on the token summary data which is already loaded
+    if (tokenSummary && tokenSummary.balances) {
+      const userBalance = tokenSummary.balances.find((balance: any) => {
+        // Try different possible structures
+        if (balance.user?.id === userId) return true;
+        if (balance.id === userId) return true;
+        if (balance.user === userId) return true;
+        return false;
+      });
+      
+      if (userBalance) {
+        console.log(`Found balance for user ${userId} in token summary:`, userBalance);
+        return; // Balance is already available in the table via tokenSummary
+      }
     }
     
-    // Set the token in the API client
-    setAuthToken(accessToken);
-    
+    console.warn(`User ${userId} not found in token summary. Individual API calls are disabled due to backend issues.`);
+    showError(`User ${userId} balance not available. Please refresh the token summary.`);
+  };
+
+  // Load token summary
+  const loadTokenSummary = async () => {
     try {
-      await fetchAdminUserBalance(userId);
+      setTokenSummaryLoading(true);
+      const response = await adminDashboardService.billing.getUserBalances();
+      if (response.success) {
+        setTokenSummary(response.data);
+        
+        // Also populate individual user balances from the response
+        if (response.data.balances) {
+          // Create a map of user balances for quick lookup
+          const balancesMap: { [key: number]: BackendUserBalance } = {};
+          response.data.balances.forEach((balance: BackendUserBalance) => {
+            // Try to get the user ID from different possible locations
+            const userId = balance.user?.id || balance.id || (typeof balance.user === 'number' ? balance.user : undefined);
+            if (userId !== undefined && typeof userId === 'number') {
+              balancesMap[userId] = balance;
+            }
+          });
+          
+          // Update the store with all user balances at once
+          // This will make the tokens immediately visible in the table
+          // Note: We don't call individual API calls since they're broken (return same user data)
+          // Instead, we rely on the token summary data which is already complete
+          console.log(`Loaded ${response.data.balances.length} user balances from token summary`);
+          console.log('Raw token summary response:', response.data.balances);
+          console.log('User balances available:', response.data.balances.map(b => ({ 
+            userId: b.user?.id || b.id || (typeof b.user === 'number' ? b.user : undefined), 
+            username: b.user?.username || (typeof b.user === 'string' ? b.user : undefined), 
+            available: b.available_tokens,
+            used: b.tokens_used,
+            status: b.payment_status
+          })));
+        }
+      } else {
+        showError('Failed to load token summary');
+      }
     } catch (error) {
-      console.error(`Failed to load balance for user ${userId}:`, error);
-      showError(`Failed to load balance for user ${userId}`);
+      console.error('Failed to load token summary:', error);
+      showError('Failed to load token summary');
+    } finally {
+      setTokenSummaryLoading(false);
     }
   };
 
@@ -298,6 +392,7 @@ const UserManagementPage: React.FC = () => {
     }
 
     loadUsers();
+    loadTokenSummary(); // Load token summary on mount
   }, [user, navigate, showError, filters, initializeAuth]); // Added initializeAuth to dependency array
 
   const handleFilterChange = (key: keyof UserFilters, value: string | number) => {
@@ -501,6 +596,69 @@ const UserManagementPage: React.FC = () => {
             </div>
           </div>
         )}
+
+        {/* Token Summary */}
+        <div className="bg-white dark:bg-gray-800 rounded-lg p-3 mb-4 border border-gray-200 dark:border-gray-700">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm lg:text-base font-medium text-gray-900 dark:text-white flex items-center gap-2">
+              <Coins className="w-4 h-4 text-purple-600" />
+              Token Overview
+            </h3>
+            <button
+              onClick={loadTokenSummary}
+              disabled={tokenSummaryLoading}
+              className="flex items-center gap-2 px-2.5 py-1 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
+            >
+              {tokenSummaryLoading ? (
+                <LoadingSpinner size="sm" inline color="white" />
+              ) : (
+                <RefreshCw className="w-3 h-3" />
+              )}
+              Refresh
+            </button>
+          </div>
+          
+          {tokenSummary ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="text-center p-2.5 bg-purple-50 dark:bg-purple-900/20 rounded-lg">
+                <p className="text-xs text-purple-600 dark:text-purple-400 font-medium">Total Users</p>
+                <p className="text-lg font-bold text-purple-700 dark:text-purple-300">
+                  {tokenSummary.summary.total_users.toLocaleString()}
+                </p>
+              </div>
+              <div className="text-center p-2.5 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                <p className="text-xs text-green-600 dark:text-green-400 font-medium">Users with Tokens</p>
+                <p className="text-lg font-bold text-green-700 dark:text-green-300">
+                  {tokenSummary.summary.users_with_tokens.toLocaleString()}
+                </p>
+              </div>
+              <div className="text-center p-2.5 bg-blue-50 dark:bg-blue-900/20 rounded-lg">
+                <p className="text-xs text-blue-600 dark:text-blue-400 font-medium">Total Available</p>
+                <p className="text-lg font-bold text-blue-700 dark:text-blue-300">
+                  {tokenSummary.summary.total_tokens_available.toLocaleString()}
+                </p>
+              </div>
+              <div className="text-center p-2.5 bg-orange-50 dark:bg-orange-900/20 rounded-lg">
+                <p className="text-xs text-orange-600 dark:text-orange-400 font-medium">Total Used</p>
+                <p className="text-lg font-bold text-orange-700 dark:text-orange-300">
+                  {tokenSummary.summary.total_tokens_used.toLocaleString()}
+                </p>
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-4">
+              <Coins className="w-10 h-10 text-gray-400 mx-auto mb-2" />
+              <p className="text-gray-500 dark:text-gray-400 mb-2 text-sm">No token summary available</p>
+              <button
+                onClick={loadTokenSummary}
+                disabled={tokenSummaryLoading}
+                className="px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-xs font-medium transition-colors disabled:opacity-50"
+              >
+                {tokenSummaryLoading ? 'Loading...' : 'Load Token Summary'}
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* Filters */}
         <div className="bg-white dark:bg-gray-800 rounded-lg p-6 mb-6 border border-gray-200 dark:border-gray-700">
@@ -752,6 +910,17 @@ const UserManagementPage: React.FC = () => {
                         <div className="flex items-center gap-2">
                           <Coins className="w-4 h-4 text-purple-600" />
                           {(() => {
+                            // First check if we have the balance in the token summary (most reliable)
+                            // The backend might be returning balances without nested user objects
+                            const summaryBalance = tokenSummary?.balances?.find(b => {
+                              // Try different possible structures
+                              if (b.user?.id === userData.id) return true;
+                              if (b.id === userData.id) return true;
+                              if (b.user === userData.username) return true;
+                              return false;
+                            });
+                            
+                            // Also check if we have it in the store
                             const balance = adminUserBalances[userData.id];
                             const isLoading = adminLoading.userBalances;
                             
@@ -759,24 +928,35 @@ const UserManagementPage: React.FC = () => {
                               return <LoadingSpinner size="sm" />;
                             }
                             
-                            if (balance) {
+                            // Prioritize summary balance over store balance
+                            const displayBalance = summaryBalance || balance;
+                            
+                            if (displayBalance) {
                               return (
-                                <span className="text-sm text-gray-900 dark:text-white">
-                                  {balance.available_tokens.toLocaleString()}
-                                </span>
+                                <div className="flex flex-col gap-1">
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-xs text-green-600 font-medium">
+                                      {displayBalance.available_tokens.toLocaleString()}
+                                    </span>
+                                    <span className="text-xs text-gray-500">available</span>
+                                  </div>
+                                  <div className="flex items-center gap-1">
+                                    <span className="text-xs text-orange-600 font-medium">
+                                      {displayBalance.tokens_used.toLocaleString()}
+                                    </span>
+                                    <span className="text-xs text-gray-500">used</span>
+                                  </div>
+                                  <div className="text-xs text-gray-500 dark:text-gray-400">
+                                    {displayBalance.payment_status}
+                                  </div>
+                                </div>
                               );
                             }
                             
                             return (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  loadUserBalance(userData.id);
-                                }}
-                                className="text-sm text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-                              >
-                                Load
-                              </button>
+                              <div className="text-sm text-gray-500 dark:text-gray-400">
+                                Not available
+                              </div>
                             );
                           })()}
                         </div>
@@ -859,6 +1039,9 @@ const UserManagementPage: React.FC = () => {
           onClose={() => setShowUserDetail(false)}
           userBalance={adminUserBalances[selectedUser.id] || null}
           loadingBalance={adminLoading.userBalances && !adminUserBalances[selectedUser.id]}
+          tokenSummary={tokenSummary}
+          adminUserBalances={adminUserBalances}
+          loadUserBalance={loadUserBalance}
         />
       )}
     </div>

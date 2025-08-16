@@ -144,8 +144,8 @@ export const DailyReportPage: React.FC = () => {
 
   useEffect(() => {
     const loadWeekData = async () => {
-      setIsLoading(true);
-      try {
+    setIsLoading(true);
+    try {
         // Fetch existing reports for the selected week
         const response = await apiClient.get(`/reports/daily/?week_number=${selectedWeek}`);
         const existingReports = response.data.results || [];
@@ -185,7 +185,7 @@ export const DailyReportPage: React.FC = () => {
           };
         });
         
-        setWeekDays(weekData);
+                setWeekDays(weekData);
         
         // Set current day index based on target date or current day
         if (targetDate) {
@@ -206,8 +206,8 @@ export const DailyReportPage: React.FC = () => {
           setValue('hours_spent', currentDay.hours);
           setValue('description', currentDay.description);
         }
-      } catch (error) {
-        console.error('Failed to load week data:', error);
+    } catch (error) {
+      console.error('Failed to load week data:', error);
         // Create mock data for development
         const weekDates = getWeekDates(selectedWeek);
         const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
@@ -248,10 +248,10 @@ export const DailyReportPage: React.FC = () => {
         } else {
           setCurrentDayIndex(0);
         }
-      } finally {
-        setIsLoading(false);
-      }
-    };
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
     loadWeekData();
   }, [selectedWeek, setValue]);
@@ -347,22 +347,22 @@ export const DailyReportPage: React.FC = () => {
 
   return (
     <div className="p-3 lg:p-6 max-w-6xl mx-auto bg-gray-50 dark:bg-gray-900 min-h-screen">
-      {/* Header */}
+        {/* Header */}
       <div className="mb-4">
         <div className="flex items-center justify-between mb-3">
-          <div>
+            <div>
             <h1 className={`text-xl lg:text-2xl font-bold text-${theme}-600 mb-1`}>
-              Daily Reports
-            </h1>
+                Daily Reports
+              </h1>
             <p className="text-gray-600 dark:text-gray-400 text-sm">
-              Week {selectedWeek} • {getWeekDateRange(selectedWeek)}
-            </p>
-          </div>
-          
+                Week {selectedWeek} • {getWeekDateRange(selectedWeek)}
+              </p>
+            </div>
+                
 
-        </div>
-      </div>
-      
+                </div>
+              </div>
+              
       {/* Enhanced Weekday Navigation */}
       <div className="mb-4">
         <div className="bg-white/90 backdrop-blur-sm border border-gray-200 rounded-xl p-4 shadow-lg">
@@ -413,13 +413,13 @@ export const DailyReportPage: React.FC = () => {
                     <div className={`text-xs font-semibold ${
                       day.isCurrentDay ? 'text-green-600' : 'text-gray-700'
                     }`}>
-                      {getDayAbbreviation(day.dayName)}
+                  {getDayAbbreviation(day.dayName)}
                     </div>
                     <div className="text-xs text-gray-500 mt-1">
                       {getFormattedDate(day.date)}
                     </div>
-                  </div>
-                  
+            </div>
+            
                   {/* Status Icon */}
                   <div className="flex justify-center mb-2">
                     {day.isCompleted ? (
@@ -441,12 +441,12 @@ export const DailyReportPage: React.FC = () => {
                       {day.isCompleted ? 'Done' : day.isCurrentDay ? 'Today' : 'Pending'}
                     </div>
                   </div>
-                </button>
+            </button>
               );
             })}
           </div>
-        </div>
-      </div>
+            </div>
+          </div>
 
       {/* Current Day Form */}
       {weekDays[currentDayIndex] && (
@@ -479,103 +479,103 @@ export const DailyReportPage: React.FC = () => {
               </div>
             </div>
             
-            {weekDays[currentDayIndex].isCompleted && (
+                {weekDays[currentDayIndex].isCompleted && (
               <span className="px-3 py-1.5 text-sm rounded-full bg-green-100 dark:bg-green-900/30 text-green-800 dark:text-green-300 font-medium">
-                Completed
-              </span>
-            )}
-          </div>
-          
+                    Completed
+                  </span>
+                )}
+              </div>
+              
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
             <input type="hidden" {...register('date')} />
-            
-            <div>
+                
+                <div>
               <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">Hours Spent</label>
-              <input 
-                type="number" 
-                min="0" 
-                max="12"
-                step="0.5"
+                  <input 
+                    type="number" 
+                    min="0" 
+                    max="12"
+                    step="0.5"
                 className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 placeholder-gray-500 dark:placeholder-gray-400"
                 placeholder="Enter hours spent (0-12)"
-                {...register('hours_spent', { 
-                  required: 'Hours are required',
-                  min: { value: 0, message: 'Hours must be positive' },
-                  max: { value: 12, message: 'Hours cannot exceed 12' }
-                })} 
-              />
+                    {...register('hours_spent', { 
+                      required: 'Hours are required',
+                      min: { value: 0, message: 'Hours must be positive' },
+                      max: { value: 12, message: 'Hours cannot exceed 12' }
+                    })} 
+                  />
               {errors.hours_spent && <p className="text-sm text-red-500 dark:text-red-400 mt-2">{errors.hours_spent.message}</p>}
-            </div>
-            
-            <div>
+                </div>
+                
+                <div>
               <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">What did you learn/performed today?</label>
-              <textarea 
+                    <textarea 
                 rows={4}
                 className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 placeholder-gray-500 dark:placeholder-gray-400 resize-none shadow-sm hover:shadow-md focus:shadow-lg"
                 placeholder="Describe your activities, tasks performed, skills learned, challenges faced, and achievements..."
-                {...register('description', { 
-                  required: 'Description is required',
-                  validate: {
-                    notEmpty: (value) => {
-                      const trimmed = value?.trim();
-                      return trimmed && trimmed.length > 0 || 'Description cannot be empty';
-                    },
-                    hasWords: (value) => {
-                      const trimmed = value?.trim();
-                      return (trimmed && trimmed.split(/\s+/).length >= 1) || 'Description must contain at least one word';
-                    }
-                  }
-                })} 
-              />
+                      {...register('description', { 
+                        required: 'Description is required',
+                        validate: {
+                          notEmpty: (value) => {
+                            const trimmed = value?.trim();
+                            return trimmed && trimmed.length > 0 || 'Description cannot be empty';
+                          },
+                          hasWords: (value) => {
+                            const trimmed = value?.trim();
+                            return (trimmed && trimmed.split(/\s+/).length >= 1) || 'Description must contain at least one word';
+                          }
+                        }
+                      })} 
+                    />
               {errors.description && <p className="text-sm text-red-500 dark:text-red-400 mt-2">{errors.description.message}</p>}
-            </div>
+                </div>
 
             <div className="flex gap-4">
-              <button
-                type="submit"
-                disabled={isSubmitting}
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
                 className={`flex-1 px-6 py-3 bg-gradient-to-r from-${theme}-600 to-${theme}-700 text-white rounded-xl font-medium shadow-lg hover:shadow-xl transition-all duration-300 flex items-center justify-center gap-3 ${
-                  isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'
-                }`}
-              >
-                {isSubmitting ? (
-                  <LoadingSpinner size="sm" inline color="white" />
-                ) : (
-                  <Save className="w-4 h-4" />
-                )}
+                      isSubmitting ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'
+                    }`}
+                  >
+                    {isSubmitting ? (
+                      <LoadingSpinner size="sm" inline color="white" />
+                    ) : (
+                      <Save className="w-4 h-4" />
+                    )}
                 {weekDays[currentDayIndex]?.isCompleted ? 'Update' : 'Save'}
-              </button>
+                  </button>
+                </div>
+              </form>
             </div>
-          </form>
-        </div>
-      )}
+          )}
 
-      {/* Weekly Summary */}
+        {/* Weekly Summary */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
         <div className="bg-white/90 backdrop-blur-sm border border-gray-200 rounded-xl p-4 shadow-lg">
-          <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-2">
             <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
               <Calendar className="w-4 h-4 text-blue-600" />
             </div>
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Total Hours</span>
           </div>
           <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">{totalHours}h</p>
-        </div>
-        
+          </div>
+          
         <div className="bg-white/90 backdrop-blur-sm border border-gray-200 rounded-xl p-4 shadow-lg">
-          <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-2">
             <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
               <CheckCircle className="w-4 h-4 text-green-600" />
             </div>
             <span className="text-sm font-medium text-gray-700 dark:text-gray-300">Days Completed</span>
           </div>
           <p className="text-2xl font-bold text-gray-800 dark:text-gray-200">
-            {weekDays.filter(day => day.isCompleted).length}/5
-          </p>
-        </div>
-        
+              {weekDays.filter(day => day.isCompleted).length}/5
+            </p>
+          </div>
+          
         <div className="bg-white/90 backdrop-blur-sm border border-gray-200 rounded-xl p-4 shadow-lg">
-          <div className="flex items-center gap-2 mb-2">
+            <div className="flex items-center gap-2 mb-2">
             <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
               <Target className="w-4 h-4 text-orange-600" />
             </div>
@@ -584,9 +584,9 @@ export const DailyReportPage: React.FC = () => {
           <p className="text-lg font-bold text-gray-800 dark:text-gray-200">
             {weekDays.find(day => day.isCurrentDay) ? 'Today Active' : 
              allDaysCompleted ? 'Week Complete!' : 'In Progress'}
-          </p>
+            </p>
+          </div>
         </div>
-      </div>
 
 
 

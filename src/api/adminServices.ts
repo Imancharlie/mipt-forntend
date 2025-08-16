@@ -1,6 +1,6 @@
 import { apiClient, handleApiError } from './client';
 import { AxiosError } from 'axios';
-import { Transaction, UserBalance, BillingStats } from '@/types';
+import { Transaction, UserBalance, BillingStats, BackendUserBalance } from '@/types';
 
 // Types
 export interface DashboardStats {
@@ -506,9 +506,18 @@ export const adminDashboardService = {
     // Get user balance
     getUserBalance: async (userId: number): Promise<{ success: boolean; data: UserBalance }> => {
       try {
+        console.log(`Calling getUserBalance API for user ${userId} at /billing/balance/${userId}/`);
         const response = await apiClient.get(`/billing/balance/${userId}/`);
-        return response.data;
+        console.log(`getUserBalance API response for user ${userId}:`, response.data);
+        
+        // The API returns the UserBalance directly, not wrapped in success/data
+        // We need to wrap it to match the expected interface
+        return {
+          success: true,
+          data: response.data
+        };
       } catch (error) {
+        console.error(`getUserBalance API error for user ${userId}:`, error);
         handleApiError(error as AxiosError);
         throw error;
       }
@@ -526,7 +535,7 @@ export const adminDashboardService = {
     },
 
     // Get all user balances for staff view
-    getUserBalances: async (): Promise<{ success: boolean; data: any }> => {
+    getUserBalances: async (): Promise<{ success: boolean; data: { balances: BackendUserBalance[]; summary: any } }> => {
       try {
         const response = await apiClient.get('/billing/staff/user_balances/');
         return response.data;

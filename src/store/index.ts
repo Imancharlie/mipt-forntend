@@ -1220,14 +1220,19 @@ export const useAppStore = create<AppState>()(
       fetchAdminUserBalance: async (userId) => {
         set({ adminLoading: { ...get().adminLoading, userBalances: true } });
         try {
+          console.log(`Fetching balance for user ${userId}...`);
           const response = await adminDashboardService.billing.getUserBalance(userId);
+          console.log(`Balance response for user ${userId}:`, response);
+          
           if (response.success) {
             set((state) => ({ adminUserBalances: { ...state.adminUserBalances, [userId]: response.data } }));
             set({ adminLoading: { ...get().adminLoading, userBalances: false } });
           } else {
-            throw new Error('Failed to fetch admin user balance');
+            console.error(`Balance API returned success: false for user ${userId}:`, response);
+            throw new Error(`Failed to fetch admin user balance: API returned success false`);
           }
         } catch (error) {
+          console.error(`Error fetching balance for user ${userId}:`, error);
           set({ adminLoading: { ...get().adminLoading, userBalances: false } });
           throw error;
         }

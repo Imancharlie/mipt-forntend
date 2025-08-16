@@ -180,44 +180,44 @@ export const PTAssessmentPage: React.FC = () => {
          <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
        <div className="p-4 max-w-7xl mx-auto">
                  {/* Header */}
-        <div className={`relative overflow-hidden bg-gradient-to-r from-${theme}-50 via-white to-${theme}-50/50 backdrop-blur-xl border border-${theme}-200/30 rounded-2xl p-6 mb-8 shadow-xl shadow-${theme}-500/20`}>
+        <div className={`relative overflow-hidden bg-gradient-to-r from-${theme}-50 via-white to-${theme}-50/50 backdrop-blur-xl border border-${theme}-200/30 rounded-xl p-4 mb-6 shadow-lg shadow-${theme}-500/20`}>
           <div className={`absolute inset-0 bg-gradient-to-r from-${theme}-600/5 via-${theme}-600/5 to-${theme}-600/5`}></div>
           <div className={`absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-96 h-96 bg-gradient-to-br from-${theme}-400/20 to-${theme}-400/20 rounded-full blur-3xl`}></div>
           
           <div className="relative z-10">
-            <div className="flex items-center gap-4 mb-6">
-              <div className={`p-3 bg-gradient-to-r from-${theme}-500 to-${theme}-600 rounded-xl shadow-lg`}>
-                <Award className="w-6 h-6 text-white" />
+            <div className="flex items-center gap-3 mb-4">
+              <div className={`p-2.5 bg-gradient-to-r from-${theme}-500 to-${theme}-600 rounded-lg shadow-lg`}>
+                <Award className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className={`text-3xl font-bold text-${theme}-700 mb-2`}>PT Assessment Guide</h1>
-                <p className="text-base text-gray-600">Master your PT assessment structure and requirements</p>
+                <h1 className={`text-xl lg:text-2xl font-bold text-${theme}-700 mb-1`}>PT Assessment Guide</h1>
+                <p className="text-sm text-gray-600">Master your PT assessment structure and requirements</p>
               </div>
             </div>
             
             {/* Key Information - Two Columns */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-white/40 shadow-lg">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-green-100 rounded-lg">
-                    <Clock className="w-5 h-5 text-green-600" />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border border-white/40 shadow-lg">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-green-100 rounded-lg">
+                    <Clock className="w-4 h-4 text-green-600" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-medium text-gray-600 mb-1">Submission Deadline</h3>
-                    <p className="text-lg font-bold text-gray-800">2nd Week Friday</p>
+                    <h3 className="text-xs font-medium text-gray-600 mb-1">Submission Deadline</h3>
+                    <p className="text-sm font-bold text-gray-800">2nd Week Friday</p>
                     <p className="text-xs text-gray-500">After university opening</p>
                   </div>
                 </div>
               </div>
               
-              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-white/40 shadow-lg">
-                <div className="flex items-center gap-3">
-                  <div className="p-2 bg-orange-100 rounded-lg">
-                    <AlertTriangle className="w-5 h-5 text-orange-600" />
+              <div className="bg-white/80 backdrop-blur-sm rounded-lg p-3 border border-white/40 shadow-lg">
+                <div className="flex items-center gap-2">
+                  <div className="p-1.5 bg-orange-100 rounded-lg">
+                    <AlertTriangle className="w-4 h-4 text-orange-600" />
                   </div>
                   <div>
-                    <h3 className="text-sm font-medium text-gray-600 mb-1">Late Penalties</h3>
-                    <p className="text-lg font-bold text-gray-800">-5 marks</p>
+                    <h3 className="text-xs font-medium text-gray-600 mb-1">Late Penalties</h3>
+                    <p className="text-sm font-bold text-gray-800">-5 marks</p>
                     <p className="text-xs text-gray-500">Per late submission</p>
                   </div>
                 </div>
@@ -227,45 +227,45 @@ export const PTAssessmentPage: React.FC = () => {
         </div>
 
         {/* Assessment Components */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
           {assessmentComponents.map((component) => {
             const Icon = component.icon;
             const isExpanded = expandedSection === component.name;
             
             return (
-              <div key={component.name} className="bg-white/90 backdrop-blur-sm border border-gray-200/50 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-3">
-                    <div className={`p-2.5 bg-gradient-to-r from-${theme}-500 to-${theme}-600 rounded-xl shadow-md`}>
-                      <Icon className="w-5 h-5 text-white" />
+              <div key={component.name} className="bg-white/90 backdrop-blur-sm border border-gray-200/50 rounded-xl p-4 shadow-lg hover:shadow-xl transition-all duration-300">
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex items-center gap-2">
+                    <div className={`p-2 bg-gradient-to-r from-${theme}-500 to-${theme}-600 rounded-lg shadow-md`}>
+                      <Icon className="w-4 h-4 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-lg font-bold text-gray-800 mb-1">{component.name}</h3>
-                      <p className="text-sm text-gray-600 leading-relaxed">{component.description}</p>
+                      <h3 className="text-sm font-bold text-gray-800 mb-1">{component.name}</h3>
+                      <p className="text-xs text-gray-600 leading-relaxed">{component.description}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className="flex items-center gap-2">
                     {getMarksDisplay(component.name, component.marks)}
                     <button
                       onClick={() => toggleSection(component.name)}
-                      className={`p-2 hover:bg-${theme}-50 rounded-lg transition-colors duration-200`}
+                      className={`p-1.5 hover:bg-${theme}-50 rounded-lg transition-colors duration-200`}
                     >
-                      {isExpanded ? <ChevronDown className="w-4 h-4 text-gray-600" /> : <ChevronRight className="w-4 h-4 text-gray-600" />}
+                      {isExpanded ? <ChevronDown className="w-3 h-3 text-gray-600" /> : <ChevronRight className="w-3 h-3 text-gray-600" />}
                     </button>
                   </div>
                 </div>
                 
                 {isExpanded && (
-                  <div className="space-y-4 pt-4 border-t border-gray-100">
+                  <div className="space-y-3 pt-3 border-t border-gray-100">
                     <div>
-                      <h4 className="font-semibold text-gray-800 mb-3 text-sm flex items-center gap-2">
-                        <CheckCircle className="w-4 h-4 text-green-500" />
+                      <h4 className="font-semibold text-gray-800 mb-2 text-xs flex items-center gap-2">
+                        <CheckCircle className="w-3 h-3 text-green-500" />
                         Key Requirements
                       </h4>
-                      <ul className="space-y-2">
+                      <ul className="space-y-1.5">
                         {component.details.map((detail, idx) => (
-                          <li key={idx} className="flex items-start gap-3 text-sm text-gray-700">
-                            <div className="w-1.5 h-1.5 bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
+                          <li key={idx} className="flex items-start gap-2 text-xs text-gray-700">
+                            <div className="w-1 h-1 bg-green-400 rounded-full mt-1.5 flex-shrink-0"></div>
                             <span className="leading-relaxed">{detail}</span>
                           </li>
                         ))}
@@ -274,11 +274,11 @@ export const PTAssessmentPage: React.FC = () => {
                     
                     {component.penalties && (
                       <div>
-                        <h4 className="font-semibold text-red-800 mb-2 text-sm flex items-center gap-2">
-                          <AlertTriangle className="w-4 h-4 text-red-500" />
+                        <h4 className="font-semibold text-red-800 mb-2 text-xs flex items-center gap-2">
+                          <AlertTriangle className="w-3 h-3 text-red-500" />
                           Penalties
                         </h4>
-                        <div className="text-sm text-red-700 bg-red-50 p-3 rounded-lg border border-red-100">
+                        <div className="text-xs text-red-700 bg-red-50 p-2 rounded-lg border border-red-100">
                           <p><strong>Arrival note:</strong> -5 marks</p>
                           <p><strong>Logbook & General report submission:</strong> -5 marks</p>
                         </div>

@@ -35,7 +35,7 @@ import WorkplacePage from '@/pages/WorkplacePage';
 import AdminDashboardPage from '@/pages/admin/AdminDashboardPage';
 import UserManagementPage from '@/pages/admin/UserManagementPage';
 import AnalyticsPage from '@/pages/admin/AnalyticsPage';
-import TokenUsagePage from '@/pages/admin/TokenUsagePage';
+
 import RecentActivityPage from '@/pages/admin/RecentActivityPage';
 import BillingDashboardPage from '@/pages/admin/BillingDashboardPage';
 
@@ -272,16 +272,7 @@ const App: React.FC = () => {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/admin/token-usage"
-              element={
-                <ProtectedRoute>
-                  <MobileLayout>
-                    <TokenUsagePage />
-                  </MobileLayout>
-                </ProtectedRoute>
-              }
-            />
+
             <Route
               path="/admin/activity"
               element={
@@ -377,16 +368,7 @@ const App: React.FC = () => {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/desktop/admin/token-usage"
-              element={
-                <ProtectedRoute>
-                  <DesktopLayout>
-                    <TokenUsagePage />
-                  </DesktopLayout>
-                </ProtectedRoute>
-              }
-            />
+
             <Route
               path="/desktop/admin/activity"
               element={

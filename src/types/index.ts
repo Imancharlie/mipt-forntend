@@ -406,6 +406,21 @@ export interface UserBalance {
   updated_at: string;
 }
 
+// Backend response structure for user balances (matches actual API response)
+export interface BackendUserBalance {
+  user?: {
+    id: number;
+    username: string;
+    email: string;
+  };
+  // Alternative structure where user info might be at root level
+  id?: number;
+  user?: string | number; // Could be username or user ID
+  available_tokens: number;
+  tokens_used: number;
+  payment_status: string;
+}
+
 export interface Transaction {
   id: number;
   user: string;

@@ -30,15 +30,15 @@ interface StatCardProps {
 }
 
 const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon, color, trend }) => (
-  <div className="bg-white dark:bg-gray-800 rounded-lg p-4 lg:p-6 shadow-lg border border-gray-200 dark:border-gray-700">
+  <div className="bg-white dark:bg-gray-800 rounded-lg p-3 lg:p-4 shadow-lg border border-gray-200 dark:border-gray-700">
     <div className="flex items-center justify-between">
       <div>
-        <p className="text-xs lg:text-sm font-medium text-gray-600 dark:text-gray-400">{title}</p>
-        <p className="text-lg lg:text-xl font-bold text-gray-900 dark:text-white mt-1">
+        <p className="text-xs font-medium text-gray-600 dark:text-gray-400">{title}</p>
+        <p className="text-base lg:text-lg font-bold text-gray-900 dark:text-white mt-1">
           {typeof value === 'number' ? value.toLocaleString() : value}
         </p>
         {trend && (
-          <div className={`flex items-center mt-2 text-xs ${
+          <div className={`flex items-center mt-1.5 text-xs ${
             trend.isPositive ? 'text-green-600' : 'text-red-600'
           }`}>
             <TrendingUp className="w-3 h-3 mr-1" />
@@ -46,8 +46,8 @@ const StatCard: React.FC<StatCardProps> = ({ title, value, icon: Icon, color, tr
           </div>
         )}
       </div>
-      <div className={`p-2 lg:p-3 rounded-full ${color}`}>
-        <Icon className="w-5 h-5 lg:w-6 lg:h-6 text-white" />
+      <div className={`p-1.5 lg:p-2.5 rounded-full ${color}`}>
+        <Icon className="w-4 h-4 lg:w-5 lg:h-5 text-white" />
       </div>
     </div>
   </div>
@@ -156,13 +156,7 @@ const AdminDashboardPage: React.FC = () => {
             <BarChart3 className="w-6 h-6 mb-2" />
             <span className="text-sm font-medium">Analytics</span>
           </button>
-          <button
-            onClick={() => navigate('/admin/token-usage')}
-            className="p-4 bg-purple-600 hover:bg-purple-700 rounded-lg text-white transition-colors"
-          >
-            <Coins className="w-6 h-6 mb-2" />
-            <span className="text-sm font-medium">Token Usage</span>
-          </button>
+
           <button
             onClick={() => navigate('/admin/billing')}
             className="p-4 bg-emerald-600 hover:bg-emerald-700 rounded-lg text-white transition-colors"
@@ -220,27 +214,27 @@ const AdminDashboardPage: React.FC = () => {
         </div>
 
         {/* Recent Activity Grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           {/* Recent Users */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 lg:p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-            <h3 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-3 lg:p-4 shadow-lg border border-gray-200 dark:border-gray-700">
+            <h3 className="text-sm lg:text-base font-semibold text-gray-900 dark:text-white mb-3">
               Recent Users
             </h3>
-            <div className="space-y-3">
+            <div className="space-y-2">
               {recentActivity.recent_users?.slice(0, 5).map((user) => (
-                <div key={user.id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <div key={user.id} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-lg">
                   <div>
-                    <p className="font-medium text-gray-900 dark:text-white">
+                    <p className="font-medium text-sm text-gray-900 dark:text-white">
                       {user.first_name} {user.last_name}
                     </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">@{user.username}</p>
+                    <p className="text-xs text-gray-600 dark:text-gray-400">@{user.username}</p>
                   </div>
                   <span className="text-xs text-gray-500 dark:text-gray-400">
                     {new Date(user.date_joined).toLocaleDateString()}
                   </span>
                 </div>
               )) || (
-                <div className="text-center py-4 text-gray-500">
+                <div className="text-center py-3 text-gray-500 text-sm">
                   No recent users data available
                 </div>
               )}
@@ -248,18 +242,18 @@ const AdminDashboardPage: React.FC = () => {
           </div>
 
           {/* Recent AI Logs */}
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-4 lg:p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-            <h3 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-3 lg:p-4 shadow-lg border border-gray-200 dark:border-gray-700">
+            <h3 className="text-sm lg:text-base font-semibold text-gray-900 dark:text-white mb-3">
               Recent AI Usage
             </h3>
-            <div className="space-y-3">
+            <div className="space-y-2">
               {recentActivity.recent_ai_logs?.slice(0, 5).map((log, index) => (
-                <div key={index} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                <div key={index} className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-lg">
                   <div>
-                    <p className="font-medium text-gray-900 dark:text-white">
+                    <p className="font-medium text-sm text-gray-900 dark:text-white">
                       {log.user__first_name} {log.user__last_name}
                     </p>
-                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                    <p className="text-xs text-gray-600 dark:text-gray-400">
                       {log.enhancement_type} - {log.tokens_consumed} tokens
                     </p>
                   </div>
@@ -268,7 +262,7 @@ const AdminDashboardPage: React.FC = () => {
                   </span>
                 </div>
               )) || (
-                <div className="text-center py-4 text-gray-500">
+                <div className="text-center py-3 text-gray-500 text-sm">
                   No recent AI usage data available
                 </div>
               )}
@@ -278,17 +272,17 @@ const AdminDashboardPage: React.FC = () => {
 
         {/* Program Statistics */}
         {recentActivity.program_stats && recentActivity.program_stats.length > 0 && (
-          <div className="mt-6 bg-white dark:bg-gray-800 rounded-lg p-4 lg:p-6 shadow-lg border border-gray-200 dark:border-gray-700">
-            <h3 className="text-base lg:text-lg font-semibold text-gray-900 dark:text-white mb-4">
+          <div className="mt-4 bg-white dark:bg-gray-800 rounded-lg p-3 lg:p-4 shadow-lg border border-gray-200 dark:border-gray-700">
+            <h3 className="text-sm lg:text-base font-semibold text-gray-900 dark:text-white mb-3">
               Program Distribution
             </h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {recentActivity.program_stats.map((stat, index) => (
-                <div key={index} className="text-center p-4 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                  <p className="text-2xl font-bold text-gray-900 dark:text-white">
+                <div key={index} className="text-center p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <p className="text-lg font-bold text-gray-900 dark:text-white">
                     {stat.count}
                   </p>
-                  <p className="text-sm text-gray-600 dark:text-gray-400">
+                  <p className="text-xs text-gray-600 dark:text-gray-400">
                     {stat.program}
                   </p>
                 </div>
