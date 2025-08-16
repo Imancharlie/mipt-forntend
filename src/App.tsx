@@ -25,7 +25,7 @@ import { WeeklyReportDetailPage } from '@/pages/reports/WeeklyReportDetailPage';
 import { GeneralReportPage } from '@/pages/reports/GeneralReportPage';
 import { ProfilePage } from '@/pages/ProfilePage';
 import { SettingsPage } from '@/pages/SettingsPage';
-import { ResourcesPage } from '@/pages/ResourcesPage';
+
 import { PTAssessmentPage } from '@/pages/PTAssessmentPage';
 import BillingPage from '@/pages/BillingPage';
 import HelpCenterPage from '@/pages/HelpCenterPage';
@@ -229,16 +229,7 @@ const App: React.FC = () => {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/resources"
-              element={
-                <ProtectedRoute>
-                  <MobileLayout>
-                    <ResourcesPage />
-                  </MobileLayout>
-                </ProtectedRoute>
-              }
-            />
+
             <Route
               path="/workplace"
               element={
@@ -343,16 +334,7 @@ const App: React.FC = () => {
                 </ProtectedRoute>
               }
             />
-            <Route
-              path="/desktop/resources"
-              element={
-                <ProtectedRoute>
-                  <DesktopLayout>
-                    <ResourcesPage />
-                  </DesktopLayout>
-                </ProtectedRoute>
-              }
-            />
+
             <Route
               path="/desktop/workplace"
               element={

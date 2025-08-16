@@ -37,7 +37,7 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
     { name: 'Weekly Reports', href: '/weekly-report', icon: Calendar },
     { name: 'General Report', href: '/general-report', icon: BookOpen },
     { name: 'PT Assessment', href: '/pt-assessment', icon: Award },
-    { name: 'Resources', href: '/resources', icon: BookOpen },
+
     { name: 'Workplace', href: '/workplace', icon: Activity },
     { name: 'Billing', href: '/billing', icon: CreditCard },
     { name: 'Help Center', href: '/help', icon: HelpCircle },

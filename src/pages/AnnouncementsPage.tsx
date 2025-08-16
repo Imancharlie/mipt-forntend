@@ -50,7 +50,7 @@ export const AnnouncementsPage: React.FC = () => {
             {
               id: 2,
               title: "Weekly Report Submission Guidelines Updated",
-              content: "New guidelines for weekly report submission have been published. Please review the updated format requirements in the Resources section.",
+              content: "New guidelines for weekly report submission have been published. Please review the updated format requirements.",
               type: 'info',
               date: '2025-01-12',
               isPinned: true
@@ -72,7 +72,7 @@ export const AnnouncementsPage: React.FC = () => {
             {
               id: 5,
               title: "Sample Reports Available for Download",
-              content: "Sample weekly and final reports are now available in the Resources section. These examples will help you understand the expected format and quality.",
+              content: "Sample weekly and final reports are now available. These examples will help you understand the expected format and quality.",
               type: 'info',
               date: '2025-01-05'
             },
@@ -108,7 +108,7 @@ export const AnnouncementsPage: React.FC = () => {
           {
             id: 2,
             title: "Weekly Report Submission Guidelines Updated",
-            content: "New guidelines for weekly report submission have been published. Please review the updated format requirements in the Resources section.",
+            content: "New guidelines for weekly report submission have been published. Please review the updated format requirements.",
             type: 'info',
             date: '2025-01-12',
             isPinned: true
@@ -130,7 +130,7 @@ export const AnnouncementsPage: React.FC = () => {
           {
             id: 5,
             title: "Sample Reports Available for Download",
-            content: "Sample weekly and final reports are now available in the Resources section. These examples will help you understand the expected format and quality.",
+            content: "Sample weekly and final reports are now available. These examples will help you understand the expected format and quality.",
             type: 'info',
             date: '2025-01-05'
           },
@@ -398,13 +398,7 @@ export const AnnouncementsPage: React.FC = () => {
             <ExternalLink className="w-4 h-4" />
             Visit PTMS
           </button>
-          <button
-            onClick={() => window.location.href = '/resources'}
-            className="btn-secondary flex items-center gap-2 text-sm"
-          >
-            <Info className="w-4 h-4" />
-            View Resources
-          </button>
+
           <button
             onClick={() => window.location.href = '/ptms'}
             className="btn-secondary flex items-center gap-2 text-sm"

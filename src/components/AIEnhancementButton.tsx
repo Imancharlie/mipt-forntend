@@ -317,6 +317,11 @@ export const AIEnhancementButton: React.FC<AIEnhancementButtonProps> = ({
                 <span className={`text-lg sm:text-xl font-bold ${userBalance && userBalance.available_tokens >= FIXED_COST ? 'text-orange-600 dark:text-orange-400' : 'text-orange-600 dark:text-orange-400'}`}>
                   {userBalance ? userBalance.available_tokens : 0}
                 </span>
+                {userBalance && userBalance.available_tokens < FIXED_COST && (
+                  <a href="/billing" className="text-xs text-orange-500 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 underline ml-2">
+                    Get more
+                  </a>
+                )}
                     </div>
               <div className="mt-2 text-xs text-orange-700 dark:text-orange-300">
                 Cost per enhancement: <span className="font-semibold">{FIXED_COST} tokens</span>
@@ -325,6 +330,11 @@ export const AIEnhancementButton: React.FC<AIEnhancementButtonProps> = ({
                 <div className="mt-2 p-2 bg-red-50 dark:bg-red-900/20 rounded border border-red-200 dark:border-red-700">
                   <p className="text-xs text-red-700 dark:text-red-300 font-medium">
                     ⚠️ Insufficient tokens. You need {FIXED_COST - userBalance.available_tokens} more tokens to enhance this report.
+                  </p>
+                  <p className="text-xs text-red-600 dark:text-red-400 mt-1">
+                    <a href="/billing" className="underline hover:text-red-800 dark:hover:text-red-200">
+                      Click here to get tokens
+                    </a>
                   </p>
                 </div>
               )}
@@ -460,7 +470,9 @@ export const AIEnhancementButton: React.FC<AIEnhancementButtonProps> = ({
                 ) : !userBalance || userBalance.available_tokens < FIXED_COST ? (
                    <>
                     <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4" />
-                     Insufficient Tokens
+                     <a href="/billing" className="underline hover:text-blue-600">
+                       Get Tokens
+                     </a>
                    </>
                 ) : (reportQuality.quality === 'empty' && !additionalDescription.trim()) ? (
                   <>

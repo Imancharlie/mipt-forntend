@@ -1276,6 +1276,17 @@ export const billingService = {
     }
   },
 
+  // Get user transactions (specific endpoint for authenticated user)
+  getUserTransactions: async (): Promise<{ success: boolean; data: Transaction[] }> => {
+    try {
+      const response = await apiClient.get('/billing/user-transactions/');
+      return response.data;
+    } catch (error) {
+      console.error('Failed to get user transactions:', error);
+      throw handleApiError(error as AxiosError);
+    }
+  },
+
   // Staff Transaction Management
   staff: {
     // Create transaction on behalf of user

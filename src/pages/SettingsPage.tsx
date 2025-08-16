@@ -4,8 +4,6 @@ import { useToastContext } from '@/contexts/ToastContext';
 
 import { 
   Settings, 
-  Palette, 
-  Bell, 
   User, 
   Lock, 
   Download, 
@@ -13,19 +11,14 @@ import {
   Save,
   Eye,
   EyeOff,
-  Loader2
+  Loader2,
+  Shield,
+  Database
 } from 'lucide-react';
 import { useAppStore } from '@/store';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 
 interface UserSettings {
-  theme: 'light' | 'dark';
-  notifications: {
-    email: boolean;
-    push: boolean;
-    weekly_reminder: boolean;
-    daily_reminder: boolean;
-  };
   account: {
     username: string;
     email: string;
@@ -33,17 +26,10 @@ interface UserSettings {
 }
 
 export const SettingsPage: React.FC = () => {
-  const { theme, setTheme, colorMode, setColorMode } = useTheme();
+  const { theme } = useTheme();
   const { user } = useAppStore();
   const { showSuccess, showError, showWarning, showInfo } = useToastContext();
   const [settings, setSettings] = useState<UserSettings>({
-    theme: colorMode,
-    notifications: {
-      email: true,
-      push: true,
-      weekly_reminder: true,
-      daily_reminder: false,
-    },
     account: {
       username: user?.username || '',
       email: user?.email || '',
@@ -68,13 +54,6 @@ export const SettingsPage: React.FC = () => {
         } else {
           // Use default settings if API fails
           setSettings({
-            theme: 'light',
-            notifications: {
-              email: true,
-              push: true,
-              weekly_reminder: true,
-              daily_reminder: false,
-            },
             account: {
               username: user?.username || '',
               email: user?.email || '',
@@ -85,13 +64,6 @@ export const SettingsPage: React.FC = () => {
         console.error('Failed to fetch user settings:', error);
         // Use default settings
         setSettings({
-          theme: 'light',
-          notifications: {
-            email: true,
-            push: true,
-            weekly_reminder: true,
-            daily_reminder: false,
-          },
           account: {
             username: user?.username || '',
             email: user?.email || '',
@@ -103,22 +75,7 @@ export const SettingsPage: React.FC = () => {
     };
 
     fetchUserSettings();
-  }, [theme, user]);
-
-  const handleThemeChange = (newTheme: 'light' | 'dark') => {
-    setColorMode(newTheme);
-    setSettings(prev => ({ ...prev, theme: newTheme }));
-  };
-
-  const handleNotificationChange = (key: string, value: boolean) => {
-    setSettings(prev => ({
-      ...prev,
-      notifications: {
-        ...prev.notifications,
-        [key]: value,
-      },
-    }));
-  };
+  }, [user]);
 
   const handleSaveSettings = async () => {
     try {
@@ -192,6 +149,7 @@ export const SettingsPage: React.FC = () => {
         a.click();
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
+        showSuccess('Data exported successfully!');
       } else {
         showInfo('Export feature coming soon!');
       }
@@ -227,78 +185,27 @@ export const SettingsPage: React.FC = () => {
           <Settings className="w-6 h-6 text-orange-500 dark:text-orange-400" />
           <div>
             <h1 className="text-2xl font-bold text-orange-600 dark:text-orange-400">Settings</h1>
-            <p className="text-sm text-gray-600 dark:text-gray-400">Manage your account preferences and settings</p>
+            <p className="text-sm text-gray-600 dark:text-gray-400">Manage your account preferences and security</p>
           </div>
         </div>
       </div>
 
       {/* Settings Sections */}
-      <div className="space-y-4">
-        {/* Theme Selection */}
-        <div className="card p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700">
-          <div className="flex items-center gap-2 mb-3">
-            <Palette className="w-5 h-5 text-orange-500 dark:text-orange-400" />
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Appearance</h2>
-          </div>
-          <div className="space-y-3">
-            <p className="text-sm text-gray-700 dark:text-gray-300">Choose your preferred appearance mode</p>
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { id: 'light', name: 'Light Mode', icon: '☀️' },
-                { id: 'dark', name: 'Dark Mode', icon: '🌙' }
-              ].map((mode) => (
-                <button
-                  key={mode.id}
-                  onClick={() => handleThemeChange(mode.id as 'light' | 'dark')}
-                  className={`p-4 rounded-xl border-2 transition-all ${
-                    colorMode === mode.id
-                      ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/30'
-                      : 'border-gray-300 dark:border-gray-600 hover:border-orange-300 dark:hover:border-orange-500'
-                  }`}
-                >
-                  <div className="text-2xl mb-2">{mode.icon}</div>
-                  <span className="text-sm font-medium text-gray-800 dark:text-white">{mode.name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Notification Preferences */}
-        <div className="card p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700">
-          <div className="flex items-center gap-2 mb-3">
-            <Bell className="w-5 h-5 text-orange-500 dark:text-orange-400" />
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Notifications</h2>
-          </div>
-          <div className="space-y-3">
-            <p className="text-sm text-gray-700 dark:text-gray-300">Manage your notification preferences</p>
-            <div className="space-y-2">
-              {Object.entries(settings.notifications).map(([key, value]) => (
-                <label key={key} className="flex items-center gap-3">
-                  <input
-                    type="checkbox"
-                    checked={value}
-                    onChange={(e) => handleNotificationChange(key, e.target.checked)}
-                    className="w-4 h-4 text-orange-600 rounded focus:ring-orange-500 focus:border-orange-500"
-                  />
-                  <span className="text-sm text-gray-700 dark:text-gray-300 capitalize">
-                    {key.replace('_', ' ')}
-                  </span>
-                </label>
-              ))}
-            </div>
-          </div>
-        </div>
-
+      <div className="space-y-6">
         {/* Account Information */}
-        <div className="card p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700">
-          <div className="flex items-center gap-2 mb-3">
-            <User className="w-5 h-5 text-orange-500 dark:text-orange-400" />
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Account Information</h2>
-          </div>
-          <div className="space-y-3">
+        <div className="card p-6 bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-900/20 dark:to-orange-800/20 border border-orange-200 dark:border-orange-700 rounded-xl">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg">
+              <User className="w-5 h-5 text-orange-600 dark:text-orange-400" />
+            </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Username</label>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Account Information</h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Update your personal details</p>
+            </div>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Username</label>
               <input
                 type="text"
                 value={settings.account.username}
@@ -306,11 +213,12 @@ export const SettingsPage: React.FC = () => {
                   ...prev,
                   account: { ...prev.account, username: e.target.value }
                 }))}
-                className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-orange-600 focus:border-orange-600 text-gray-900 dark:text-white"
+                className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 dark:text-white transition-all duration-200"
+                placeholder="Enter your username"
               />
             </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Email</label>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Email Address</label>
               <input
                 type="email"
                 value={settings.account.email}
@@ -318,76 +226,124 @@ export const SettingsPage: React.FC = () => {
                   ...prev,
                   account: { ...prev.account, email: e.target.value }
                 }))}
-                className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-orange-600 focus:border-orange-600 text-gray-900 dark:text-white"
+                className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 dark:text-white transition-all duration-200"
+                placeholder="Enter your email address"
               />
             </div>
           </div>
         </div>
 
         {/* Password Change */}
-        <div className="card p-4 bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-700">
-          <div className="flex items-center gap-2 mb-3">
-            <Lock className="w-5 h-5 text-orange-500 dark:text-orange-400" />
-            <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Change Password</h2>
-          </div>
-          <div className="space-y-3">
+        <div className="card p-6 bg-gradient-to-r from-blue-50 to-blue-100 dark:from-blue-900/20 dark:to-blue-800/20 border border-blue-200 dark:border-blue-700 rounded-xl">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-blue-100 dark:bg-blue-900/30 rounded-lg">
+              <Lock className="w-5 h-5 text-blue-600 dark:text-blue-400" />
+            </div>
             <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Current Password</label>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Security</h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Change your password to keep your account secure</p>
+            </div>
+          </div>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Current Password</label>
               <div className="relative">
                 <input
                   type={showPassword ? 'text' : 'password'}
                   value={passwordData.current}
                   onChange={(e) => setPasswordData(prev => ({ ...prev, current: e.target.value }))}
-                  className="w-full px-3 py-2 pr-10 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-orange-600 focus:border-orange-600 text-gray-900 dark:text-white"
+                  className="w-full px-4 py-3 pr-12 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white transition-all duration-200"
+                  placeholder="Enter your current password"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 p-1 hover:bg-gray-100 dark:hover:bg-gray-600 rounded transition-colors"
                 >
                   {showPassword ? <EyeOff className="w-4 h-4 text-gray-500 dark:text-gray-400" /> : <Eye className="w-4 h-4 text-gray-500 dark:text-gray-400" />}
                 </button>
               </div>
             </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">New Password</label>
-              <input
-                type="password"
-                value={passwordData.new}
-                onChange={(e) => setPasswordData(prev => ({ ...prev, new: e.target.value }))}
-                className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-orange-600 focus:border-orange-600 text-gray-900 dark:text-white"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Confirm New Password</label>
-              <input
-                type="password"
-                value={passwordData.confirm}
-                onChange={(e) => setPasswordData(prev => ({ ...prev, confirm: e.target.value }))}
-                className="w-full px-3 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-orange-600 focus:border-orange-600 text-gray-900 dark:text-white"
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">New Password</label>
+                <input
+                  type="password"
+                  value={passwordData.new}
+                  onChange={(e) => setPasswordData(prev => ({ ...prev, new: e.target.value }))}
+                  className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white transition-all duration-200"
+                  placeholder="Enter new password"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Confirm New Password</label>
+                <input
+                  type="password"
+                  value={passwordData.confirm}
+                  onChange={(e) => setPasswordData(prev => ({ ...prev, confirm: e.target.value }))}
+                  className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white transition-all duration-200"
+                  placeholder="Confirm new password"
+                />
+              </div>
             </div>
             <button
               onClick={handlePasswordChange}
-              className="btn-primary flex items-center gap-2 text-sm"
+              className="btn-primary flex items-center gap-2 text-sm px-6 py-3 bg-blue-600 hover:bg-blue-700 focus:ring-blue-500"
             >
               <Lock className="w-4 h-4" />
-              Change Password
+              Update Password
             </button>
           </div>
         </div>
 
-        {/* PWA Install Guide */}
-        
+        {/* Data Management */}
+        <div className="card p-6 bg-gradient-to-r from-green-50 to-green-100 dark:from-green-900/20 dark:to-green-800/20 border border-green-200 dark:border-green-700 rounded-xl">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+              <Database className="w-5 h-5 text-green-600 dark:text-green-400" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900 dark:text-white">Data Management</h2>
+              <p className="text-sm text-gray-600 dark:text-gray-400">Export your data or manage your account</p>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <button
+              onClick={handleExportData}
+              className="flex items-center gap-3 p-4 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-600 transition-all duration-200 group"
+            >
+              <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg group-hover:bg-green-200 dark:group-hover:bg-green-800/40 transition-colors">
+                <Download className="w-4 h-4 text-green-600 dark:text-green-400" />
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-medium text-gray-900 dark:text-white">Export Data</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400">Download your personal data</p>
+              </div>
+            </button>
+            
+            <button
+              onClick={handleDeleteAccount}
+              className="flex items-center gap-3 p-4 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition-all duration-200 group"
+            >
+              <div className="p-2 bg-red-100 dark:bg-red-900/30 rounded-lg group-hover:bg-red-200 dark:group-hover:bg-red-800/40 transition-colors">
+                <Trash2 className="w-4 h-4 text-red-600 dark:text-red-400" />
+              </div>
+              <div className="text-left">
+                <p className="text-sm font-medium text-gray-900 dark:text-white">Delete Account</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400">Permanently remove your account</p>
+              </div>
+            </button>
+          </div>
+        </div>
 
-     
-        <div className="flex justify-end">
+        {/* Save Button */}
+        <div className="flex justify-end pt-4">
           <button
             onClick={handleSaveSettings}
-            className="btn-primary flex items-center gap-2 text-sm"
+            className="btn-primary flex items-center gap-2 text-sm px-8 py-3 bg-orange-600 hover:bg-orange-700 focus:ring-orange-500 shadow-lg hover:shadow-xl transition-all duration-200"
           >
             <Save className="w-4 h-4" />
-            Save Settings
+            Save Changes
           </button>
         </div>
       </div>

@@ -43,7 +43,7 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({ children }) => {
     { path: '/weekly-report', icon: Calendar, label: 'Weekly Reports' },
     { path: '/general-report', icon: BookOpen, label: 'General Report' },
     { path: '/pt-assessment', icon: Award, label: 'PT Assessment' },
-    { path: '/resources', icon: BookOpen, label: 'Resources' },
+
     { path: '/workplace', icon: Activity, label: 'Workplace' },
     { path: '/billing', icon: CreditCard, label: 'Billing' },
     { path: '/help', icon: HelpCircle, label: 'Help Center' },
