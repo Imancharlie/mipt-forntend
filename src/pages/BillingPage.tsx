@@ -55,7 +55,7 @@ const BillingPage: React.FC = () => {
     name: '',
     confirmationType: 'own'
   });
-  const [calculatorAmount, setCalculatorAmount] = useState<number>(2000);
+  const [calculatorAmount, setCalculatorAmount] = useState<number>(1000);
   const [transactionSuccess, setTransactionSuccess] = useState<{
     show: boolean;
     transactionId?: number;
@@ -74,7 +74,7 @@ const BillingPage: React.FC = () => {
       description: 'LiPA NAMBA',
       icon: <Phone className="w-6 h-6" />,
       number: paymentInfo?.payment_number || '5356432',
-      accountName: 'MIPT Softwares'
+      accountName: 'MIPT Software'
     },
     {
       id: 'airtel',
@@ -82,7 +82,7 @@ const BillingPage: React.FC = () => {
       description: 'LiPA NAMBA',
       icon: <Phone className="w-6 h-6" />,
       number: '4556432',
-      accountName: 'MIPT Softwares'
+      accountName: 'MIPT Software'
     }
   ];
 
@@ -92,12 +92,12 @@ const BillingPage: React.FC = () => {
   };
 
   const handleProceedToPayment = () => {
-    if (calculatorAmount < 2000) {
-      showError('Minimum payment amount is 2000 TSH');
+    if (calculatorAmount < 1000) {
+      showError('Minimum payment amount is 1000 TSH');
       return;
     }
-    if (calculatorAmount % 1000 !== 0) {
-      showError('Payment amount must be in multiples of 1000 TSH');
+    if (calculatorAmount % 500 !== 0) {
+      showError('Payment amount must be in multiples of 500 TSH');
       return;
     }
     // Clear any previous success state
@@ -235,50 +235,8 @@ const BillingPage: React.FC = () => {
         </div>
       )}
 
-      {/* Current Tokens */}
-      <div className="mb-8">
-        <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
-        <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">Current Tokens</h2>
-              <div className="flex items-center gap-3">
-                <div className="flex items-center gap-2 px-4 py-2 bg-orange-100 dark:bg-orange-900/30 rounded-full text-orange-700 dark:text-orange-300 border border-orange-200 dark:border-orange-700">
-                  <Coins className="w-5 h-5" />
-                  <span className="text-xl font-bold">{userBalance?.available_tokens || 0}</span>
-                  <span className="text-sm">tokens</span>
-                </div>
-              </div>
-            </div>
-            <div className="text-right">
-              <p className="text-sm text-gray-600 dark:text-gray-400">Last updated</p>
-              <p className="text-sm font-medium text-gray-800 dark:text-white">Just now</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {!showPaymentMethods ? (
         <>
-          {/* Minimum Amount Info */}
-          <div className="mb-8">
-            <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-2xl p-6">
-              <div className="flex items-start gap-3">
-                <Info className="w-6 h-6 text-blue-600 dark:text-blue-400 mt-1" />
-                <div>
-                  <h3 className="text-lg font-semibold text-blue-800 dark:text-blue-200 mb-2">
-                    Payment Information
-                  </h3>
-                  <div className="space-y-2 text-sm text-blue-700 dark:text-blue-300">
-                    <p>• <strong>Minimum payment:</strong> 2000 TSH</p>
-                    <p>• <strong>Token rate:</strong> 2000 TSH = 600 tokens</p>
-                    <p>• <strong>Payment increments:</strong> Multiples of 1000 TSH</p>
-                    <p>• <strong>Enhancement costs:</strong> 300 tokens (complete report) or 500 tokens (blank report)</p>
-                  </div>
-                </div>
-        </div>
-        </div>
-      </div>
-
           {/* Token Calculator */}
           <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 lg:p-6 mb-6">
             <div className="flex items-center gap-3 mb-4">
@@ -303,14 +261,19 @@ const BillingPage: React.FC = () => {
                 <input
                   type="number"
                   value={calculatorAmount}
-                  onChange={(e) => setCalculatorAmount(Number(e.target.value))}
-                  min="2000"
-                  step="1000"
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    // Remove leading zeros and convert to number
+                    const cleanValue = value.replace(/^0+/, '') || '0';
+                    setCalculatorAmount(Number(cleanValue));
+                  }}
+                  min="1000"
+                  step="500"
                   className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-sm"
-                  placeholder="Enter amount in multiples of 1000"
+                  placeholder="Enter amount in multiples of 500"
                 />
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                  Minimum: 2,000 TSH • Step: 1,000 TSH
+                  Minimum: 1,000 TSH • Step: 500 TSH
                 </p>
               </div>
               
@@ -336,46 +299,36 @@ const BillingPage: React.FC = () => {
               </button>
             </div>
           </div>
-
-          {/* Proceed Button */}
-          <div className="mb-8">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
-              <div className="text-center">
-                
-                
-              </div>
-            </div>
-        </div>
         </>
       ) : (
         <>
           {/* Payment Methods */}
           <div className="mb-8">
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-6">Payment Methods</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-6">Payment Methods</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {paymentMethods.map((method) => (
                 <div
                   key={method.id}
-                  className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 hover:shadow-xl transition-all duration-300"
+                  className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-all duration-300"
                 >
-                  <div className="flex items-center gap-4 mb-4">
-                    <div className="p-3 bg-orange-100 dark:bg-orange-900/30 rounded-xl text-orange-600 dark:text-orange-400">
+                  <div className="flex items-center gap-3 mb-3">
+                    <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg text-orange-600 dark:text-orange-400">
                       {method.icon}
                     </div>
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-800 dark:text-white">{method.name}</h3>
-                      <p className="text-sm text-gray-600 dark:text-gray-400">{method.description}</p>
+                      <h3 className="text-base font-semibold text-gray-800 dark:text-white">{method.name}</h3>
+                      <p className="text-xs text-gray-600 dark:text-gray-400">{method.description}</p>
                     </div>
                   </div>
                   
-                  <div className="space-y-3 mb-4">
-                    <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Account Number</p>
-                      <p className="text-lg font-bold text-gray-800 dark:text-white">{method.number}</p>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                      <span className="text-xs text-gray-600 dark:text-gray-400">Account:</span>
+                      <span className="text-sm font-medium text-gray-800 dark:text-white">{method.number}</span>
                     </div>
-                    <div className="p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                      <p className="text-sm text-gray-600 dark:text-gray-400">Account Name</p>
-                      <p className="text-lg font-bold text-gray-800 dark:text-white">{method.accountName}</p>
+                    <div className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                      <span className="text-xs text-gray-600 dark:text-gray-400">Name:</span>
+                      <span className="text-sm font-medium text-gray-800 dark:text-white">{method.accountName}</span>
                     </div>
                   </div>
                 </div>
@@ -385,9 +338,9 @@ const BillingPage: React.FC = () => {
 
           {/* Confirmation Link */}
           <div className="mb-8">
-            <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6">
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
               <div className="text-center">
-                <h3 className="text-xl font-semibold text-gray-800 dark:text-white mb-4">
+                <h3 className="text-lg font-semibold text-gray-800 dark:text-white mb-3">
                   After making your payment, click below to submit your transaction
                 </h3>
                 <button
@@ -412,9 +365,9 @@ const BillingPage: React.FC = () => {
       {/* Confirmation Modal */}
       {showConfirmationModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-2xl max-w-md w-full p-6">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-gray-800 dark:text-white">Submit Transaction</h3>
+          <div className="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full p-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-bold text-gray-800 dark:text-white">Submit Transaction</h3>
               <button
                 onClick={() => {
                   setShowConfirmationModal(false);
@@ -424,63 +377,63 @@ const BillingPage: React.FC = () => {
                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors"
               >
                 <X className="w-5 h-5" />
-        </button>
-      </div>
+              </button>
+            </div>
 
-            <div className="space-y-6">
+            <div className="space-y-4">
               {/* Payment Method Selection */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-3">
                   How did you send the money?
                 </label>
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <button
                     onClick={() => setConfirmationType('own')}
-                    className={`w-full p-4 border-2 rounded-xl text-left transition-all duration-300 ${
+                    className={`w-full p-3 border-2 rounded-lg text-left transition-all duration-300 ${
                       confirmationType === 'own' 
                         ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20' 
                         : 'border-gray-300 dark:border-gray-600 hover:border-orange-300'
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <CheckCircle className={`w-5 h-5 ${confirmationType === 'own' ? 'text-orange-600 dark:text-orange-400' : 'text-gray-400'}`} />
+                      <CheckCircle className={`w-4 h-4 ${confirmationType === 'own' ? 'text-orange-600 dark:text-orange-400' : 'text-gray-400'}`} />
                       <div>
-                        <p className="font-semibold text-gray-800 dark:text-white">From my registered number</p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Using the number you registered with</p>
+                        <p className="font-semibold text-gray-800 dark:text-white text-sm">From my registered number</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">Using the number you registered with</p>
                       </div>
                     </div>
                   </button>
 
                   <button
                     onClick={() => setConfirmationType('different')}
-                    className={`w-full p-4 border-2 rounded-xl text-left transition-all duration-300 ${
+                    className={`w-full p-3 border-2 rounded-lg text-left transition-all duration-300 ${
                       confirmationType === 'different' 
                         ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20' 
                         : 'border-gray-300 dark:border-gray-600 hover:border-orange-300'
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <Phone className={`w-5 h-5 ${confirmationType === 'different' ? 'text-orange-600 dark:text-orange-400' : 'text-gray-400'}`} />
+                      <Phone className={`w-4 h-4 ${confirmationType === 'different' ? 'text-orange-600 dark:text-orange-400' : 'text-gray-400'}`} />
                       <div>
-                        <p className="font-semibold text-gray-800 dark:text-white">Different phone number</p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Used a different number to pay</p>
+                        <p className="font-semibold text-gray-800 dark:text-white text-sm">Different phone number</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">Used a different number to pay</p>
                       </div>
                     </div>
                   </button>
 
                   <button
                     onClick={() => setConfirmationType('wakala')}
-                    className={`w-full p-4 border-2 rounded-xl text-left transition-all duration-300 ${
+                    className={`w-full p-3 border-2 rounded-lg text-left transition-all duration-300 ${
                       confirmationType === 'wakala' 
                         ? 'border-orange-500 bg-orange-50 dark:bg-orange-900/20' 
                         : 'border-gray-300 dark:border-gray-600 hover:border-orange-300'
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <User className={`w-5 h-5 ${confirmationType === 'wakala' ? 'text-orange-600 dark:text-orange-400' : 'text-gray-400'}`} />
+                      <User className={`w-4 h-4 ${confirmationType === 'wakala' ? 'text-orange-600 dark:text-orange-400' : 'text-gray-400'}`} />
                       <div>
-                        <p className="font-semibold text-gray-800 dark:text-white">By Wakala/Agent</p>
-                        <p className="text-sm text-gray-600 dark:text-gray-400">Paid through an agent</p>
+                        <p className="font-semibold text-gray-800 dark:text-white text-sm">By Wakala/Agent</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">Paid through an agent</p>
                       </div>
                     </div>
                   </button>
@@ -489,17 +442,18 @@ const BillingPage: React.FC = () => {
 
               {/* Conditional Input Fields */}
               {confirmationType && (
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {confirmationType === 'different' && (
                     <div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Phone Number Used
+                        Phone Number Used <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="tel"
                         value={paymentDetails.phoneNumber || ''}
                         onChange={(e) => setPaymentDetails(prev => ({ ...prev, phoneNumber: e.target.value }))}
-                        className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:border-orange-500 focus:outline-none transition-all duration-300"
+                        required
+                        className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:border-orange-500 focus:outline-none transition-all duration-300 text-sm"
                         placeholder="Enter phone number used for payment"
                       />
                     </div>
@@ -507,19 +461,15 @@ const BillingPage: React.FC = () => {
 
                   {confirmationType === 'wakala' && (
                     <div>
-                      <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
-                        <p className="text-sm text-blue-700 dark:text-blue-300">
-                          <strong>Phone Number:</strong> {profile?.phone_number || 'Not set in profile'}
-                        </p>
-                      </div>
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Wakala/Agent Name
+                        Wakala/Agent Name <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
                         value={paymentDetails.wakalaName || ''}
                         onChange={(e) => setPaymentDetails(prev => ({ ...prev, wakalaName: e.target.value }))}
-                        className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:border-orange-500 focus:outline-none transition-all duration-300"
+                        required
+                        className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:border-orange-500 focus:outline-none transition-all duration-300 text-sm"
                         placeholder="Enter wakala/agent name"
                       />
                     </div>
@@ -527,15 +477,18 @@ const BillingPage: React.FC = () => {
 
                   <div>
                     <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                      Amount Sent (TSH)
+                      Amount Sent (TSH) <span className="text-red-500">*</span>
                     </label>
                     <div className="relative">
-                      <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+                      <DollarSign className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                       <input
                         type="number"
                         value={paymentDetails.amount}
                         onChange={(e) => setPaymentDetails(prev => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
-                        className="w-full pl-10 pr-4 py-3 border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:border-orange-500 focus:outline-none transition-all duration-300"
+                        required
+                        min="2000"
+                        step="1000"
+                        className="w-full pl-8 pr-3 py-2 border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:border-orange-500 focus:outline-none transition-all duration-300 text-sm"
                         placeholder="Enter amount sent"
                       />
                     </div>
@@ -544,20 +497,21 @@ const BillingPage: React.FC = () => {
                   {(confirmationType === 'own' || confirmationType === 'different') && (
                     <div>
                       {confirmationType === 'own' && (
-                        <div className="mb-3 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
-                          <p className="text-sm text-blue-700 dark:text-blue-300">
+                        <div className="mb-2 p-2 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-lg">
+                          <p className="text-xs text-blue-700 dark:text-blue-300">
                             <strong>Phone Number:</strong> {profile?.phone_number || 'Not set in profile'}
                           </p>
                         </div>
                       )}
                       <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                        Name on Phone Number
+                        Name on Phone Number <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
                         value={paymentDetails.name}
                         onChange={(e) => setPaymentDetails(prev => ({ ...prev, name: e.target.value }))}
-                        className="w-full px-4 py-3 border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-xl focus:border-orange-500 focus:outline-none transition-all duration-300"
+                        required
+                        className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:border-orange-500 focus:outline-none transition-all duration-300 text-sm"
                         placeholder="Enter name on the phone number"
                       />
                     </div>
@@ -565,7 +519,7 @@ const BillingPage: React.FC = () => {
 
                   <button
                     onClick={handleSubmitConfirmation}
-                    className="w-full px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2"
+                    className="w-full px-4 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105 flex items-center justify-center gap-2 text-sm"
                   >
                     <Send className="w-4 h-4" />
                     Submit Transaction
@@ -573,7 +527,7 @@ const BillingPage: React.FC = () => {
                 </div>
               )}
             </div>
-      </div>
+          </div>
         </div>
       )}
     </div>

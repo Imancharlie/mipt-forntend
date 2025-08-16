@@ -601,7 +601,27 @@ export const weeklyReportService = {
       });
       return response.data;
     } catch (error) {
-      console.error('Failed to download all weekly reports:', error);
+      console.error('Failed to download all reports:', error);
+      throw error;
+    }
+  },
+
+  resetWeeklyReport: async (reportId: number): Promise<{ success: boolean; message: string }> => {
+    try {
+      const response = await apiClient.post(`/reports/weekly/${reportId}/reset_to_original/`);
+      return response.data;
+    } catch (error: any) {
+      console.error('Failed to reset weekly report:', error);
+      
+      // Handle 404 specifically - reset endpoint not available
+      if (error.response?.status === 404) {
+        return {
+          success: false,
+          message: 'Reset is not available for this report'
+        };
+      }
+      
+      handleApiError(error as AxiosError);
       throw error;
     }
   },
@@ -1069,11 +1089,11 @@ export const mainJobService = {
       const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
       
       try {
-        const response = await apiClient.get(`/reports/main-jobs/${mainJobId}/operations/`, {
+      const response = await apiClient.get(`/reports/main-jobs/${mainJobId}/operations/`, {
           signal: controller.signal
-        });
+      });
         clearTimeout(timeoutId);
-        return response.data.results || response.data;
+      return response.data.results || response.data;
       } catch (error: any) {
         clearTimeout(timeoutId);
         if (error.name === 'AbortError') {

@@ -59,8 +59,8 @@ export const PTAssessmentPage: React.FC = () => {
       marks: 5,
       icon: Users,
       details: [
-        'University supervisor conducts periodic visits',
-        'Evaluates student progress and integration',
+        'University supervisor conducts a visit atleast once, which might start arround week 5 to the end',
+        'Evaluates student progress and might check the weekly reports',
         'Assesses learning outcomes and objectives',
         'Reviews training plan implementation',
         'Provides feedback and recommendations'
@@ -72,21 +72,21 @@ export const PTAssessmentPage: React.FC = () => {
       marks: 20,
       icon: FileText,
       details: [
-        'Contains detailed weekly reports',
-        'Documents daily activities for each week',
+        'It is the combination of all weekly reports',
+        'Documents daily activities of the weeks',
         'Explains main job in detail with step-by-step process',
         'Includes diagrams related to main job',
         'Shows learning progression and skill development',
-        'Demonstrates understanding of company processes'
+        'Demonstrates understanding and report writing skills'
       ]
     },
     {
       name: 'General Report',
-      description: 'Comprehensive report with company and process sections',
+      description: 'Comprehensive report that demonstrate everything about the practical training,details about the company and also show case what student learned and give recomendations to the company ',
       marks: 60,
       icon: FileSpreadsheet,
       details: [
-        'Two main sections: Company and Process',
+        'Two main Chapters:The Company and The Process',
         'Different mark distribution for PT1, PT2, and PT3',
         'Company section covers organizational understanding',
         'Process section details technical procedures',
@@ -180,155 +180,182 @@ export const PTAssessmentPage: React.FC = () => {
          <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
        <div className="p-4 max-w-7xl mx-auto">
                  {/* Header */}
-         <div className={`relative overflow-hidden bg-white/70 backdrop-blur-xl border border-white/20 rounded-xl p-4 mb-6 shadow-2xl shadow-${theme}-500/10`}>
+        <div className={`relative overflow-hidden bg-gradient-to-r from-${theme}-50 via-white to-${theme}-50/50 backdrop-blur-xl border border-${theme}-200/30 rounded-2xl p-6 mb-8 shadow-xl shadow-${theme}-500/20`}>
           <div className={`absolute inset-0 bg-gradient-to-r from-${theme}-600/5 via-${theme}-600/5 to-${theme}-600/5`}></div>
           <div className={`absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-96 h-96 bg-gradient-to-br from-${theme}-400/20 to-${theme}-400/20 rounded-full blur-3xl`}></div>
           
           <div className="relative z-10">
-                         <div className="flex items-center gap-3 mb-3">
-               <div className={`p-2 bg-gradient-to-r from-${theme}-500 to-${theme}-600 rounded-lg shadow-lg`}>
-                 <Award className="w-5 h-5 text-white" />
-               </div>
-               <div>
-                 <h1 className={`text-2xl font-bold text-${theme}-600`}>PT Assessment Guide</h1>
-                 <p className="text-sm text-gray-600">Understanding the assessment structure and requirements</p>
-               </div>
-             </div>
+            <div className="flex items-center gap-4 mb-6">
+              <div className={`p-3 bg-gradient-to-r from-${theme}-500 to-${theme}-600 rounded-xl shadow-lg`}>
+                <Award className="w-6 h-6 text-white" />
+              </div>
+              <div>
+                <h1 className={`text-3xl font-bold text-${theme}-700 mb-2`}>PT Assessment Guide</h1>
+                <p className="text-base text-gray-600">Master your PT assessment structure and requirements</p>
+              </div>
+            </div>
             
-                         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-               <div className="bg-white/60 backdrop-blur-sm rounded-lg p-3 border border-white/20">
-                 <div className="flex items-center gap-2 mb-1">
-                   <Calculator className="w-4 h-4 text-blue-500" />
-                   <span className="text-xs font-medium text-gray-700">Total Marks</span>
-                 </div>
-                 <p className="text-lg font-bold text-gray-800">{totalMarks}</p>
-               </div>
-               
-               <div className="bg-white/60 backdrop-blur-sm rounded-lg p-3 border border-white/20">
-                 <div className="flex items-center gap-2 mb-1">
-                   <Clock className="w-4 h-4 text-green-500" />
-                   <span className="text-xs font-medium text-gray-700">Deadline</span>
-                 </div>
-                 <p className="text-xs font-bold text-gray-800">2nd Week Friday</p>
-               </div>
-               
-               <div className="bg-white/60 backdrop-blur-sm rounded-lg p-3 border border-white/20">
-                 <div className="flex items-center gap-2 mb-1">
-                   <AlertTriangle className="w-4 h-4 text-orange-500" />
-                   <span className="text-xs font-medium text-gray-700">Penalties</span>
-                 </div>
-                 <p className="text-xs font-bold text-gray-800">-5 marks each</p>
-               </div>
-               
-               <div className="bg-white/60 backdrop-blur-sm rounded-lg p-3 border border-white/20">
-                 <div className="flex items-center gap-2 mb-1">
-                   <BarChart3 className="w-4 h-4 text-purple-500" />
-                   <span className="text-xs font-medium text-gray-700">PT Levels</span>
-                 </div>
-                 <p className="text-xs font-bold text-gray-800">PT1, PT2, PT3</p>
-               </div>
-             </div>
+            {/* Key Information - Two Columns */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-white/40 shadow-lg">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-green-100 rounded-lg">
+                    <Clock className="w-5 h-5 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-600 mb-1">Submission Deadline</h3>
+                    <p className="text-lg font-bold text-gray-800">2nd Week Friday</p>
+                    <p className="text-xs text-gray-500">After university opening</p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="bg-white/80 backdrop-blur-sm rounded-xl p-4 border border-white/40 shadow-lg">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-orange-100 rounded-lg">
+                    <AlertTriangle className="w-5 h-5 text-orange-600" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium text-gray-600 mb-1">Late Penalties</h3>
+                    <p className="text-lg font-bold text-gray-800">-5 marks</p>
+                    <p className="text-xs text-gray-500">Per late submission</p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
 
-                 {/* Assessment Components */}
-         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-6">
-           {assessmentComponents.map((component) => {
-             const Icon = component.icon;
-             const isExpanded = expandedSection === component.name;
-             
-             return (
-               <div key={component.name} className="bg-white/80 backdrop-blur-sm border border-gray-200 rounded-xl p-4 shadow-lg">
-                 <div className="flex items-start justify-between mb-3">
-                   <div className="flex items-center gap-2">
-                     <div className={`p-1.5 bg-gradient-to-r from-${theme}-500 to-${theme}-600 rounded-lg`}>
-                       <Icon className="w-4 h-4 text-white" />
-                     </div>
-                     <div>
-                       <h3 className="text-base font-semibold text-gray-800">{component.name}</h3>
-                       <p className="text-xs text-gray-600">{component.description}</p>
-                     </div>
-                   </div>
-                   <div className="flex items-center gap-2">
-                     {getMarksDisplay(component.name, component.marks)}
-                     <button
-                       onClick={() => toggleSection(component.name)}
-                       className="p-1 hover:bg-gray-100 rounded"
-                     >
-                       {isExpanded ? <ChevronDown className="w-3 h-3" /> : <ChevronRight className="w-3 h-3" />}
-                     </button>
-                   </div>
-                 </div>
-                 
-                 {isExpanded && (
-                   <div className="space-y-3">
-                     <div>
-                       <h4 className="font-medium text-gray-800 mb-2 text-sm">Key Requirements:</h4>
-                       <ul className="space-y-1">
-                         {component.details.map((detail, idx) => (
-                           <li key={idx} className="flex items-start gap-2 text-xs text-gray-600">
-                             <CheckCircle className="w-3 h-3 text-green-500 mt-0.5 flex-shrink-0" />
-                             <span>{detail}</span>
-                           </li>
-                         ))}
-                       </ul>
-                     </div>
-                     
-                     {component.penalties && (
-                       <div>
-                         <h4 className="font-medium text-red-800 mb-1 text-sm">Penalties:</h4>
-                         <div className="text-xs text-red-600 bg-red-50 p-2 rounded">
-                           <p><strong>Arrival note:</strong> -5 marks</p>
-                           <p><strong>Logbook & General report submission:</strong> -5 marks</p>
-                         </div>
-                       </div>
-                     )}
-                     
-                     {(component.name === 'Logbook' || component.name === 'General Report') && (
-                       <div className="pt-2">
-                         <button className={`px-3 py-1.5 bg-${theme}-600 text-white rounded text-xs font-medium hover:bg-${theme}-700 transition-colors flex items-center gap-1`}>
-                           <Download className="w-3 h-3" />
-                           Download Example {component.name}
-                         </button>
-                       </div>
-                     )}
-                   </div>
-                 )}
-               </div>
-             );
-           })}
-         </div>
+        {/* Assessment Components */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+          {assessmentComponents.map((component) => {
+            const Icon = component.icon;
+            const isExpanded = expandedSection === component.name;
+            
+            return (
+              <div key={component.name} className="bg-white/90 backdrop-blur-sm border border-gray-200/50 rounded-2xl p-6 shadow-lg hover:shadow-xl transition-all duration-300">
+                <div className="flex items-start justify-between mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className={`p-2.5 bg-gradient-to-r from-${theme}-500 to-${theme}-600 rounded-xl shadow-md`}>
+                      <Icon className="w-5 h-5 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-bold text-gray-800 mb-1">{component.name}</h3>
+                      <p className="text-sm text-gray-600 leading-relaxed">{component.description}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    {getMarksDisplay(component.name, component.marks)}
+                    <button
+                      onClick={() => toggleSection(component.name)}
+                      className={`p-2 hover:bg-${theme}-50 rounded-lg transition-colors duration-200`}
+                    >
+                      {isExpanded ? <ChevronDown className="w-4 h-4 text-gray-600" /> : <ChevronRight className="w-4 h-4 text-gray-600" />}
+                    </button>
+                  </div>
+                </div>
+                
+                {isExpanded && (
+                  <div className="space-y-4 pt-4 border-t border-gray-100">
+                    <div>
+                      <h4 className="font-semibold text-gray-800 mb-3 text-sm flex items-center gap-2">
+                        <CheckCircle className="w-4 h-4 text-green-500" />
+                        Key Requirements
+                      </h4>
+                      <ul className="space-y-2">
+                        {component.details.map((detail, idx) => (
+                          <li key={idx} className="flex items-start gap-3 text-sm text-gray-700">
+                            <div className="w-1.5 h-1.5 bg-green-400 rounded-full mt-2 flex-shrink-0"></div>
+                            <span className="leading-relaxed">{detail}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                    
+                    {component.penalties && (
+                      <div>
+                        <h4 className="font-semibold text-red-800 mb-2 text-sm flex items-center gap-2">
+                          <AlertTriangle className="w-4 h-4 text-red-500" />
+                          Penalties
+                        </h4>
+                        <div className="text-sm text-red-700 bg-red-50 p-3 rounded-lg border border-red-100">
+                          <p><strong>Arrival note:</strong> -5 marks</p>
+                          <p><strong>Logbook & General report submission:</strong> -5 marks</p>
+                        </div>
+                      </div>
+                    )}
+                    
+                    {(component.name === 'Logbook' || component.name === 'General Report') && (
+                      <div className="pt-2">
+                        <button className={`px-4 py-2 bg-gradient-to-r from-${theme}-500 to-${theme}-600 text-white rounded-lg text-sm font-medium hover:from-${theme}-600 hover:to-${theme}-700 transition-all duration-300 flex items-center gap-2 shadow-md hover:shadow-lg`}>
+                          <Download className="w-4 h-4" />
+                          Download Example {component.name}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
 
          
                  {/* Important Notes */}
-         <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-xl p-4">
-           <div className="flex items-center gap-2 mb-3">
-             <Info className="w-5 h-5 text-yellow-600" />
-             <h3 className="text-base font-semibold text-yellow-800">Important Notes</h3>
-           </div>
-           
-           <div className="space-y-2 text-xs text-yellow-800">
-             <div className="flex items-start gap-2">
-               <Clock className="w-3 h-3 mt-0.5 flex-shrink-0" />
-               <span><strong>Submission Deadline:</strong> All reports must be submitted by the second week Friday after university opening.</span>
-             </div>
-             
-             <div className="flex items-start gap-2">
-               <AlertTriangle className="w-3 h-3 mt-0.5 flex-shrink-0" />
-               <span><strong>Late Penalties:</strong> Each late submission (arrival note, general report, logbook) incurs a -5 mark penalty.</span>
-             </div>
-             
-             <div className="flex items-start gap-2">
-               <FileText className="w-3 h-3 mt-0.5 flex-shrink-0" />
-               <span><strong>Logbook Requirements:</strong> Must include detailed daily activities, main job explanation with steps, and related diagrams.</span>
-             </div>
-             
-             <div className="flex items-start gap-2">
-               <BarChart3 className="w-3 h-3 mt-0.5 flex-shrink-0" />
-               <span><strong>PT Level Distribution:</strong> As you progress from PT1 to PT3, company marks decrease while process marks increase.</span>
-             </div>
-           </div>
-         </div>
+        <div className="bg-gradient-to-r from-amber-50 via-yellow-50 to-orange-50 border border-amber-200/50 rounded-2xl p-6 shadow-lg">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-amber-100 rounded-lg">
+              <Info className="w-5 h-5 text-amber-600" />
+            </div>
+            <h3 className="text-lg font-bold text-amber-800">Important Notes</h3>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-3">
+              <div className="flex items-start gap-3">
+                <div className="p-1.5 bg-green-100 rounded-full mt-0.5">
+                  <Clock className="w-3 h-3 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-800 mb-1">Submission Deadline</p>
+                  <p className="text-sm text-gray-700">All reports must be submitted by the second week Friday after university opening.</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-3">
+                <div className="p-1.5 bg-red-100 rounded-full mt-0.5">
+                  <AlertTriangle className="w-3 h-3 text-red-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-800 mb-1">Late Penalties</p>
+                  <p className="text-sm text-gray-700">Each late submission (arrival note, general report, logbook) incurs a -5 mark penalty.</p>
+                </div>
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              <div className="flex items-start gap-3">
+                <div className="p-1.5 bg-blue-100 rounded-full mt-0.5">
+                  <FileText className="w-3 h-3 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-800 mb-1">Logbook Requirements</p>
+                  <p className="text-sm text-gray-700">Must include detailed daily activities, main job explanation with steps, and related diagrams.</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-3">
+                <div className="p-1.5 bg-purple-100 rounded-full mt-0.5">
+                  <BarChart3 className="w-3 h-3 text-purple-600" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-gray-800 mb-1">PT Level Distribution</p>
+                  <p className="text-sm text-gray-700">As you progress from PT1 to PT3, company marks decrease while process marks increase.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );

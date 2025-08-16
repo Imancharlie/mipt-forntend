@@ -13,7 +13,8 @@ import {
   X, 
   AlertCircle,
   ArrowLeft,
-  FileDown
+  FileDown,
+  FileText
 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { useRef } from 'react';
@@ -49,6 +50,16 @@ interface WeeklyReportData {
     title: string;
     operations: MainJobOperation[];
   };
+  is_enhanced?: boolean;
+  enhancement_date?: string;
+  enhanced_at?: string;
+  ai_enhanced?: boolean;
+  enhancement_count?: number;
+  enhanced_with_ai?: boolean;
+  ai_enhancement_date?: string;
+  original_content?: string;
+  original_daily_reports?: DailyReport[];
+  content?: string;
 }
 
 export const WeeklyReportDetailPage: React.FC = () => {
@@ -68,6 +79,7 @@ export const WeeklyReportDetailPage: React.FC = () => {
   const [dailyDescriptions, setDailyDescriptions] = useState<{[key: string]: string}>({});
   const [isLoading, setIsLoading] = useState(true);
   const [showExportMenu, setShowExportMenu] = useState(false);
+  const [isResetting, setIsResetting] = useState(false);
   const exportMenuRef = useRef<HTMLDivElement | null>(null);
   const hasLoadedData = useRef(false);
 
@@ -284,7 +296,7 @@ export const WeeklyReportDetailPage: React.FC = () => {
           }
         };
         setReportData(updatedReportData);
-        showInfo('Report saved locally (backend unavailable)');
+        showInfo('Report saved locally ');
       }
       
       setIsEditing(false);
@@ -486,7 +498,7 @@ export const WeeklyReportDetailPage: React.FC = () => {
       
       // Check if there's actual data to download
       if (!reportData || reportData.daily_reports.length === 0) {
-        showWarning('⚠️ Be careful! No data available to download. Please add daily reports and complete the weekly report before downloading.');
+        showWarning('⚠️ No data available to download. Please add daily reports and complete the weekly report before downloading.');
         return;
       }
       
@@ -496,7 +508,7 @@ export const WeeklyReportDetailPage: React.FC = () => {
       );
       
       if (!hasContent) {
-        showWarning('⚠️ Be careful! The report contains no meaningful content. Please add descriptions to your daily reports before downloading.');
+        showWarning('⚠️ The report contains no content. Please add descriptions to your daily reports before downloading.');
         return;
       }
       
@@ -666,6 +678,52 @@ export const WeeklyReportDetailPage: React.FC = () => {
                   className="text-xs lg:text-sm px-3 py-1.5 lg:px-4 lg:py-2"
                 />
               )}
+
+              {/* Reset to Original Button - Always visible */}
+              <button
+                onClick={async () => {
+                  // Always show confirmation first
+                  const confirmed = window.confirm('⚠️ WARNING: This action will permanently reset your enhanced report to the original state.\n\n• All AI enhancements will be lost\n• The report will return to your original input\n• This action cannot be undone\n\nAre you sure you want to continue?');
+                  if (!confirmed) return;
+                  
+                  setIsResetting(true);
+                  try {
+                    if (!reportData.id) {
+                      showError('Report ID not found. Please try again.');
+                      setIsResetting(false);
+                      return;
+                    }
+                    
+                    const result = await weeklyReportService.resetWeeklyReport(reportData.id);
+                    if (result.success) {
+                      showSuccess('✅ Weekly report successfully reset to original state!');
+                      // Refresh the page data after reset
+                      window.location.reload();
+                    } else {
+                      // Handle case where reset is not available
+                      if (result.message === 'Reset is not available for this report') {
+                        showWarning('⚠️ Reset is not available for this report. The reset functionality may not be implemented yet or this report cannot be reset.');
+                      } else {
+                        throw new Error(result.message || 'Reset failed');
+                      }
+                    }
+                  } catch (error: any) {
+                    showError(`Failed to reset report: ${error.message}`);
+                  } finally {
+                    setIsResetting(false);
+                  }
+                }}
+                className={`btn-secondary flex items-center gap-1 lg:gap-2 text-xs lg:text-sm px-3 py-1.5 lg:px-4 lg:py-2 bg-amber-500 hover:bg-amber-600 text-white border-amber-500 ${isResetting ? 'opacity-50 cursor-not-allowed' : ''}`}
+                title="Reset report to original user inputs"
+                disabled={isResetting}
+              >
+                <FileText className="w-3 h-3 lg:w-4 lg:h-4" />
+                {isResetting ? (
+                  <LoadingSpinner size="sm" />
+                ) : (
+                  'Reset to Original'
+                )}
+              </button>
             </>
           ) : (
             <div className="flex items-center gap-2">

@@ -3,7 +3,7 @@ import { useAppStore } from '@/store';
 import { useTheme } from '@/components/ThemeProvider';
 import { useToastContext } from '@/contexts/ToastContext';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
-import { Sparkles, X, CheckCircle, Coins, Brain, FileText, Clock, AlertCircle, Info } from 'lucide-react';
+import { Sparkles, X, CheckCircle, Coins, Brain, FileText, Clock, AlertCircle, Info, AlertTriangle } from 'lucide-react';
 
 interface AIEnhancementButtonProps {
   weeklyReportId: number;
@@ -29,6 +29,7 @@ export const AIEnhancementButton: React.FC<AIEnhancementButtonProps> = ({
   const [currentStep, setCurrentStep] = useState('');
   const [isResetting, setIsResetting] = useState(false);
   const [canReset, setCanReset] = useState(false);
+  const [additionalDescription, setAdditionalDescription] = useState('');
 
   // Fixed cost: 300 tokens regardless of report completeness
   const FIXED_COST = 300;
@@ -304,95 +305,106 @@ export const AIEnhancementButton: React.FC<AIEnhancementButtonProps> = ({
               </button>
             </div>
 
-            {/* Report Quality Information */}
-            <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-blue-50 dark:bg-blue-900/30 rounded-lg border border-blue-200 dark:border-blue-700">
-              <div className="flex items-start gap-2">
-                <Info className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 dark:text-blue-400 mt-0.5 flex-shrink-0" />
-                <div className="text-xs sm:text-sm">
-                  <p className="font-medium text-blue-800 dark:text-blue-200 mb-1">
-                    {reportQuality.quality === 'empty' ? 'Empty Report Detected' : 
-                     reportQuality.quality === 'minimal' ? 'Minimal Content Detected' : 
-                     'Good Content Detected'}
-                  </p>
-                  <p className="text-blue-700 dark:text-blue-300 leading-relaxed">
-                    {reportQuality.message}
-                  </p>
-                  {reportQuality.quality !== 'good' && (
-                    <p className="text-blue-600 dark:text-blue-400 font-medium mt-2">
-                      💡 <strong>Tip:</strong> Provide detailed additional instructions to help AI generate exactly what you need!
-                    </p>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* Token Balance and Cost */}
-            <div className="mb-4 sm:mb-6 space-y-3">
-              {/* Current Balance */}
-              {userBalance && (
-                <div className={`p-3 sm:p-4 rounded-lg border ${
-                  userBalance.available_tokens >= FIXED_COST 
-                    ? 'bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 border-green-200 dark:border-green-700'
-                    : 'bg-gradient-to-r from-orange-50 to-orange-100 dark:from-orange-900/30 dark:to-orange-800/30 border-orange-200 dark:border-orange-700'
-                }`}>
+            {/* Token Balance Card - Always pale orange */}
+            <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-orange-50 dark:bg-orange-900/30 rounded-lg border border-orange-200 dark:border-orange-700">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <Coins className={`w-4 h-4 sm:w-5 sm:h-5 ${
-                        userBalance.available_tokens >= FIXED_COST 
-                          ? 'text-green-600 dark:text-green-400' 
-                          : 'text-orange-600 dark:text-orange-400'
-                      }`} />
-                      <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">Your Balance:</span>
+                  <Coins className="w-4 h-4 sm:w-5 sm:h-5 text-orange-600 dark:text-orange-400" />
+                  <span className="text-xs sm:text-sm font-medium text-orange-800 dark:text-orange-200">
+                    Available Tokens
+                  </span>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className={`text-lg sm:text-xl font-bold ${
-                        userBalance.available_tokens >= FIXED_COST 
-                          ? 'text-green-600 dark:text-green-400' 
-                          : 'text-orange-600 dark:text-orange-400'
-                      }`}>{userBalance.available_tokens}</span>
-                      <span className="text-xs text-gray-500">tokens</span>
+                <span className={`text-lg sm:text-xl font-bold ${userBalance && userBalance.available_tokens >= FIXED_COST ? 'text-orange-600 dark:text-orange-400' : 'text-orange-600 dark:text-orange-400'}`}>
+                  {userBalance ? userBalance.available_tokens : 0}
+                </span>
                     </div>
+              <div className="mt-2 text-xs text-orange-700 dark:text-orange-300">
+                Cost per enhancement: <span className="font-semibold">{FIXED_COST} tokens</span>
                   </div>
+              {userBalance && userBalance.available_tokens < FIXED_COST && (
+                <div className="mt-2 p-2 bg-red-50 dark:bg-red-900/20 rounded border border-red-200 dark:border-red-700">
+                  <p className="text-xs text-red-700 dark:text-red-300 font-medium">
+                    ⚠️ Insufficient tokens. You need {FIXED_COST - userBalance.available_tokens} more tokens to enhance this report.
+                  </p>
                 </div>
               )}
-              
-              {/* Fixed Cost - Always 300 tokens */}
-              <div className="p-3 sm:p-4 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-900/30 dark:to-emerald-900/30 rounded-lg border border-green-200 dark:border-green-700">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <Coins className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 dark:text-green-400" />
-                    <span className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">Fixed Cost:</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-lg sm:text-xl font-bold text-green-600 dark:text-green-400">{FIXED_COST}</span>
-                    <span className="text-xs text-gray-500">tokens</span>
+            </div>
+
+            {/* Report Quality Info - Only show when not all days are filled */}
+            {reportQuality.quality !== 'good' && (
+              <div className={`mb-4 sm:mb-6 p-3 sm:p-4 rounded-lg border ${
+                reportQuality.quality === 'empty' 
+                  ? 'bg-red-50 dark:bg-red-900/30 border-red-200 dark:border-red-700' 
+                  : reportQuality.quality === 'minimal'
+                  ? 'bg-yellow-50 dark:bg-yellow-900/30 border-yellow-200 dark:border-yellow-700'
+                  : 'bg-green-50 dark:bg-green-900/30 border-green-200 dark:border-green-700'
+              }`}>
+                <div className="flex items-start gap-2">
+                  {reportQuality.quality === 'empty' ? (
+                    <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" />
+                  ) : reportQuality.quality === 'minimal' ? (
+                    <AlertTriangle className="w-4 h-4 sm:w-5 sm:h-5 text-yellow-600 dark:text-yellow-400 mt-0.5 flex-shrink-0" />
+                  ) : (
+                    <CheckCircle className="w-4 h-4 sm:w-5 sm:h-5 text-green-600 dark:text-green-400 mt-0.5 flex-shrink-0" />
+                  )}
+                  <div className="flex-1">
+                    <p className={`text-xs sm:text-sm font-medium mb-2 ${
+                      reportQuality.quality === 'empty' 
+                        ? 'text-red-800 dark:text-red-200' 
+                        : reportQuality.quality === 'minimal'
+                        ? 'text-yellow-800 dark:text-yellow-200'
+                        : 'text-green-800 dark:text-green-200'
+                    }`}>
+                      {reportQuality.quality === 'empty' 
+                        ? '⚠️ Report is Empty' 
+                        : reportQuality.quality === 'minimal'
+                        ? '⚠️ Limited Report Content'
+                        : '✅ Good Report Content'
+                      }
+                    </p>
+                    <p className={`text-xs ${
+                      reportQuality.quality === 'empty' 
+                        ? 'text-red-700 dark:text-red-300' 
+                        : reportQuality.quality === 'minimal'
+                        ? 'text-yellow-700 dark:text-yellow-300'
+                        : 'text-green-700 dark:text-green-300'
+                    }`}>
+                      {reportQuality.quality === 'empty' 
+                        ? 'Your report has no content. Please provide detailed information in the additional description below to help AI generate a comprehensive report.'
+                        : reportQuality.quality === 'minimal'
+                        ? 'Your report has limited content. Adding more details in the additional description will help AI generate a better report.'
+                        : 'Your report has good content. Additional details will help AI enhance it further.'
+                      }
+                    </p>
                   </div>
                 </div>
-                <div className="mt-2 text-xs text-gray-600 dark:text-gray-300">
-                  Professional AI enhancement with grammar, style, and content improvements
-                </div>
-                </div>
-                
-              {/* Insufficient balance warning with billing link */}
-              {userBalance && userBalance.available_tokens < FIXED_COST && (
-                <div className="p-3 bg-red-50 dark:bg-red-900/30 rounded-lg border border-red-200 dark:border-red-700">
-                  <div className="flex items-start gap-2">
-                    <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-red-600 mt-0.5 flex-shrink-0" />
-                    <div className="flex-1">
-                      <p className="text-xs sm:text-sm text-red-700 dark:text-red-300 font-medium mb-2">
-                        Insufficient tokens. You need {FIXED_COST - userBalance.available_tokens} more tokens.
-                      </p>
-                      <a 
-                        href="/billing" 
-                        className="inline-flex items-center gap-2 text-xs text-red-600 dark:text-red-400 hover:text-red-700 dark:hover:text-red-300 font-medium underline"
-                      >
-                        <Coins className="w-3 h-3 sm:w-4 sm:h-4" />
-                        Go to Billing Page
-                      </a>
-                    </div>
-                    </div>
-                  </div>
-                )}
+              </div>
+            )}
+
+            {/* Additional Description Input */}
+            <div className="mb-4 sm:mb-6">
+              <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                Additional Description
+                {reportQuality.quality === 'empty' && <span className="text-red-500 ml-1">*</span>}
+              </label>
+              <textarea
+                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white resize-none"
+                rows={4}
+                placeholder={
+                  reportQuality.quality === 'empty'
+                    ? "Please provide detailed information about your work activities, projects, and achievements for this week..."
+                    : "Add any additional details, specific projects, or achievements you'd like AI to include..."
+                }
+                value={additionalDescription}
+                onChange={(e) => setAdditionalDescription(e.target.value)}
+                required={reportQuality.quality === 'empty'}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                {reportQuality.quality === 'empty'
+                  ? "This field is required for empty reports. Please provide comprehensive details about your work."
+                  : "Optional: Additional context helps AI generate better enhancements."
+                }
+              </p>
             </div>
 
             {/* Enhancement Progress (when active) */}
@@ -421,85 +433,6 @@ export const AIEnhancementButton: React.FC<AIEnhancementButtonProps> = ({
               </div>
             )}
 
-            {/* Additional Instructions */}
-            <div className="mb-4 sm:mb-6">
-              <label className="block text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
-                Additional Instructions 
-                {reportQuality.quality === 'empty' && <span className="text-red-600 font-semibold">(Required)</span>}
-                {reportQuality.quality === 'minimal' && <span className="text-orange-600 font-semibold">(Highly Recommended)</span>}
-                {reportQuality.quality === 'good' && <span className="text-green-600">(Optional)</span>}
-                </label>
-                <textarea
-                  value={instructions}
-                  onChange={(e) => setInstructions(e.target.value)}
-                placeholder={reportQuality.quality === 'empty' 
-                  ? "⚠️ REQUIRED: Describe your work week, achievements, challenges, and what you'd like the report to focus on..."
-                  : reportQuality.quality === 'minimal'
-                  ? "💡 RECOMMENDED: Provide additional context about your work, goals, and specific areas you'd like enhanced..."
-                  : "✨ OPTIONAL: E.g., 'Make it more technical', 'Focus on achievements', 'Use formal language'"
-                }
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none text-xs sm:text-sm ${
-                  reportQuality.quality === 'empty' && !instructions.trim()
-                    ? 'border-red-300 bg-red-50 dark:bg-red-900/20'
-                    : 'border-gray-300'
-                }`}
-                rows={4}
-                disabled={isEnhancing}
-                required={reportQuality.quality === 'empty'}
-              />
-              <div className="mt-1 text-xs text-gray-500 dark:text-gray-400">
-                {reportQuality.quality === 'empty' 
-                  ? "⚠️ Detailed instructions are required for empty reports to help AI generate comprehensive content!"
-                  : reportQuality.quality === 'minimal'
-                  ? "💡 Detailed instructions help AI generate exactly what you need!"
-                  : "✨ Custom instructions help tailor the enhancement to your preferences"
-                }
-              </div>
-              </div>
-
-            {/* Reset Button - Only visible when reset is available */}
-            {canReset && (
-              <div className="mb-4 sm:mb-6 p-3 sm:p-4 bg-amber-50 dark:bg-amber-900/30 rounded-lg border border-amber-200 dark:border-amber-700">
-                <div className="flex items-start gap-2">
-                  <AlertCircle className="w-4 h-4 sm:w-5 sm:h-5 text-amber-600 dark:text-amber-400 mt-0.5 flex-shrink-0" />
-                  <div className="flex-1">
-                    <p className="text-xs sm:text-sm font-medium text-amber-800 dark:text-amber-200 mb-2">
-                      ⚠️ Reset to Original Available
-                    </p>
-                    <p className="text-xs text-amber-700 dark:text-amber-300 mb-3">
-                      This report has been enhanced with AI. You can reset it to your original input at any time.
-                    </p>
-                    <div className="mb-3 p-2 bg-red-50 dark:bg-red-900/20 rounded border border-red-200 dark:border-red-700">
-                      <p className="text-xs text-red-700 dark:text-red-300 font-medium">
-                        ⚠️ <strong>Warning:</strong> Resetting will permanently remove all AI enhancements and cannot be undone.
-                      </p>
-                </div>
-                    <button
-                      onClick={handleReset}
-                      disabled={isResetting || isEnhancing}
-                      className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 flex items-center justify-center gap-2 text-xs sm:text-sm ${
-                        isResetting || isEnhancing
-                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                          : 'bg-amber-500 text-white hover:bg-amber-600'
-                      }`}
-                    >
-                      {isResetting ? (
-                        <>
-                          <LoadingSpinner size="sm" inline color="white" />
-                          Resetting...
-                        </>
-                      ) : (
-                        <>
-                          <FileText className="w-3 h-3 sm:w-4 sm:h-4" />
-                          Reset to Original
-                        </>
-                      )}
-                    </button>
-                </div>
-                </div>
-              </div>
-            )}
-
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                <button
@@ -512,9 +445,9 @@ export const AIEnhancementButton: React.FC<AIEnhancementButtonProps> = ({
               
               <button
                 onClick={handleQuickEnhance}
-                disabled={!canEnhance || (reportQuality.quality === 'empty' && !instructions.trim())}
+                disabled={!canEnhance || (reportQuality.quality === 'empty' && !additionalDescription.trim())}
                 className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all duration-300 flex items-center justify-center gap-2 text-xs sm:text-sm ${
-                  !canEnhance || (reportQuality.quality === 'empty' && !instructions.trim())
+                  !canEnhance || (reportQuality.quality === 'empty' && !additionalDescription.trim())
                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                     : `bg-gradient-to-r from-${theme}-500 to-${theme}-600 text-white hover:from-${theme}-600 hover:to-${theme}-700`
                 }`}
@@ -529,7 +462,7 @@ export const AIEnhancementButton: React.FC<AIEnhancementButtonProps> = ({
                     <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4" />
                      Insufficient Tokens
                    </>
-                ) : (reportQuality.quality === 'empty' && !instructions.trim()) ? (
+                ) : (reportQuality.quality === 'empty' && !additionalDescription.trim()) ? (
                   <>
                     <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4" />
                     Instructions Required
@@ -542,7 +475,7 @@ export const AIEnhancementButton: React.FC<AIEnhancementButtonProps> = ({
                  )}
               </button>
               
-              {instructions.trim() && (
+              {additionalDescription.trim() && (
                 <button
                   onClick={handleCustomEnhance}
                   disabled={!canEnhance}
