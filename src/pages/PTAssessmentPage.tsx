@@ -82,15 +82,15 @@ export const PTAssessmentPage: React.FC = () => {
     },
     {
       name: 'General Report',
-      description: 'Comprehensive report that demonstrate everything about the practical training,details about the company and also show case what student learned and give recomendations to the company ',
+      description: 'Comprehensive report demonstrating practical training experience, company analysis, and technical process documentation',
       marks: 60,
       icon: FileSpreadsheet,
       details: [
-        'Two main Chapters:The Company and The Process',
-        'Different mark distribution for PT1, PT2, and PT3',
-        'Company section covers organizational understanding',
-        'Process section details technical procedures',
-        'Demonstrates comprehensive learning outcomes'
+        'Two main chapters: The Company and The Process',
+        'Must be signed by student and countersigned by training officer',
+        'Different mark distribution for PT1, PT2, and PT3 levels',
+        'Company section: organization chart, job descriptions, safety policies',
+        'Process section: technical procedures, flow charts, analysis and recommendations'
       ],
       penalties: [
         'Late arrival note submission: -5 marks',
@@ -284,6 +284,61 @@ export const PTAssessmentPage: React.FC = () => {
                         </div>
                       </div>
                     )}
+
+                    {/* PT Guidelines for General Report */}
+                    {component.name === 'General Report' && (
+                      <div>
+                        <h4 className="font-semibold text-blue-800 mb-3 text-sm flex items-center gap-2">
+                          <BarChart3 className="w-4 h-4 text-blue-500" />
+                          Assessment Criteria by PT Level
+                        </h4>
+
+                        {/* Detailed Assessment Areas */}
+                        <div className="space-y-3">
+                          {/* Company Section */}
+                          <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                            <h5 className="font-semibold text-blue-800 mb-2 text-sm">The Company Section:</h5>
+                            <div className="space-y-2 text-xs text-blue-700">
+                              <p><strong>PT1:</strong> Full company analysis including organization chart, safety regulations, job descriptions, and recruitment policies</p>
+                              <p><strong>PT2:</strong> Enhanced company analysis with detailed organizational structure and policy evaluation</p>
+                              <p><strong>PT3:</strong> Company section contains very few or no marks at all, but it is still important to have it</p>
+                            </div>
+                          </div>
+
+                          {/* Process Section */}
+                          <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+                            <h5 className="font-semibold text-green-800 mb-2 text-sm">The Process Section:</h5>
+                            <div className="space-y-2 text-xs text-green-700">
+                              <p><strong>PT1:</strong> Basic technical procedures with fundamental analysis and basic conclusions,you are taken considarations as a skilled worker</p>
+                              <p><strong>PT2:</strong> Intermediate technical analysis with some alternative solutions and basic recommendations,you are taken considarations as Technician</p>
+                              <p><strong>PT3:</strong> Advanced technical analysis with comprehensive alternative solutions, detailed comparisons, and extensive recommendations as an Engineer</p>
+                            </div>
+                          </div>
+
+                          {/* Quality Expectations */}
+                          <div className="p-3 bg-amber-50 rounded-lg border border-amber-200">
+                            <h5 className="font-semibold text-amber-800 mb-2 text-sm">Quality Expectations by Level:</h5>
+                            <div className="space-y-2 text-xs text-amber-700">
+                              <p><strong>PT1:</strong> Good technical writing, basic diagrams, fundamental analysis</p>
+                              <p><strong>PT2:</strong> Enhanced technical writing, improved diagrams, intermediate analysis with some alternatives</p>
+                              <p><strong>PT3:</strong> Excellent technical writing, professional diagrams, advanced analysis with comprehensive alternatives and detailed recommendations</p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* General Guidelines */}
+                        <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+                          <h5 className="font-semibold text-gray-800 mb-2 text-sm">General Guidelines:</h5>
+                          <div className="space-y-1 text-xs text-gray-700">
+                            <p>• Reports must be signed by student and countersigned by training officer</p>
+                            <p>• Submit to Department PT coordinator by 2nd week of subsequent semester</p>
+                            <p>• Use proper engineering language and scale drawings</p>
+                            <p>• Presentation quality significantly contributes to final marks</p>
+                            <p>• Higher PT levels require more sophisticated analysis and recommendations</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                     
                     {(component.name === 'Logbook' || component.name === 'General Report') && (
                       <div className="pt-2">
@@ -328,7 +383,7 @@ export const PTAssessmentPage: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-gray-800 mb-1">Late Penalties</p>
-                  <p className="text-sm text-gray-700">Each late submission (arrival note, general report, logbook) incurs a -5 mark penalty.</p>
+                  <p className="text-sm text-gray-700">Each late submission (arrival note, general report and logbook are submited  together) incurs a -5 mark penalty.</p>
                 </div>
               </div>
             </div>
@@ -340,7 +395,7 @@ export const PTAssessmentPage: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-gray-800 mb-1">Logbook Requirements</p>
-                  <p className="text-sm text-gray-700">Must include detailed daily activities, main job explanation with steps, and related diagrams.</p>
+                  <p className="text-sm text-gray-700">Must include detailed daily activities, main job explanation with steps, and related diagrams of the main jobs.</p>
                 </div>
               </div>
               
@@ -350,7 +405,7 @@ export const PTAssessmentPage: React.FC = () => {
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-gray-800 mb-1">PT Level Distribution</p>
-                  <p className="text-sm text-gray-700">As you progress from PT1 to PT3, company marks decrease while process marks increase.</p>
+                  <p className="text-sm text-gray-700">As you progress from PT1 to PT3,the distribution of marks in the general report between the two chapter changes, The company marks decrease while The process marks increases.</p>
                 </div>
               </div>
             </div>

@@ -1,428 +1,126 @@
-import React, { useEffect, useState } from 'react';
-import { useAppStore } from '@/store';
+import React from 'react';
 import { useTheme } from '@/components/ThemeProvider';
-import { GeneralReport } from '@/types';
-import { Loader2, Sparkles, Edit, Download, CheckCircle } from 'lucide-react';
-import { useForm } from 'react-hook-form';
-import { LoadingSpinner } from '@/components/LoadingSpinner';
+import { FileSpreadsheet, Clock, CheckCircle, Users, BarChart3 } from 'lucide-react';
 
 export const GeneralReportPage: React.FC = () => {
-  const { generalReport, fetchGeneralReport, loading, exportReport } = useAppStore();
   const { theme } = useTheme();
-  const [isEditing, setIsEditing] = useState(false);
-  const [showAIEnhance, setShowAIEnhance] = useState(false);
-  const [enhancingField, setEnhancingField] = useState<string>('');
-  const { register, handleSubmit, reset, formState: { isSubmitting } } = useForm<GeneralReport>();
-
-  useEffect(() => {
-    fetchGeneralReport();
-  }, []); // Removed fetchGeneralReport from dependencies to prevent infinite loop
-
-  useEffect(() => {
-    if (generalReport) {
-      reset(generalReport);
-    }
-  }, [generalReport, reset]);
-
-  const onSubmit = async (data: GeneralReport) => {
-    try {
-      // TODO: Implement update general report
-      console.log('Update general report:', data);
-      setIsEditing(false);
-    } catch (error) {
-      console.error('Failed to update general report:', error);
-    }
-  };
-
-  const handleAIEnhance = async (field: string) => {
-    setEnhancingField(field);
-    setShowAIEnhance(true);
-    // TODO: Implement AI enhancement
-  };
-
-  const handleExport = async (type: 'pdf' | 'docx') => {
-    try {
-      await exportReport(type, 'general', 0);
-    } catch (error) {
-      console.error('Export failed:', error);
-    }
-  };
-
-  if (loading.isLoading && !generalReport) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] p-4">
-        <LoadingSpinner size="lg" color="primary" message="Loading general report..." />
-      </div>
-    );
-  }
 
   return (
-    <div className="p-4 lg:p-6 max-w-6xl mx-auto">
-      {/* Enhanced Header */}
-      <div className="mb-8">
-        <div className="bg-gradient-to-r from-orange-50 to-orange-100 border border-orange-200 rounded-2xl p-6 mb-6">
-          <div className="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4">
-            <div>
-              <h1 className={`text-3xl lg:text-4xl font-bold text-${theme}-600 mb-2`}>
-                General Report
-              </h1>
-              <p className="text-gray-600 text-lg">Your comprehensive training report and achievements</p>
-            </div>
-            <div className="flex flex-col sm:flex-row items-center gap-3">
-              <button 
-                className={`px-6 py-3 bg-white border-2 border-${theme}-300 text-${theme}-600 rounded-xl font-semibold shadow-sm hover:shadow-md transition-all duration-300 flex items-center gap-2 hover:bg-${theme}-50`}
-                onClick={() => setIsEditing(!isEditing)}
-              >
-                <Edit className="w-4 h-4" />
-                {isEditing ? 'Cancel Edit' : 'Edit Report'}
-              </button>
-              <div className="flex items-center gap-2">
-                <button 
-                  className={`px-4 py-3 bg-gradient-to-r from-${theme}-500 to-${theme}-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2 hover:scale-105`}
-                  onClick={() => handleExport('pdf')}
-                >
-                  <Download className="w-4 h-4" />
-                  PDF
-                </button>
-                <button 
-                  className={`px-4 py-3 bg-gray-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transition-all duration-300 flex items-center gap-2 hover:scale-105`}
-                  onClick={() => handleExport('docx')}
-                >
-                  <Download className="w-4 h-4" />
-                  DOCX
-                </button>
+    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50/30">
+      <div className="p-4 max-w-4xl mx-auto">
+        
+        {/* Header */}
+        <div className={`relative overflow-hidden bg-gradient-to-r from-${theme}-50 via-white to-${theme}-50/50 backdrop-blur-xl border border-${theme}-200/30 rounded-2xl p-8 mb-8 shadow-xl shadow-${theme}-500/20`}>
+          <div className={`absolute inset-0 bg-gradient-to-r from-${theme}-600/5 via-${theme}-600/5 to-${theme}-600/5`}></div>
+          <div className={`absolute top-0 right-0 -translate-y-1/2 translate-x-1/2 w-96 h-96 bg-gradient-to-br from-${theme}-400/20 to-${theme}-400/20 rounded-full blur-3xl`}></div>
+          
+          <div className="relative z-10 text-center">
+            <div className="flex justify-center mb-6">
+              <div className={`p-4 bg-gradient-to-r from-${theme}-500 to-${theme}-600 rounded-2xl shadow-lg`}>
+                <FileSpreadsheet className="w-8 h-8 text-white" />
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Report Content */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Title Section */}
-        <div className="lg:col-span-2 bg-white rounded-2xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-all duration-300">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold text-gray-800">Report Title</h2>
-            <button
-              onClick={() => handleAIEnhance('title')}
-              className="p-2 text-gray-500 hover:text-blue-600 transition-colors"
-              title="AI Enhance"
-            >
-              <Sparkles className="w-4 h-4" />
-            </button>
-          </div>
-          {isEditing ? (
-            <input 
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl text-xl font-semibold focus:border-orange-500 focus:outline-none transition-all duration-300" 
-              {...register('title')} 
-            />
-          ) : (
-            <h3 className="text-xl font-semibold text-gray-900">
-              {generalReport?.title || 'Industrial Practical Training Report'}
-            </h3>
-          )}
-        </div>
-
-        {/* Introduction */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-all duration-300">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-800">Introduction</h2>
-            <button
-              onClick={() => handleAIEnhance('introduction')}
-              className="p-2 text-gray-500 hover:text-blue-600 transition-colors"
-              title="AI Enhance"
-            >
-              <Sparkles className="w-4 h-4" />
-            </button>
-          </div>
-          {isEditing ? (
-            <textarea 
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:outline-none transition-all duration-300 resize-none" 
-              rows={6}
-              placeholder="Provide an overview of your training program, objectives, and what you hope to achieve..."
-              {...register('introduction')} 
-            />
-          ) : (
-            <p className="text-gray-700 leading-relaxed">
-              {generalReport?.introduction || 'Introduction content will appear here...'}
+            <h1 className={`text-4xl font-bold text-${theme}-700 mb-4`}>General Report</h1>
+            <p className="text-lg text-gray-600 max-w-2xl mx-auto">
+              Comprehensive documentation of your practical training experience, showcasing company analysis and technical process understanding
             </p>
-          )}
-        </div>
-
-        {/* Company Overview */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-all duration-300">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-800">Company Overview</h2>
-            <button
-              onClick={() => handleAIEnhance('company_overview')}
-              className="p-2 text-gray-500 hover:text-blue-600 transition-colors"
-              title="AI Enhance"
-            >
-              <Sparkles className="w-4 h-4" />
-            </button>
           </div>
-          {isEditing ? (
-            <textarea 
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:outline-none transition-all duration-300 resize-none" 
-              rows={4}
-              placeholder="Describe the company, its industry, size, and your role within the organization..."
-              {...register('company_overview')} 
-            />
-          ) : (
-            <p className="text-gray-700 leading-relaxed">
-              {generalReport?.company_overview || 'Company overview content will appear here...'}
-            </p>
-          )}
         </div>
 
-        {/* Training Objectives */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-all duration-300">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-800">Training Objectives</h2>
-            <button
-              onClick={() => handleAIEnhance('training_objectives')}
-              className="p-2 text-gray-500 hover:text-blue-600 transition-colors"
-              title="AI Enhance"
-            >
-              <Sparkles className="w-4 h-4" />
-            </button>
+        {/* Coming Soon Banner */}
+        <div className="mb-8 bg-gradient-to-r from-amber-50 to-orange-50 border border-amber-200/50 rounded-2xl p-6 shadow-lg">
+          <div className="flex items-center gap-3 mb-4">
+            <div className="p-2 bg-amber-100 rounded-lg">
+              <Clock className="w-5 h-5 text-amber-600" />
+            </div>
+            <h2 className="text-xl font-bold text-amber-800">Coming Very Soon!</h2>
           </div>
-          {isEditing ? (
-            <textarea 
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:outline-none transition-all duration-300 resize-none" 
-              rows={4}
-              placeholder="List the specific objectives and goals of your training program..."
-              {...register('training_objectives')} 
-            />
-          ) : (
-            <p className="text-gray-700 leading-relaxed">
-              {generalReport?.training_objectives || 'Training objectives content will appear here...'}
-            </p>
-          )}
+          <p className="text-amber-700 text-center">
+            The full General Report functionality will be available shortly. You'll be able to create, edit, and submit your comprehensive PT reports with ease.
+          </p>
         </div>
 
-        {/* Methodology */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-all duration-300">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-800">Methodology</h2>
-            <button
-              onClick={() => handleAIEnhance('methodology')}
-              className="p-2 text-gray-500 hover:text-blue-600 transition-colors"
-              title="AI Enhance"
-            >
-              <Sparkles className="w-4 h-4" />
-            </button>
-          </div>
-          {isEditing ? (
-            <textarea 
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:outline-none transition-all duration-300 resize-none" 
-              rows={4}
-              placeholder="Describe the methods, approaches, and techniques used during your training..."
-              {...register('methodology')} 
-            />
-          ) : (
-            <p className="text-gray-700 leading-relaxed">
-              {generalReport?.methodology || 'Methodology content will appear here...'}
-            </p>
-          )}
-        </div>
+        {/* What is General Report */}
+        <div className="bg-white/90 backdrop-blur-sm border border-gray-200/50 rounded-2xl p-6 shadow-lg mb-6">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4 flex items-center gap-3">
+            <FileSpreadsheet className="w-6 h-6 text-blue-600" />
+            What is a General Report?
+          </h2>
+          <p className="text-gray-700 leading-relaxed mb-4">
+            A General Report is the comprehensive documentation of your practical training experience that demonstrates your understanding of both the company organization and technical processes you've learned.
+          </p>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Company Section */}
+            <div className="p-4 bg-blue-50 rounded-xl border border-blue-200">
+              <h3 className="font-semibold text-blue-800 mb-3 flex items-center gap-2">
+                <Users className="w-4 h-4" />
+                The Company
+              </h3>
+              <ul className="space-y-2 text-sm text-blue-700">
+                <li>• Organization chart of your training department</li>
+                <li>• Job descriptions for key positions</li>
+                <li>• Safety regulations and welfare policies</li>
+                <li>• Recruitment and training procedures</li>
+                <li>• Company structure and operations</li>
+              </ul>
+            </div>
 
-        {/* Achievements */}
-        <div className="bg-white rounded-2xl shadow-lg border border-gray-200 p-6 hover:shadow-xl transition-all duration-300">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-800">Achievements</h2>
-            <button
-              onClick={() => handleAIEnhance('achievements')}
-              className="p-2 text-gray-500 hover:text-blue-600 transition-colors"
-              title="AI Enhance"
-            >
-              <Sparkles className="w-4 h-4" />
-            </button>
-          </div>
-          {isEditing ? (
-            <textarea 
-              className="w-full px-4 py-3 border-2 border-gray-300 rounded-xl focus:border-orange-500 focus:outline-none transition-all duration-300 resize-none" 
-              rows={4}
-              placeholder="Highlight your key achievements, completed projects, and significant contributions..."
-              {...register('achievements')} 
-            />
-          ) : (
-            <p className="text-gray-700 leading-relaxed">
-              {generalReport?.achievements || 'Achievements content will appear here...'}
-            </p>
-          )}
-        </div>
-
-        {/* Challenges Faced */}
-        <div className="card">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Challenges Faced</h2>
-            <button
-              onClick={() => handleAIEnhance('challenges_faced')}
-              className="p-2 text-gray-500 hover:text-blue-600 transition-colors"
-              title="AI Enhance"
-            >
-              <Sparkles className="w-4 h-4" />
-            </button>
-          </div>
-          {isEditing ? (
-            <textarea 
-              className="input-field" 
-              rows={4}
-              placeholder="Discuss the challenges you encountered and how you overcame them..."
-              {...register('challenges_faced')} 
-            />
-          ) : (
-            <p className="text-gray-700 leading-relaxed">
-              {generalReport?.challenges_faced || 'Challenges content will appear here...'}
-            </p>
-          )}
-        </div>
-
-        {/* Skills Acquired */}
-        <div className="card">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Skills Acquired</h2>
-            <button
-              onClick={() => handleAIEnhance('skills_acquired')}
-              className="p-2 text-gray-500 hover:text-blue-600 transition-colors"
-              title="AI Enhance"
-            >
-              <Sparkles className="w-4 h-4" />
-            </button>
-          </div>
-          {isEditing ? (
-            <textarea 
-              className="input-field" 
-              rows={4}
-              placeholder="List the technical and soft skills you developed during your training..."
-              {...register('skills_acquired')} 
-            />
-          ) : (
-            <p className="text-gray-700 leading-relaxed">
-              {generalReport?.skills_acquired || 'Skills acquired content will appear here...'}
-            </p>
-          )}
-        </div>
-
-        {/* Recommendations */}
-        <div className="card">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Recommendations</h2>
-            <button
-              onClick={() => handleAIEnhance('recommendations')}
-              className="p-2 text-gray-500 hover:text-blue-600 transition-colors"
-              title="AI Enhance"
-            >
-              <Sparkles className="w-4 h-4" />
-            </button>
-          </div>
-          {isEditing ? (
-            <textarea 
-              className="input-field" 
-              rows={4}
-              placeholder="Provide recommendations for future improvements or suggestions..."
-              {...register('recommendations')} 
-            />
-          ) : (
-            <p className="text-gray-700 leading-relaxed">
-              {generalReport?.recommendations || 'Recommendations content will appear here...'}
-            </p>
-          )}
-        </div>
-
-        {/* Conclusion */}
-        <div className="card">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Conclusion</h2>
-            <button
-              onClick={() => handleAIEnhance('conclusion')}
-              className="p-2 text-gray-500 hover:text-blue-600 transition-colors"
-              title="AI Enhance"
-            >
-              <Sparkles className="w-4 h-4" />
-            </button>
-          </div>
-          {isEditing ? (
-            <textarea 
-              className="input-field" 
-              rows={4}
-              placeholder="Summarize your training experience and its impact on your professional development..."
-              {...register('conclusion')} 
-            />
-          ) : (
-            <p className="text-gray-700 leading-relaxed">
-              {generalReport?.conclusion || 'Conclusion content will appear here...'}
-            </p>
-          )}
-        </div>
-
-        {/* Acknowledgments */}
-        <div className="card">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold">Acknowledgments</h2>
-            <button
-              onClick={() => handleAIEnhance('acknowledgments')}
-              className="p-2 text-gray-500 hover:text-blue-600 transition-colors"
-              title="AI Enhance"
-            >
-              <Sparkles className="w-4 h-4" />
-            </button>
-          </div>
-          {isEditing ? (
-            <textarea 
-              className="input-field" 
-              rows={3}
-              placeholder="Thank the people who supported you during your training..."
-              {...register('acknowledgments')} 
-            />
-          ) : (
-            <p className="text-gray-700 leading-relaxed">
-              {generalReport?.acknowledgments || 'Acknowledgments content will appear here...'}
-            </p>
-          )}
-        </div>
-      </div>
-
-      {/* Save Button for Edit Mode */}
-      {isEditing && (
-        <div className="mt-6 flex justify-end">
-          <button 
-            onClick={handleSubmit(onSubmit)}
-            className="btn-primary flex items-center gap-2"
-            disabled={isSubmitting}
-          >
-            {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
-            Save Changes
-          </button>
-        </div>
-      )}
-
-      {/* AI Enhancement Modal */}
-      {showAIEnhance && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-            <h3 className="text-lg font-semibold mb-4">AI Enhancement</h3>
-            <p className="text-gray-600 mb-4">
-              Enhance your {enhancingField} with AI assistance
-            </p>
-            <div className="flex gap-3">
-              <button 
-                className="btn-primary flex-1"
-                onClick={() => setShowAIEnhance(false)}
-              >
-                Enhance
-              </button>
-              <button 
-                className="btn-secondary flex-1"
-                onClick={() => setShowAIEnhance(false)}
-              >
-                Cancel
-              </button>
+            {/* Process Section */}
+            <div className="p-4 bg-green-50 rounded-xl border border-green-200">
+              <h3 className="font-semibold text-green-800 mb-3 flex items-center gap-2">
+                <BarChart3 className="w-4 h-4" />
+                The Process
+              </h3>
+              <ul className="space-y-2 text-sm text-green-700">
+                <li>• Technical procedures you've learned</li>
+                <li>• Flow charts and diagrams</li>
+                <li>• Problem analysis and solutions</li>
+                <li>• Alternative approaches considered</li>
+                <li>• Recommendations and improvements</li>
+              </ul>
             </div>
           </div>
         </div>
-      )}
+
+        {/* Key Features Coming */}
+        <div className="bg-white/90 backdrop-blur-sm border border-gray-200/50 rounded-2xl p-6 shadow-lg mb-6">
+          <h2 className="text-2xl font-bold text-gray-800 mb-4">Key Features Coming Soon</h2>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="text-center p-4">
+              <div className={`w-12 h-12 bg-${theme}-100 rounded-full flex items-center justify-center mx-auto mb-3`}>
+                <FileSpreadsheet className={`w-6 h-6 text-${theme}-600`} />
+              </div>
+              <h3 className="font-semibold text-gray-800 mb-2">Smart Templates</h3>
+              <p className="text-sm text-gray-600">Pre-built templates for different PT levels and departments</p>
+            </div>
+
+            <div className="text-center p-4">
+              <div className={`w-12 h-12 bg-${theme}-100 rounded-full flex items-center justify-center mx-auto mb-3`}>
+                <CheckCircle className={`w-6 h-6 text-${theme}-600`} />
+              </div>
+              <h3 className="font-semibold text-gray-800 mb-2">Guided Writing</h3>
+              <p className="text-sm text-gray-600">Step-by-step guidance for each section of your report</p>
+            </div>
+          </div>
+        </div>
+
+        {/* Stay Tuned */}
+        <div className="text-center bg-gradient-to-r from-gray-50 to-gray-100 border border-gray-200 rounded-2xl p-8 shadow-lg">
+          <div className={`w-16 h-16 bg-${theme}-100 rounded-full flex items-center justify-center mx-auto mb-4`}>
+            <Clock className={`w-8 h-8 text-${theme}-600`} />
+          </div>
+          <h2 className="text-2xl font-bold text-gray-800 mb-3">Stay Tuned!</h2>
+          <p className="text-gray-600 max-w-md mx-auto">
+            We're working hard to bring you a powerful and user-friendly General Report system. 
+            Check back soon for the full experience!
+          </p>
+        </div>
+
+      </div>
     </div>
   );
-}; 
+};
+
+export default GeneralReportPage;
