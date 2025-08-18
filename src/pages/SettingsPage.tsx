@@ -213,7 +213,7 @@ export const SettingsPage: React.FC = () => {
                   ...prev,
                   account: { ...prev.account, username: e.target.value }
                 }))}
-                className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 dark:text-white transition-all duration-200"
+                className="input-field"
                 placeholder="Enter your username"
               />
             </div>
@@ -226,7 +226,7 @@ export const SettingsPage: React.FC = () => {
                   ...prev,
                   account: { ...prev.account, email: e.target.value }
                 }))}
-                className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-orange-500 focus:border-orange-500 text-gray-900 dark:text-white transition-all duration-200"
+                className="input-field"
                 placeholder="Enter your email address"
               />
             </div>
@@ -252,7 +252,7 @@ export const SettingsPage: React.FC = () => {
                   type={showPassword ? 'text' : 'password'}
                   value={passwordData.current}
                   onChange={(e) => setPasswordData(prev => ({ ...prev, current: e.target.value }))}
-                  className="w-full px-4 py-3 pr-12 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white transition-all duration-200"
+                  className="input-field pr-12"
                   placeholder="Enter your current password"
                 />
                 <button
@@ -271,7 +271,7 @@ export const SettingsPage: React.FC = () => {
                   type="password"
                   value={passwordData.new}
                   onChange={(e) => setPasswordData(prev => ({ ...prev, new: e.target.value }))}
-                  className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white transition-all duration-200"
+                  className="input-field"
                   placeholder="Enter new password"
                 />
               </div>
@@ -281,7 +281,7 @@ export const SettingsPage: React.FC = () => {
                   type="password"
                   value={passwordData.confirm}
                   onChange={(e) => setPasswordData(prev => ({ ...prev, confirm: e.target.value }))}
-                  className="w-full px-4 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 dark:text-white transition-all duration-200"
+                  className="input-field"
                   placeholder="Confirm new password"
                 />
               </div>

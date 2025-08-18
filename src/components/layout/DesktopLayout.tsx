@@ -25,7 +25,7 @@ interface DesktopLayoutProps {
 export const DesktopLayout: React.FC<DesktopLayoutProps> = ({ children }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout, userBalance, fetchUserBalance, balanceLoading } = useAppStore();
+  const { user, logout, fastLogout, userBalance, fetchUserBalance, balanceLoading } = useAppStore();
   const { theme, setTheme, colorMode } = useTheme();
 
   // Fetch user balance on mount - only when user exists and balance is missing
@@ -51,9 +51,8 @@ export const DesktopLayout: React.FC<DesktopLayoutProps> = ({ children }) => {
     ...(user?.is_staff ? [{ path: '/admin', icon: Shield, label: 'Admin Dashboard' }] : []),
   ];
 
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
+  const handleLogout = () => {
+    fastLogout();
   };
 
   const handleThemeChange = () => {

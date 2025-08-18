@@ -7,7 +7,7 @@ import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { ToastContainer } from '@/components/ui/ToastContainer';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { PWAUpdatePrompt } from '@/components/PWAUpdatePrompt';
-import { NetworkStatus } from '@/components/NetworkStatus';
+
 
 // Layout Components
 import { MobileLayout } from '@/components/layout/MobileLayout';
@@ -95,8 +95,7 @@ const App: React.FC = () => {
             {/* PWA Components */}
             <PWAUpdatePrompt />
 
-            {/* Network Status and Offline Support */}
-            <NetworkStatus />
+
 
           {/* Main Application */}
           <Routes>

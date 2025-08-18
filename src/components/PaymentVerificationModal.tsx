@@ -156,7 +156,7 @@ export const PaymentVerificationModal: React.FC<PaymentVerificationModalProps> =
                 value={verificationData.user_phone_number}
                 onChange={(e) => setVerificationData(prev => ({ ...prev, user_phone_number: e.target.value }))}
                 placeholder="e.g., 0712345678"
-                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="input-field input-field-sm"
                 disabled={loading}
               />
             </div>
@@ -171,7 +171,7 @@ export const PaymentVerificationModal: React.FC<PaymentVerificationModalProps> =
                 value={verificationData.sender_name}
                 onChange={(e) => setVerificationData(prev => ({ ...prev, sender_name: e.target.value }))}
                 placeholder="Full name of person who sent payment"
-                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="input-field input-field-sm"
                 disabled={loading}
               />
             </div>
@@ -186,7 +186,7 @@ export const PaymentVerificationModal: React.FC<PaymentVerificationModalProps> =
                 value={verificationData.amount || ''}
                 onChange={(e) => setVerificationData(prev => ({ ...prev, amount: parseFloat(e.target.value) || 0 }))}
                 placeholder="Enter exact amount sent"
-                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                className="input-field input-field-sm"
                 disabled={loading}
               />
             </div>

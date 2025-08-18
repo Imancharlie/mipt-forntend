@@ -9,7 +9,7 @@ interface MobileLayoutProps {
 
 export const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const { user, logout, theme, userBalance, fetchUserBalance, balanceLoading } = useAppStore();
+  const { user, logout, fastLogout, theme, userBalance, fetchUserBalance, balanceLoading } = useAppStore();
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -20,9 +20,8 @@ export const MobileLayout: React.FC<MobileLayoutProps> = ({ children }) => {
     }
   }, [user, userBalance]); // Removed fetchUserBalance from dependencies to prevent infinite loop
 
-  const handleLogout = async () => {
-    await logout();
-    navigate('/login');
+  const handleLogout = () => {
+    fastLogout();
   };
 
   const handleRefreshBalance = () => {

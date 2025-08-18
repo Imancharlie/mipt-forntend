@@ -45,14 +45,10 @@ import {
 import { adminDashboardService } from '@/api/adminServices';
 import { 
   isTokenExpired, 
-  shouldRefreshToken, 
-  shouldMaintainSession, 
   updateLastActivity, 
-  getLastActivity,
-  shouldAutoLogout 
+  getLastActivity
 } from '@/utils/auth';
 import { setAuthToken } from '@/api/client';
-import { OfflineQueue } from '@/utils/offlineQueue';
 
 interface AppState {
   // Authentication
@@ -213,8 +209,10 @@ interface AppState {
   clearError: () => void;
   clearLoading: () => void;
   initializeAuth: () => Promise<void>;
+  ensureAuthentication: () => void;
   setupAuthListener: () => (() => void);
   silentTokenRefresh: () => Promise<boolean>;
+  fastLogout: () => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -482,11 +480,7 @@ export const useAppStore = create<AppState>()(
           }
           
           // Clear all offline actions when logging out
-          try {
-            await OfflineQueue.clearAll();
-          } catch (error) {
-            console.warn('Failed to clear offline actions:', error);
-          }
+          // Note: OfflineQueue functionality removed
           
           set({ 
             user: null,
@@ -1269,18 +1263,10 @@ export const useAppStore = create<AppState>()(
           set({ loading: { isLoading: true, message: 'Initializing authentication...' } });
           
           try {
-            // Check if user should be auto-logged out due to inactivity
-            if (shouldAutoLogout()) {
-              console.log('🕐 User inactive for too long, auto-logging out');
-              await get().logout();
-              return;
-            }
-            
-            // Check if token should be maintained (within 7 days)
-            if (!shouldMaintainSession(state.tokens.access)) {
-              console.log('🕐 Session too old, requiring re-login');
-              await get().logout();
-              return;
+            // Check if token is expired
+            if (isTokenExpired(state.tokens.access)) {
+              console.log('🕐 Access token expired, attempting refresh');
+              // Continue to refresh logic below
             }
             
             // Set the token in apiClient
@@ -1374,6 +1360,52 @@ export const useAppStore = create<AppState>()(
         } catch (error) {
           console.warn('Silent token refresh failed:', error);
           return false;
+        }
+      },
+
+      // Fast logout for immediate response (used by logout button)
+      fastLogout: () => {
+        console.log('🚀 Manual fast logout initiated by user');
+        
+        // Clear authentication state immediately
+        set({ 
+          isAuthenticated: false,
+          user: null,
+          tokens: { access: null, refresh: null },
+          profile: null
+        });
+        
+        // Clear tokens from localStorage
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        
+        // Clear the token from apiClient
+        setAuthToken(null);
+        
+        // Redirect to login after state is cleared
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
+      },
+
+      // Safety function to ensure authentication state is correct
+      ensureAuthentication: () => {
+        const currentState = get();
+        const accessToken = localStorage.getItem('access_token');
+        const refreshToken = localStorage.getItem('refresh_token');
+        
+        // If no tokens but authenticated, fix the state
+        if (!accessToken && !refreshToken && currentState.isAuthenticated) {
+          console.log('🔐 Fixing authentication state - no tokens found');
+          set({ isAuthenticated: false });
+        }
+        
+        // If tokens exist but not authenticated, check if they're valid
+        if (accessToken && refreshToken && !currentState.isAuthenticated) {
+          if (!isTokenExpired(accessToken) || !isTokenExpired(refreshToken)) {
+            console.log('🔐 Fixing authentication state - valid tokens found');
+            set({ isAuthenticated: true });
+          }
         }
       },
     }),

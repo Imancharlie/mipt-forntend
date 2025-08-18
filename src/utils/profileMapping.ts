@@ -13,6 +13,11 @@ export const PROGRAM_MAPPING = {
   'BSc. Geomatic Engineering': 'GEOMATIC',
   'Bachelor of Architecture': 'ARCHITECTURE',
   'Bachelor of Science in Quantity Surveying': 'QUANTITY_SURVEYING',
+  'BSc. Computer Science': 'COMPUTER',
+  'BSc. Electronic Science and Communication': 'ELECTRONIC_SCIENCE',
+  'BSc. Computer Engineering and Information Technology': 'COMPUTER_ENGINEERING',
+  'BSc. Telecommunications Engineering': 'TELECOMMUNICATIONS',
+  'BSc. Business Information Technology': 'BUSINESS_IT',
   // Reverse mapping for display
   'MECHANICAL': 'BSc. Mechanical Engineering',
   'ELECTRICAL': 'BSc. Electrical Engineering',
@@ -25,6 +30,11 @@ export const PROGRAM_MAPPING = {
   'GEOMATIC': 'BSc. Geomatic Engineering',
   'ARCHITECTURE': 'Bachelor of Architecture',
   'QUANTITY_SURVEYING': 'Bachelor of Science in Quantity Surveying',
+  'COMPUTER': 'BSc. Computer Science',
+  'ELECTRONIC_SCIENCE': 'BSc. Electronic Science and Communication',
+  'COMPUTER_ENGINEERING': 'BSc. Computer Engineering and Information Technology',
+  'TELECOMMUNICATIONS': 'BSc. Telecommunications Engineering',
+  'BUSINESS_IT': 'BSc. Business Information Technology',
 };
 
 // PT Phase mapping
@@ -59,6 +69,11 @@ export const mapProgramToBackend = (program: string): string => {
   if (upperProgram.includes('GEOMATIC')) return 'GEOMATIC';
   if (upperProgram.includes('ARCHITECTURE')) return 'ARCHITECTURE';
   if (upperProgram.includes('QUANTITY_SURVEYING')) return 'QUANTITY_SURVEYING';
+  if (upperProgram.includes('COMPUTER')) return 'COMPUTER';
+  if (upperProgram.includes('ELECTRONIC_SCIENCE')) return 'ELECTRONIC_SCIENCE';
+  if (upperProgram.includes('COMPUTER_ENGINEERING')) return 'COMPUTER_ENGINEERING';
+  if (upperProgram.includes('TELECOMMUNICATIONS')) return 'TELECOMMUNICATIONS';
+  if (upperProgram.includes('BUSINESS_IT')) return 'BUSINESS_IT';
   
   // Default to the original value if no match found
   return program;
@@ -120,6 +135,16 @@ export const getDepartmentFromProgram = (program: string): string => {
     return 'Departments of Structural and Construction Engineering';
   } else if (programUpper.includes('QUANTITY_SURVEYING')) {
     return 'Departments of Structural and Construction Engineering';
+  } else if (programUpper.includes('COMPUTER')) {
+    return 'Computer Science Department';
+  } else if (programUpper.includes('ELECTRONIC_SCIENCE')) {
+    return 'Electronic Science and Communication Department';
+  } else if (programUpper.includes('COMPUTER_ENGINEERING')) {
+    return 'Computer Engineering and Information Technology Department';
+  } else if (programUpper.includes('TELECOMMUNICATIONS')) {
+    return 'Telecommunications Engineering Department';
+  } else if (programUpper.includes('BUSINESS_IT')) {
+    return 'Business Information Technology Department';
   }
   
   return '';

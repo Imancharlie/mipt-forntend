@@ -269,7 +269,7 @@ const BillingPage: React.FC = () => {
                   }}
                   min="1000"
                   step="500"
-                  className="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent dark:bg-gray-700 dark:text-white text-sm"
+                  className="input-field input-field-sm"
                   placeholder="Enter amount in multiples of 500"
                 />
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
@@ -453,7 +453,7 @@ const BillingPage: React.FC = () => {
                         value={paymentDetails.phoneNumber || ''}
                         onChange={(e) => setPaymentDetails(prev => ({ ...prev, phoneNumber: e.target.value }))}
                         required
-                        className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:border-orange-500 focus:outline-none transition-all duration-300 text-sm"
+                        className="input-field input-field-sm"
                         placeholder="Enter phone number used for payment"
                       />
                     </div>
@@ -469,7 +469,7 @@ const BillingPage: React.FC = () => {
                         value={paymentDetails.wakalaName || ''}
                         onChange={(e) => setPaymentDetails(prev => ({ ...prev, wakalaName: e.target.value }))}
                         required
-                        className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:border-orange-500 focus:outline-none transition-all duration-300 text-sm"
+                        className="input-field input-field-sm"
                         placeholder="Enter wakala/agent name"
                       />
                     </div>
@@ -488,7 +488,7 @@ const BillingPage: React.FC = () => {
                         required
                         min="2000"
                         step="1000"
-                        className="w-full pl-8 pr-3 py-2 border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:border-orange-500 focus:outline-none transition-all duration-300 text-sm"
+                        className="input-field input-field-sm pl-8"
                         placeholder="Enter amount sent"
                       />
                     </div>
@@ -511,7 +511,7 @@ const BillingPage: React.FC = () => {
                         value={paymentDetails.name}
                         onChange={(e) => setPaymentDetails(prev => ({ ...prev, name: e.target.value }))}
                         required
-                        className="w-full px-3 py-2 border-2 border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-lg focus:border-orange-500 focus:outline-none transition-all duration-300 text-sm"
+                        className="input-field input-field-sm"
                         placeholder="Enter name on the phone number"
                       />
                     </div>

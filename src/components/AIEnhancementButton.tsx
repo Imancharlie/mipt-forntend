@@ -10,13 +10,15 @@ interface AIEnhancementButtonProps {
   onEnhancementComplete?: (enhancedData: any) => void;
   className?: string;
   reportData?: any; // Weekly report data for token estimation
+  getCurrentFormData?: () => any; // Function to get current form data
 }
 
 export const AIEnhancementButton: React.FC<AIEnhancementButtonProps> = ({
   weeklyReportId,
   onEnhancementComplete,
   className = '',
-  reportData
+  reportData,
+  getCurrentFormData
 }) => {
   const { enhanceWeeklyReportWithAI, loading, userBalance, paymentInfo } = useAppStore();
   const { theme } = useTheme();
@@ -34,38 +36,88 @@ export const AIEnhancementButton: React.FC<AIEnhancementButtonProps> = ({
   // Fixed cost: 300 tokens regardless of report completeness
   const FIXED_COST = 300;
   
+  // Determine report quality and provide appropriate messaging
+  const getReportQualityInfo = (report: any) => {
+    if (!report) return { quality: 'unknown', message: '', daysCount: 0 };
+    
+    // Get current form data if available, otherwise use the static report data
+    const currentData = getCurrentFormData ? getCurrentFormData() : report;
+    
+    // Count days with actual content (not just empty strings)
+    let daysCount = 0;
+    let totalHours = 0;
+    
+    if (currentData && currentData.daily_reports) {
+      // Count days with actual content
+      daysCount = currentData.daily_reports.filter((day: any) => {
+        const hasDescription = day.description && day.description.trim().length > 0;
+        const hasHours = day.hours_spent && parseFloat(day.hours_spent) > 0;
+        return hasDescription || hasHours;
+      }).length;
+      
+      // Calculate total hours
+      totalHours = currentData.daily_reports.reduce((sum: number, day: any) => {
+        return sum + (parseFloat(day.hours_spent) || 0);
+      }, 0);
+    }
+    
+    // Also check if there are any form inputs with content
+    if (getCurrentFormData) {
+      const formData = getCurrentFormData();
+      if (formData) {
+        // Check for any daily descriptions or hours that might not be in daily_reports yet
+        const weekDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+        weekDays.forEach(day => {
+          const description = formData[`daily_${day}`];
+          const hours = formData[`hours_${day}`];
+          if (description && description.trim().length > 0) {
+            daysCount = Math.max(daysCount, 1); // At least one day has content
+          }
+          if (hours && parseFloat(hours) > 0) {
+            totalHours += parseFloat(hours);
+          }
+        });
+      }
+    }
+    
+    if (daysCount === 0 && totalHours === 0) {
+      return {
+        quality: 'empty',
+        message: 'Your report is completely empty. AI will generate comprehensive content based on your additional description.',
+        daysCount: 0
+      };
+    } else if (daysCount < 3 || totalHours < 10) {
+      return {
+        quality: 'minimal',
+        message: `Your report has limited content (${daysCount} day${daysCount === 1 ? '' : 's'} with content, ${totalHours.toFixed(1)} total hours). AI will enhance what you have and generate additional content based on your description.`,
+        daysCount: daysCount
+      };
+    } else {
+      return {
+        quality: 'good',
+        message: `Your report has good content (${daysCount} days filled, ${totalHours.toFixed(1)} total hours). AI will enhance your existing content and improve the overall quality.`,
+        daysCount: daysCount
+      };
+    }
+  };
+
   // Check if report can be enhanced (not currently being enhanced and has sufficient tokens)
   const canEnhance = userBalance && 
                     userBalance.available_tokens >= FIXED_COST && 
                     !isEnhancing && 
                     !isResetting;
 
-  // Determine report quality and provide appropriate messaging
-  const getReportQualityInfo = (report: any) => {
-    if (!report) return { quality: 'unknown', message: '', daysCount: 0 };
-    
-    const daysCount = report.daily_reports?.length || 0;
-    
-    if (daysCount === 0) {
-      return {
-        quality: 'empty',
-        message: 'Your report is completely empty. AI will generate comprehensive content based on your additional description.',
-        daysCount: 0
-      };
-    } else if (daysCount < 3) {
-      return {
-        quality: 'minimal',
-        message: `Your report only has ${daysCount} day${daysCount === 1 ? '' : 's'} filled. AI will enhance what you have and generate additional content based on your description.`,
-        daysCount: daysCount
-      };
-    } else {
-      return {
-        quality: 'good',
-        message: `Your report has ${daysCount} days filled. AI will enhance your existing content and improve the overall quality.`,
-        daysCount: daysCount
-      };
-    }
-  };
+  // Get current report quality to determine if enhancement is meaningful
+  const reportQuality = getReportQualityInfo(reportData);
+  
+  // Additional check: if report is completely empty and no additional description, disable enhancement
+  const hasContentOrDescription = reportQuality.quality !== 'empty' || additionalDescription.trim().length > 0;
+
+  // Update report quality when additional description changes
+  useEffect(() => {
+    // This will trigger a re-render when additionalDescription changes
+    // and update the hasContentOrDescription value
+  }, [additionalDescription, reportQuality]);
 
   const handleEnhance = async () => {
     console.log('Enhance button clicked');
@@ -205,7 +257,34 @@ export const AIEnhancementButton: React.FC<AIEnhancementButtonProps> = ({
       console.log('Starting AI enhancement for weekly report:', weeklyReportId);
       console.log('Custom instructions:', customInstructions || instructions);
       
-      await enhanceWeeklyReportWithAI(weeklyReportId, customInstructions || instructions);
+      // Get current form data to include in the enhancement request
+      let currentFormData = null;
+      if (getCurrentFormData) {
+        currentFormData = getCurrentFormData();
+        console.log('Current form data for AI enhancement:', currentFormData);
+      }
+      
+      // Combine custom instructions with current form data context
+      let enhancedInstructions = customInstructions || instructions;
+      if (currentFormData) {
+        const formContext: string[] = [];
+        
+        // Add daily report context
+        const weekDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+        weekDays.forEach(day => {
+          const description = currentFormData[`daily_${day}`];
+          const hours = currentFormData[`hours_${day}`];
+          if (description && description.trim().length > 0) {
+            formContext.push(`${day.charAt(0).toUpperCase() + day.slice(1)}: ${description} (${hours || 0} hours)`);
+          }
+        });
+        
+        if (formContext.length > 0) {
+          enhancedInstructions = `${enhancedInstructions}\n\nCurrent report content:\n${formContext.join('\n')}`;
+        }
+      }
+      
+      await enhanceWeeklyReportWithAI(weeklyReportId, enhancedInstructions);
       
       console.log('AI enhancement completed successfully');
       showSuccess('Weekly report enhanced successfully!');
@@ -246,9 +325,6 @@ export const AIEnhancementButton: React.FC<AIEnhancementButtonProps> = ({
 
   const isProcessing = isEnhancing || isResetting || loading.isLoading;
 
-  // Get report quality information
-  const reportQuality = getReportQualityInfo(reportData);
-
   return (
     <>
       {/* Main Enhancement Button */}
@@ -259,10 +335,10 @@ export const AIEnhancementButton: React.FC<AIEnhancementButtonProps> = ({
           console.log('Button clicked!');
           handleEnhance();
         }}
-        disabled={isProcessing}
+        disabled={isProcessing || !hasContentOrDescription}
         className={`
           inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-all duration-300
-          ${isProcessing 
+          ${isProcessing || !hasContentOrDescription
             ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
             : `bg-gradient-to-r from-${theme}-500 to-${theme}-600 text-white hover:from-${theme}-600 hover:to-${theme}-700 shadow-lg hover:shadow-xl transform hover:scale-105`
           }
@@ -273,6 +349,11 @@ export const AIEnhancementButton: React.FC<AIEnhancementButtonProps> = ({
           <>
             <LoadingSpinner size="sm" inline color="white" />
             Enhancing...
+          </>
+        ) : !hasContentOrDescription ? (
+          <>
+            <AlertCircle className="w-4 h-4" />
+            Add Content First
           </>
         ) : (
           <>
@@ -398,7 +479,7 @@ export const AIEnhancementButton: React.FC<AIEnhancementButtonProps> = ({
                 {reportQuality.quality === 'empty' && <span className="text-red-500 ml-1">*</span>}
               </label>
               <textarea
-                className="w-full p-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent dark:bg-gray-700 dark:text-white resize-none"
+                                  className="input-field input-field-sm textarea"
                 rows={4}
                 placeholder={
                   reportQuality.quality === 'empty'
@@ -455,9 +536,9 @@ export const AIEnhancementButton: React.FC<AIEnhancementButtonProps> = ({
               
               <button
                 onClick={handleQuickEnhance}
-                disabled={!canEnhance || (reportQuality.quality === 'empty' && !additionalDescription.trim())}
+                disabled={!canEnhance || !hasContentOrDescription}
                 className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all duration-300 flex items-center justify-center gap-2 text-xs sm:text-sm ${
-                  !canEnhance || (reportQuality.quality === 'empty' && !additionalDescription.trim())
+                  !canEnhance || !hasContentOrDescription
                     ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                     : `bg-gradient-to-r from-${theme}-500 to-${theme}-600 text-white hover:from-${theme}-600 hover:to-${theme}-700`
                 }`}
@@ -474,10 +555,10 @@ export const AIEnhancementButton: React.FC<AIEnhancementButtonProps> = ({
                        Get Tokens
                      </a>
                    </>
-                ) : (reportQuality.quality === 'empty' && !additionalDescription.trim()) ? (
+                ) : !hasContentOrDescription ? (
                   <>
                     <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4" />
-                    Instructions Required
+                    Add Content or Description
                    </>
                  ) : (
                    <>

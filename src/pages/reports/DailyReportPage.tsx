@@ -496,7 +496,7 @@ export const DailyReportPage: React.FC = () => {
                     min="0" 
                     max="12"
                     step="0.5"
-                className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 placeholder-gray-500 dark:placeholder-gray-400"
+                className="input-field input-field-sm"
                 placeholder="Enter hours spent (0-12)"
                     {...register('hours_spent', { 
                       required: 'Hours are required',
@@ -511,7 +511,7 @@ export const DailyReportPage: React.FC = () => {
               <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">What did you learn/performed today?</label>
                     <textarea 
                 rows={4}
-                className="w-full px-3 py-2 bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 rounded-lg text-sm text-gray-900 dark:text-white focus:ring-2 focus:ring-orange-500 focus:border-orange-500 transition-all duration-200 placeholder-gray-500 dark:placeholder-gray-400 resize-none shadow-sm hover:shadow-md focus:shadow-lg"
+                className="input-field input-field-sm textarea"
                 placeholder="Describe your activities, tasks performed, skills learned, challenges faced, and achievements..."
                       {...register('description', { 
                         required: 'Description is required',

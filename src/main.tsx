@@ -4,7 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import App from './App.tsx'
 import './index.css'
 // import { registerServiceWorker } from './sw-register' // Removed - VitePWA handles this
-import './utils/offlineQueue'
+
 
 // VitePWA automatically registers the service worker
 // registerServiceWorker(); // Removed to prevent conflicts

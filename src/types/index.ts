@@ -13,7 +13,7 @@ export interface RegisterData {
   password_confirm: string;
   phone_number: string;
   student_id?: string;
-  program: 'MECHANICAL' | 'ELECTRICAL' | 'CIVIL' | 'COMPUTER' | 'CHEMICAL' | 'TEXTILE_DESIGN' | 'TEXTILE_ENGINEERING' | 'INDUSTRIAL' | 'GEOMATIC' | 'ARCHITECTURE' | 'QUANTITY_SURVEYING';
+  program: 'MECHANICAL' | 'ELECTRICAL' | 'CIVIL' | 'COMPUTER' | 'CHEMICAL' | 'TEXTILE_DESIGN' | 'TEXTILE_ENGINEERING' | 'INDUSTRIAL' | 'GEOMATIC' | 'ARCHITECTURE' | 'QUANTITY_SURVEYING' | 'ELECTRONIC_SCIENCE' | 'COMPUTER_ENGINEERING' | 'TELECOMMUNICATIONS' | 'BUSINESS_IT';
   pt_phase: 'PT1' | 'PT2' | 'PT3';
   year_of_study: number;
   department: string;
@@ -45,7 +45,7 @@ export interface UserData {
 export interface UserProfile {
   id: number;
   student_id: string;
-  program: 'MECHANICAL' | 'ELECTRICAL' | 'CIVIL' | 'COMPUTER' | 'CHEMICAL' | 'TEXTILE_DESIGN' | 'TEXTILE_ENGINEERING' | 'INDUSTRIAL' | 'GEOMATIC' | 'ARCHITECTURE' | 'QUANTITY_SURVEYING';
+  program: 'MECHANICAL' | 'ELECTRICAL' | 'CIVIL' | 'COMPUTER' | 'CHEMICAL' | 'TEXTILE_DESIGN' | 'TEXTILE_ENGINEERING' | 'INDUSTRIAL' | 'GEOMATIC' | 'ARCHITECTURE' | 'QUANTITY_SURVEYING' | 'ELECTRONIC_SCIENCE' | 'COMPUTER_ENGINEERING' | 'TELECOMMUNICATIONS' | 'BUSINESS_IT';
   year_of_study: number;
   pt_phase: 'PT1' | 'PT2' | 'PT3';
   department: string;

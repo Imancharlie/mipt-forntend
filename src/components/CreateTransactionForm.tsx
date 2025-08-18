@@ -184,7 +184,7 @@ const CreateTransactionForm: React.FC<CreateTransactionFormProps> = ({ onSubmit,
         <select
           value={formData.payment_method}
           onChange={(e) => handleInputChange('payment_method', e.target.value as 'DIRECT' | 'WAKALA')}
-          className="w-full p-2 sm:p-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white text-sm"
+                            className="input-field input-field-sm"
         >
           <option value="DIRECT">Direct Payment</option>
           <option value="WAKALA">Money Agent (Wakala)</option>

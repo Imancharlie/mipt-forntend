@@ -65,7 +65,7 @@ interface WeeklyReportData {
 export const WeeklyReportDetailPage: React.FC = () => {
   const params = useParams<{ weekNumber: string }>();
   const weekNumber = params?.weekNumber;
-  const { fetchUserBalance } = useAppStore();
+  const { fetchUserBalance, profile } = useAppStore();
   const navigate = useNavigate();
   const { theme } = useTheme();
   const { showSuccess, showError, showWarning, showInfo } = useToastContext();
@@ -84,6 +84,32 @@ export const WeeklyReportDetailPage: React.FC = () => {
   const hasLoadedData = useRef(false);
 
   const { register, handleSubmit, getValues, formState: { errors } } = useForm();
+
+  // Function to determine college based on user's course
+  const getCollegeName = (): string => {
+    if (!profile?.program) {
+      return 'College of Engineering and Technology (CoET)'; // Default fallback
+    }
+
+    const program = profile.program;
+    
+    // CoICT courses (using the enum values from types)
+    const coictCourses = [
+      'COMPUTER', // BSc in Computer Science
+      'ELECTRONIC_SCIENCE', // BSc in Electronic Science and Communication
+      'COMPUTER_ENGINEERING', // BSc in Computer Engineering and Information Technology
+      'TELECOMMUNICATIONS', // BSc in Telecommunications Engineering
+      'BUSINESS_IT' // BSc in Business Information Technology
+    ];
+
+    // Check if the user's program is in CoICT
+    if (coictCourses.includes(program)) {
+      return 'College of Information and Communication Technologies (CoICT)';
+    }
+
+    // All other courses are CoET
+    return 'College of Engineering and Technology (CoET)';
+  };
 
   useEffect(() => {
     // close export menu when clicking outside
@@ -665,6 +691,32 @@ export const WeeklyReportDetailPage: React.FC = () => {
                 <AIEnhancementButton
                   weeklyReportId={reportData.week_number ?? reportData.id}
                   reportData={reportData}
+                  getCurrentFormData={() => {
+                    // Get current form values from react-hook-form
+                    const formValues = getValues();
+                    
+                    // Combine form values with current state
+                    const currentData = {
+                      ...formValues,
+                      // Include current daily hours and descriptions from state
+                      daily_monday: dailyDescriptions.Monday || formValues.daily_monday || '',
+                      hours_monday: dailyHours.Monday || formValues.hours_monday || 0,
+                      daily_tuesday: dailyDescriptions.Tuesday || formValues.daily_tuesday || '',
+                      hours_tuesday: dailyHours.Tuesday || formValues.hours_tuesday || 0,
+                      daily_wednesday: dailyDescriptions.Wednesday || formValues.daily_wednesday || '',
+                      hours_wednesday: dailyHours.Wednesday || formValues.hours_wednesday || 0,
+                      daily_thursday: dailyDescriptions.Thursday || formValues.daily_thursday || '',
+                      hours_thursday: dailyHours.Thursday || formValues.hours_thursday || 0,
+                      daily_friday: dailyDescriptions.Friday || formValues.daily_friday || '',
+                      hours_friday: dailyHours.Friday || formValues.hours_friday || 0,
+                      // Include existing daily reports
+                      daily_reports: reportData?.daily_reports || [],
+                      // Include main job data
+                      main_job: reportData?.main_job || { title: '', operations: [] }
+                    };
+                    
+                    return currentData;
+                  }}
                   onEnhancementComplete={async (_data) => {
                     // Refresh the user balance to show updated tokens
                     try {
@@ -798,7 +850,9 @@ export const WeeklyReportDetailPage: React.FC = () => {
         {/* Report Header */}
         <div className="card p-3 lg:p-4">
           <div className="text-center mb-4 lg:mb-6">
-            <h2 className="text-lg lg:text-xl xl:text-2xl font-bold text-gray-900 mb-2">College of Engineering and Technology (CoET)</h2>
+            <h2 className="text-lg lg:text-xl xl:text-2xl font-bold text-gray-900 mb-2">
+              {getCollegeName()}
+            </h2>
             <div className="flex flex-col lg:flex-row items-center justify-center gap-2 lg:gap-8 text-xs lg:text-sm">
               <div className="flex items-center gap-1 lg:gap-2">
                 <span className="font-medium">Weekly Report No:</span>
@@ -1043,7 +1097,7 @@ export const WeeklyReportDetailPage: React.FC = () => {
                           <textarea
                             {...register(`operation_${operation.id}`)}
                             defaultValue={operation.operation_description}
-                            className="w-full p-1 lg:p-2 border border-gray-300 rounded text-xs resize-none"
+                            className="input-field input-field-sm textarea"
                             rows={5}
                             style={{ minHeight: '100px' }}
                             placeholder="Describe the operation..."
@@ -1083,13 +1137,13 @@ export const WeeklyReportDetailPage: React.FC = () => {
                       {reportData.main_job.operations.length + 1}
                     </td>
                     <td className="border border-gray-300 px-2 py-2 lg:px-4 lg:py-3">
-                      <textarea
-                        {...register('new_operation_description')}
-                        className="w-full p-1 lg:p-2 border border-blue-300 rounded text-xs resize-none"
-                        placeholder="Describe the new operation..."
-                        rows={5}
-                        style={{ minHeight: '100px' }}
-                      />
+                                                <textarea
+                            {...register('new_operation_description')}
+                            className="input-field input-field-sm textarea"
+                            placeholder="Describe the new operation..."
+                            rows={5}
+                            style={{ minHeight: '100px' }}
+                          />
                     </td>
                     <td className="border border-gray-300 px-2 py-2 lg:px-4 lg:py-3">
                       <textarea
