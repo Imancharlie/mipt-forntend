@@ -11,6 +11,7 @@ export const AccountActivationPage: React.FC = () => {
   const navigate = useNavigate();
   const { colorMode } = useTheme();
   const { profile, isAuthenticated, fetchProfile } = useAppStore();
+  const isVerified = (profile as any)?.email_verified === true;
   
   // removed legacy isLoading from previous status-check flow
   const [verificationStatus, setVerificationStatus] = useState<'pending' | 'verifying' | 'success' | 'failed'>('pending');
@@ -24,13 +25,13 @@ export const AccountActivationPage: React.FC = () => {
 
   useEffect(() => {
     // If user is already verified, redirect to dashboard
-    if (profile?.email_verified) {
+    if (isVerified) {
       navigate('/dashboard');
       return;
     }
 
     // Check if we have an email in URL params
-    if (email && !profile?.email_verified) {
+    if (email && !isVerified) {
       setVerificationStatus('pending');
     }
   }, [profile, email, navigate]);
