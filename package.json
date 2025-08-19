@@ -5,6 +5,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
+    "@fingerprintjs/fingerprintjs": "^4.6.2",
     "@headlessui/react": "^1.7.17",
     "@types/node": "^20.10.0",
     "@types/react": "^18.2.42",

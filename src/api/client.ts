@@ -1,4 +1,6 @@
 import axios, { AxiosError } from 'axios';
+import { getFingerprint } from '@/utils/fingerprint';
+import { collectDeviceInfo } from '@/utils/deviceInfo';
 
 
 // Token manager to handle authentication tokens
@@ -35,13 +37,32 @@ export const apiClient = axios.create({
   },
 });
 
-// Request interceptor to add auth token
+// Request interceptor to add auth token and client fingerprint/device metadata
 apiClient.interceptors.request.use(
-  (config) => {
+  async (config) => {
     try {
       if (currentToken) {
         config.headers.Authorization = `Bearer ${currentToken}`;
       }
+      // Attach fingerprint headers (best-effort)
+      try {
+        const fp = await getFingerprint();
+        if (fp?.visitorId) {
+          (config.headers as any)['X-Device-Fingerprint'] = fp.visitorId;
+          if (typeof fp.confidence === 'number') {
+            (config.headers as any)['X-Device-Fingerprint-Confidence'] = String(fp.confidence);
+          }
+        }
+      } catch {}
+      // Attach lightweight device info
+      try {
+        const info = collectDeviceInfo();
+        (config.headers as any)['X-Device-UserAgent'] = info.userAgent;
+        (config.headers as any)['X-Device-Locale'] = info.language;
+        (config.headers as any)['X-Device-Platform'] = info.platform;
+        (config.headers as any)['X-Device-Screen'] = `${info.screen.width}x${info.screen.height}@${info.screen.pixelRatio}`;
+        (config.headers as any)['X-Device-Timezone'] = info.timezone;
+      } catch {}
       
       // Add retry flag to prevent infinite loops
       (config as any)._retry = false;

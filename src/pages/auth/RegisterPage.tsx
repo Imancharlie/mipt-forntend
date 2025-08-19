@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { useAppStore } from '@/store';
 import { RegisterData, RegistrationSteps } from '@/types';
-import { Loader2, ArrowRight, ArrowLeft, User, GraduationCap, Building2, Phone, Mail, Lock } from 'lucide-react';
+import { Loader2, ArrowRight, ArrowLeft, User, GraduationCap, Phone, Mail, Lock } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '@/api/services';
@@ -37,10 +37,18 @@ export const RegisterPage: React.FC = () => {
     },
   });
   const [phoneChecking, setPhoneChecking] = useState(false);
-  const { registerAndLogin, loading } = useAppStore();
+  const [showTerms, setShowTerms] = useState(false);
+  const { registerAndLogin, loading, error } = useAppStore();
   const { theme } = useTheme();
   const navigate = useNavigate();
   const { showSuccess, showError } = useToastContext();
+  
+  // Show validation errors (e.g., email already exists)
+  React.useEffect(() => {
+    if (error?.message) {
+      showError(error.message);
+    }
+  }, [error]);
   
   // Function to auto-determine department based on program
   const getDepartmentByProgram = (program: string): string => {
@@ -65,7 +73,7 @@ export const RegisterPage: React.FC = () => {
     defaultValues: formData.step1 
   });
   const step2Methods = useForm<RegistrationSteps["step2"]>({ 
-    defaultValues: formData.step2 
+    defaultValues: { ...formData.step2, accepted_terms: false } as any
   });
   const step3Methods = useForm<RegistrationSteps["step3"]>({ 
     defaultValues: formData.step3 
@@ -135,7 +143,10 @@ export const RegisterPage: React.FC = () => {
         };
         
         await registerAndLogin(registrationData);
-        
+
+        // Navigate smoothly to activation page immediately after successful registration
+        navigate(`/account-activation?email=${encodeURIComponent(formData.step2.email)}`);
+
         // Store profile data for later use
         const profileData = {
           program: data.program,
@@ -148,8 +159,7 @@ export const RegisterPage: React.FC = () => {
         
         storeRegistrationProfile(profileData);
         
-        // After successful registration and login, redirect to dashboard
-        navigate('/dashboard');
+        // No redirect to dashboard; activation first
         
       } catch (error) {
         console.error('Registration failed:', error);
@@ -177,6 +187,11 @@ export const RegisterPage: React.FC = () => {
     <div className="min-h-screen flex flex-col justify-center items-center px-4 bg-gray-50 dark:bg-gray-900">
       <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 border border-gray-200 dark:border-gray-700">
         <h2 className="text-2xl font-bold mb-6 text-orange-600 dark:text-orange-400 text-center">Register</h2>
+        {error?.message && (
+          <div className="mb-4 p-3 rounded-lg border border-red-300 bg-red-50 text-red-700 text-sm">
+            {error.message}
+          </div>
+        )}
         
         {/* Progress Bar */}
         <div className="mb-6">
@@ -250,7 +265,7 @@ export const RegisterPage: React.FC = () => {
               </>
             )}
 
-            {/* Step 2: Account Details (Email + Password) */}
+            {/* Step 2: Account Details (Email + Password + Terms) */}
             {step === 1 && (
               <>
                 <div className="flex items-center gap-2 mb-4">
@@ -319,6 +334,25 @@ export const RegisterPage: React.FC = () => {
                   </div>
                   {(currentMethods as any).formState.errors.password_confirm && 
                     <p className="text-xs text-red-500 mt-1">{(currentMethods as any).formState.errors.password_confirm.message}</p>}
+                </div>
+
+                {/* Terms & Conditions */}
+                <div className="mt-2">
+                  <label className="inline-flex items-center gap-2 text-sm">
+                    <input
+                      type="checkbox"
+                      className="rounded border-gray-300 text-current focus:ring-2"
+                      {...(step2Methods as any).register('accepted_terms', {
+                        validate: (v: any) => v === true || 'You must accept the terms and conditions to continue'
+                      })}
+                    />
+                    <span>
+                      I agree to the <button type="button" onClick={() => setShowTerms(true)} className={`underline text-${theme}-600 hover:text-${theme}-700`}>Terms & Conditions</button>
+                    </span>
+                  </label>
+                  {(step2Methods as any).formState.errors.accepted_terms && (
+                    <p className="text-xs text-red-500 mt-1">{(step2Methods as any).formState.errors.accepted_terms.message as any}</p>
+                  )}
                 </div>
               </>
             )}
@@ -470,6 +504,38 @@ export const RegisterPage: React.FC = () => {
             </div>
           </form>
         </FormProvider>
+        
+        {/* Terms Modal */}
+        {showTerms && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+            <div className="w-full max-w-2xl mx-4 rounded-xl shadow-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+              <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                <h4 className={`text-lg font-semibold text-${theme}-600 dark:text-${theme}-400`}>Terms & Conditions</h4>
+                <button onClick={() => setShowTerms(false)} className="text-gray-500 hover:text-gray-700">✕</button>
+              </div>
+              <div className="px-6 py-4 max-h-[60vh] overflow-y-auto text-sm text-gray-700 dark:text-gray-200 space-y-3">
+                <p>Welcome to MiPT. By creating an account and using our services, you agree to the following:</p>
+                <ul className="list-disc pl-5 space-y-2">
+                  <li>Your account details must be accurate and belong to you.</li>
+                  <li>You will keep your credentials secure and not share them with others.</li>
+                  <li>All content you submit must comply with academic integrity and applicable laws.</li>
+                  <li>We may send you service-related notifications to your registered email/phone.</li>
+                  <li>Your usage may be monitored to improve service quality and ensure compliance.</li>
+                </ul>
+                <p>For more details, contact support at support@mipt.co.tz.</p>
+              </div>
+              <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-end gap-2">
+                <button onClick={() => setShowTerms(false)} className="btn-secondary">Close</button>
+                <button
+                  onClick={() => { (step2Methods as any).setValue('accepted_terms', true, { shouldValidate: true }); setShowTerms(false); }}
+                  className={`btn-primary bg-${theme}-600 hover:bg-${theme}-700`}
+                >
+                  I Agree
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
         
         <div className="mt-6 text-center text-sm">
           <span>Already have an account?</span>{' '}

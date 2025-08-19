@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAppStore } from '@/store';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
@@ -16,6 +16,7 @@ import { DesktopLayout } from '@/components/layout/DesktopLayout';
 // Authentication Pages
 import { LoginPage } from '@/pages/auth/LoginPage';
 import { RegisterPage } from '@/pages/auth/RegisterPage';
+import { AccountActivationPage } from '@/pages/AccountActivationPage';
 
 // Main Application Pages
 import { DashboardPage } from '@/pages/DashboardPage';
@@ -41,20 +42,46 @@ import BillingDashboardPage from '@/pages/admin/BillingDashboardPage';
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated } = useAppStore();
-  
+  const { isAuthenticated, profile, fetchProfile, loading } = useAppStore();
+  const location = useLocation();
+
+  React.useEffect(() => {
+    if (isAuthenticated && !profile && !loading.isLoading) {
+      fetchProfile().catch(() => {});
+    }
+  }, [isAuthenticated, profile, loading.isLoading, fetchProfile]);
+
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
-  
+
+  // While fetching profile, block route with a loading overlay
+  if (!profile) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <LoadingSpinner message="Loading profile..." />
+      </div>
+    );
+  }
+
+  // If authenticated but email not verified, force activation
+  if (!profile.email_verified && location.pathname !== '/account-activation') {
+    const email = encodeURIComponent(profile.user_details?.email || '');
+    return <Navigate to={`/account-activation?email=${email}`} replace />;
+  }
+
   return <>{children}</>;
 };
 
-// Public Route Component (redirects to dashboard if authenticated)
+// Public Route Component (redirects authenticated users appropriately)
 const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { isAuthenticated } = useAppStore();
-  
+  const { isAuthenticated, profile } = useAppStore();
+
   if (isAuthenticated) {
+    if (profile && !profile.email_verified) {
+      const email = encodeURIComponent(profile.user_details?.email || '');
+      return <Navigate to={`/account-activation?email=${email}`} replace />;
+    }
     return <Navigate to="/dashboard" replace />;
   }
   
@@ -74,6 +101,16 @@ const App: React.FC = () => {
     const cleanup = setupAuthListener();
     return cleanup;
   }, [setupAuthListener]);
+
+  // Add loaded class to body and html after initial render to prevent icon text from showing
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      document.body.classList.add('loaded');
+      document.documentElement.classList.add('loaded');
+    }, 100);
+    
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <ErrorBoundary>
@@ -114,6 +151,12 @@ const App: React.FC = () => {
                 <PublicRoute>
                   <RegisterPage />
                 </PublicRoute>
+              }
+            />
+            <Route
+              path="/account-activation"
+              element={
+                <AccountActivationPage />
               }
             />
 

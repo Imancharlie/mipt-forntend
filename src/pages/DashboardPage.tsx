@@ -5,6 +5,43 @@ import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { PlusCircle, Calendar, BookOpen, Star, MapPin, Coins } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { getWeekDates, getCurrentWeek, TOTAL_WEEKS } from '@/utils/dateUtils';
+import { shouldRedirectToActivation, getEmailVerificationRedirect } from '@/utils/emailVerificationUtils';
+
+// Icon wrapper component to prevent text labels from showing
+const IconWrapper: React.FC<{ icon: React.ComponentType<any>; className?: string; [key: string]: any }> = ({ 
+  icon: Icon, 
+  className = '', 
+  ...props 
+}) => {
+  try {
+    // Ensure the icon is properly rendered without text
+    return (
+      <div className="icon-container" style={{ display: 'inline-block', verticalAlign: 'middle' }}>
+        <Icon 
+          className={className} 
+          aria-hidden="true" 
+          role="presentation"
+          {...props} 
+        />
+      </div>
+    );
+  } catch (error) {
+    // Fallback to prevent icon text from showing
+    return (
+      <div 
+        className={`${className} bg-current rounded`} 
+        style={{ 
+          width: '1em', 
+          height: '1em',
+          display: 'inline-block',
+          verticalAlign: 'middle'
+        }} 
+        aria-hidden="true"
+        role="presentation"
+      />
+    );
+  }
+};
 
 interface WeekData {
   weekNumber: number;
@@ -55,6 +92,20 @@ export const DashboardPage: React.FC = () => {
     
     loadDashboardData();
   }, []); // Empty dependency array - these functions are stable from the store
+
+  // Check email verification status
+  useEffect(() => {
+    if (profile && shouldRedirectToActivation(profile)) {
+      // Redirect to account activation page if email is not verified
+      const redirectPath = getEmailVerificationRedirect(profile);
+      if (redirectPath) {
+        navigate(redirectPath, { 
+          state: { from: 'dashboard' },
+          replace: true 
+        });
+      }
+    }
+  }, [profile, navigate]);
 
   useEffect(() => {
     // Generate weeks data
@@ -195,7 +246,7 @@ export const DashboardPage: React.FC = () => {
         <div className="absolute left-1/2 top-1/2 transform -translate-x-1/2 -translate-y-full">
           <div className="w-1 h-8 lg:h-10 bg-gray-600 mx-auto"></div>
           <div className="w-6 h-4 lg:w-8 lg:h-5 bg-blue-600 rounded-t-lg flex items-center justify-center -mt-1">
-            <MapPin className="w-3 h-3 lg:w-4 lg:h-4 text-white" />
+            <IconWrapper icon={MapPin} className="w-3 h-3 lg:w-4 lg:h-4 text-white" />
           </div>
         </div>
 
@@ -219,7 +270,7 @@ export const DashboardPage: React.FC = () => {
           <div className="absolute -top-2 -right-2">
             {weekData.weekNumber < currentWeek && (
               <div className="w-5 h-5 lg:w-6 lg:h-6 bg-gradient-to-br from-yellow-300 to-yellow-500 rounded-full flex items-center justify-center shadow-md border-2 border-white">
-                <Star className="w-2.5 h-2.5 lg:w-3 lg:h-3 text-yellow-800 fill-current" />
+                <IconWrapper icon={Star} className="w-2.5 h-2.5 lg:w-3 lg:h-3 text-yellow-800 fill-current" />
               </div>
             )}
             
@@ -316,7 +367,7 @@ export const DashboardPage: React.FC = () => {
 
       {/* Enhanced Training Roadmap */}
       <div className="mb-6">
-        <h2 className="text-lg lg:text-xl font-bold text-gray-900 mb-4 text-center">Training Journey Roadmap</h2>
+        <h2 className="text-lg lg:text-xl font-bold text-gray-900 mb-4 text-center">PT Training Journey Roadmap</h2>
 
         {/* Complex Road Layout */}
         <div className="relative bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 rounded-2xl p-4 lg:p-6 h-80 lg:h-64 overflow-hidden shadow-lg border border-emerald-100">
@@ -510,7 +561,7 @@ export const DashboardPage: React.FC = () => {
           >
             <div className="flex items-center gap-3">
               <div className={`w-6 h-6 lg:w-8 lg:h-8 bg-${theme}-100 rounded-full flex items-center justify-center`}>
-                <PlusCircle className={`w-4 h-4 lg:w-5 lg:h-5 text-${theme}-600`} />
+                <IconWrapper icon={PlusCircle} className={`w-4 h-4 lg:w-5 lg:h-5 text-${theme}-600`} />
               </div>
               <div>
                 <h3 className="font-semibold text-gray-900 text-sm lg:text-base">Add Today's Work</h3>
@@ -525,7 +576,7 @@ export const DashboardPage: React.FC = () => {
           >
             <div className="flex items-center gap-3">
               <div className={`w-6 h-6 lg:w-8 lg:h-8 bg-${theme}-100 rounded-full flex items-center justify-center`}>
-                <Coins className={`w-4 h-4 lg:w-5 lg:h-5 text-${theme}-600`} />
+                <IconWrapper icon={Coins} className={`w-4 h-4 lg:w-5 lg:h-5 text-${theme}-600`} />
               </div>
               <div>
                 <h3 className="font-semibold text-gray-900 text-sm lg:text-base">Get Tokens</h3>
@@ -540,7 +591,7 @@ export const DashboardPage: React.FC = () => {
           >
             <div className="flex items-center gap-3">
               <div className={`w-6 h-6 lg:w-8 lg:h-8 bg-${theme}-100 rounded-full flex items-center justify-center`}>
-                <BookOpen className={`w-4 h-4 lg:w-5 lg:h-5 text-${theme}-600`} />
+                <IconWrapper icon={BookOpen} className={`w-4 h-4 lg:w-5 lg:h-5 text-${theme}-600`} />
               </div>
               <div>
                 <h3 className="font-semibold text-gray-900 text-sm lg:text-base">PTMIS</h3>

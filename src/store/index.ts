@@ -395,67 +395,74 @@ export const useAppStore = create<AppState>()(
       },
 
       registerAndLogin: async (data) => {
-        set({ loading: { isLoading: true, message: 'Creating account and logging in...' } });
+        set({ loading: { isLoading: true, message: 'Creating your account...' } });
         try {
-          // First register the user
+          // Register the user first
           await authService.register(data);
           
-          // Then automatically log them in
-          const loginData = {
-            username: data.username,
-            password: data.password
-          };
-          
+          // Immediately log them in so activation happens while authenticated
+          set({ loading: { isLoading: true, message: 'Logging you in...' } });
+          const loginData = { username: data.username, password: data.password };
           const response = await authService.login(loginData);
+          
+          // Update last activity and auth state
+          updateLastActivity();
           set({ 
             user: response.user,
             tokens: { access: response.access, refresh: response.refresh },
             isAuthenticated: true,
-            loading: { isLoading: false },
             error: null
           });
-          
-          // Set the token in the apiClient for future requests
           setAuthToken(response.access);
-          
-          // After successful login, fetch profile to check if it's complete
+
+          // Preload profile (best-effort) for smoother guards/UI
           try {
             await get().fetchProfile();
-          } catch (profileError) {
-            console.warn('Failed to fetch profile after registration:', profileError);
-          }
+          } catch {}
+
+          // Done
+          set({ loading: { isLoading: false } });
         } catch (error: any) {
           let errorMessage = 'Registration failed';
-          let errorType: 'general' | 'network' | 'validation' | 'auth' = 'auth';
+          let errorType: 'general' | 'network' | 'validation' | 'auth' = 'validation';
           
-          if (error.response) {
-            const { status, data } = error.response;
-            
-            switch (status) {
-              case 400:
-                errorMessage = data?.message || 'Invalid registration data. Please check your input.';
-                errorType = 'validation';
-                break;
-              case 409:
-                errorMessage = 'Username or email already exists. Please choose different credentials.';
-                errorType = 'validation';
-                break;
-              case 500:
-                errorMessage = 'Server error. Please try again later or contact support.';
-                errorType = 'network';
-                break;
-              default:
-                errorMessage = data?.message || 'Registration failed. Please try again.';
-                errorType = 'general';
+          const apiData = error?.response?.data || {};
+          const status = error?.response?.status;
+          
+          if (status === 400) {
+            // Try to extract field-specific errors
+            if (apiData.email && Array.isArray(apiData.email) && apiData.email[0]) {
+              errorMessage = String(apiData.email[0]);
+            } else if (apiData.username && Array.isArray(apiData.username) && apiData.username[0]) {
+              errorMessage = String(apiData.username[0]);
+            } else if (typeof apiData.detail === 'string') {
+              errorMessage = apiData.detail;
+            } else if (typeof apiData.message === 'string') {
+              errorMessage = apiData.message;
+            } else {
+              errorMessage = 'Invalid registration data. Please check your input.';
             }
-          } else if (error.request) {
+            // Normalize known duplicates to a friendly message
+            if (/exist/i.test(errorMessage)) {
+              if (/email/i.test(errorMessage)) {
+                errorMessage = 'Email already exists. Please use a different email.';
+              } else if (/username/i.test(errorMessage)) {
+                errorMessage = 'Username already exists. Please choose a different username.';
+              }
+            }
+          } else if (status === 409) {
+            errorMessage = 'Username or email already exists. Please choose different credentials.';
+          } else if (status === 500) {
+            errorMessage = 'Server error. Please try again later or contact support.';
+            errorType = 'network';
+          } else if (error.request && !error.response) {
             errorMessage = 'Network error. Please check your internet connection and try again.';
             errorType = 'network';
-          } else {
-            errorMessage = error.message || 'An unexpected error occurred. Please try again.';
+          } else if (error.message) {
+            errorMessage = error.message;
             errorType = 'general';
           }
-          
+
           set({ 
             error: { message: errorMessage, type: errorType },
             loading: { isLoading: false }

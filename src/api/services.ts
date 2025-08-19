@@ -163,6 +163,28 @@ export const authService = {
     }
   },
 
+  // Request password reset by email
+  requestPasswordReset: async (email: string): Promise<{ success?: boolean; detail?: string; message?: string }> => {
+    try {
+      const response = await apiClient.post('/auth/password-reset/request/', { email });
+      return response.data;
+    } catch (error: any) {
+      handleApiError(error as AxiosError);
+      throw error;
+    }
+  },
+
+  // Confirm password reset with token/code
+  confirmPasswordReset: async (data: { email: string; token: string; new_password: string }): Promise<{ success?: boolean; detail?: string; message?: string }> => {
+    try {
+      const response = await apiClient.post('/auth/password-reset/confirm/', data);
+      return response.data;
+    } catch (error: any) {
+      handleApiError(error as AxiosError);
+      throw error;
+    }
+  },
+
   register: async (data: RegisterData) => {
     try {
       console.log('📝 Sending registration request:', {
@@ -185,7 +207,8 @@ export const authService = {
       });
       
       // Log the exact JSON being sent
-      const registrationData = {
+      // Enrich registration with fingerprint/device identifiers to support backend risk checks
+      const registrationData: any = {
         username: data.username,
         email: data.email,
         first_name: data.first_name,
@@ -203,6 +226,25 @@ export const authService = {
         company_name: data.company_name,
         company_region: data.company_region
       };
+
+      // Best-effort include fingerprint and device info payload (in addition to headers set in client)
+      try {
+        const [{ getFingerprint }] = await Promise.all([
+          import('@/utils/fingerprint') as any,
+        ]);
+        const fp = await getFingerprint();
+        if (fp?.visitorId) {
+          registrationData.device_fingerprint = fp.visitorId;
+          if (typeof fp.confidence === 'number') {
+            registrationData.device_fingerprint_confidence = fp.confidence;
+          }
+        }
+      } catch {}
+      try {
+        const { collectDeviceInfo } = await import('@/utils/deviceInfo');
+        const info = collectDeviceInfo();
+        registrationData.device_info = info;
+      } catch {}
       
       console.log('📤 Exact JSON being sent to backend:', JSON.stringify(registrationData, null, 2));
       
@@ -253,6 +295,27 @@ export const profileService = {
     }
   },
 
+  verifyEmailOtp: async (data: { email: string; code: string; purpose?: string }): Promise<{ detail: string; email_verified: boolean }> => {
+    try {
+      const response = await apiClient.post('/auth/verify-email-otp/', data);
+      return response.data;
+    } catch (error) {
+      handleApiError(error as AxiosError);
+      throw error;
+    }
+  },
+
+  sendEmailOtp: async (email: string, purpose: string = 'register'): Promise<{ detail?: string; sent?: boolean; success?: boolean; message?: string }> => {
+    try {
+      // If your backend uses a different endpoint name, update here accordingly
+      const response = await apiClient.post('/auth/send-email-otp/', { email, purpose });
+      return response.data;
+    } catch (error) {
+      handleApiError(error as AxiosError);
+      throw error;
+    }
+  },
+
   updateProfile: async (data: UpdateProfileData): Promise<UserProfile> => {
     try {
       const response = await apiClient.put('/auth/profile/', data);
@@ -285,6 +348,16 @@ export const profileService = {
     try {
       // Use the correct endpoint structure based on backend
       const response = await apiClient.delete('/auth/profile/remove-picture/');
+      return response.data;
+    } catch (error) {
+      handleApiError(error as AxiosError);
+      throw error;
+    }
+  },
+
+  resendVerificationEmail: async (email: string): Promise<{ success: boolean; message: string }> => {
+    try {
+      const response = await apiClient.post('/auth/resend-verification/', { email });
       return response.data;
     } catch (error) {
       handleApiError(error as AxiosError);

@@ -4,6 +4,8 @@ import { useAppStore } from '@/store';
 import { LoginData } from '@/types';
 import { Loader2, Eye, EyeOff, AlertCircle } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
+import { authService } from '@/api/services';
+import { useToastContext } from '@/contexts/ToastContext';
 
 export const LoginPage: React.FC = () => {
   const { register, handleSubmit, formState: { errors, isSubmitting } } = useForm<LoginData>();
@@ -11,6 +13,15 @@ export const LoginPage: React.FC = () => {
   const { theme } = useTheme();
   const [showPassword, setShowPassword] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
+  const { showError, showSuccess } = useToastContext();
+
+  // Forgot password state
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [resetStage, setResetStage] = useState<'request' | 'confirm'>('request');
+  const [resetEmail, setResetEmail] = useState('');
+  const [resetToken, setResetToken] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const onSubmit = async (data: LoginData) => {
     if (isLoggingIn) return; // Prevent multiple submissions
@@ -25,6 +36,45 @@ export const LoginPage: React.FC = () => {
       console.error('Login error:', error);
     } finally {
       setIsLoggingIn(false);
+    }
+  };
+
+  const requestReset = async () => {
+    if (!resetEmail) {
+      showError('Please enter your email');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await authService.requestPasswordReset(resetEmail);
+      showSuccess('Reset code sent. Check your email.');
+      setResetStage('confirm');
+    } catch (e: any) {
+      const msg = e?.response?.data?.detail || 'Failed to send reset code';
+      showError(msg);
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const confirmReset = async () => {
+    if (!resetEmail || !resetToken || !newPassword) {
+      showError('Please fill all fields');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await authService.confirmPasswordReset({ email: resetEmail, token: resetToken, new_password: newPassword });
+      showSuccess('Password reset successfully. You can now log in.');
+      setForgotOpen(false);
+      setResetStage('request');
+      setResetToken('');
+      setNewPassword('');
+    } catch (e: any) {
+      const msg = e?.response?.data?.detail || 'Failed to reset password';
+      showError(msg);
+    } finally {
+      setSubmitting(false);
     }
   };
 
@@ -101,6 +151,11 @@ export const LoginPage: React.FC = () => {
             {isLoggingIn ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
             Sign In
           </button>
+          <div className="mt-3 text-right">
+            <button type="button" onClick={() => setForgotOpen(true)} className="text-sm text-orange-600 hover:text-orange-700 underline">
+              Forgot password?
+            </button>
+          </div>
         </form>
         
         <div className="mt-6 text-center text-sm">
@@ -108,6 +163,69 @@ export const LoginPage: React.FC = () => {
           <a href="/register" className="text-orange-600 hover:text-orange-700 dark:text-orange-400 dark:hover:text-orange-300 font-medium hover:underline">Register</a>
         </div>
       </div>
+      {forgotOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="w-full max-w-md mx-4 rounded-xl shadow-xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
+            <div className="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+              <h4 className="text-lg font-semibold text-orange-600 dark:text-orange-400">Reset Password</h4>
+              <button onClick={() => setForgotOpen(false)} className="text-gray-500 hover:text-gray-700">✕</button>
+            </div>
+            <div className="px-6 py-4 space-y-4">
+              {resetStage === 'request' ? (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Email</label>
+                    <input
+                      className="input-field"
+                      type="email"
+                      placeholder="your.email@example.com"
+                      value={resetEmail}
+                      onChange={(e) => setResetEmail(e.target.value)}
+                    />
+                  </div>
+                  <button onClick={requestReset} disabled={submitting} className="btn-primary w-full">
+                    {submitting ? 'Sending...' : 'Send Reset Code'}
+                  </button>
+                </>
+              ) : (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Email</label>
+                    <input
+                      className="input-field"
+                      type="email"
+                      value={resetEmail}
+                      onChange={(e) => setResetEmail(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Reset Code</label>
+                    <input
+                      className="input-field"
+                      placeholder="Enter the code received"
+                      value={resetToken}
+                      onChange={(e) => setResetToken(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium mb-1">New Password</label>
+                    <input
+                      className="input-field"
+                      type="password"
+                      placeholder="Enter new password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                    />
+                  </div>
+                  <button onClick={confirmReset} disabled={submitting} className="btn-primary w-full">
+                    {submitting ? 'Resetting...' : 'Reset Password'}
+                  </button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }; 

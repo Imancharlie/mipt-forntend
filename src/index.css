@@ -12,6 +12,224 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
   }
+  
+  /* Hide icon labels and accessibility text that might show during refresh */
+  svg[aria-label], svg[aria-labelledby], svg[role="img"] {
+    overflow: visible;
+  }
+  
+  /* Ensure Lucide icons don't show text labels */
+  svg[data-lucide] {
+    overflow: visible;
+  }
+  
+  /* Hide any potential icon text that might appear */
+  .lucide, [class*="lucide-"] {
+    overflow: visible;
+  }
+  
+  /* Prevent icon text from showing during load */
+  svg text, svg title {
+    display: none !important;
+  }
+  
+  /* Ensure proper icon rendering */
+  svg {
+    display: inline-block;
+    vertical-align: middle;
+  }
+  
+  /* Additional rules to prevent icon text from showing */
+  [data-lucide] text,
+  [data-lucide] title,
+  .lucide text,
+  .lucide title {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+  }
+  
+  /* Hide any aria-labels that might show as text */
+  [aria-label]:not([aria-label=""]) {
+    position: relative;
+  }
+  
+  [aria-label]:not([aria-label=""])::after {
+    content: none !important;
+    display: none !important;
+  }
+  
+  /* Ensure icons load properly without text */
+  svg[width][height] {
+    min-width: 1em;
+    min-height: 1em;
+  }
+  
+  /* Prevent icon text from showing during initial load */
+  body:not(.loaded) svg text,
+  body:not(.loaded) svg title,
+  body:not(.loaded) [data-lucide] text,
+  body:not(.loaded) [data-lucide] title {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+  }
+  
+  /* Add loaded class to body after initial render */
+  body.loaded {
+    transition: opacity 0.1s ease-in;
+  }
+  
+  /* Comprehensive icon text hiding */
+  svg text,
+  svg title,
+  svg desc,
+  [data-lucide] text,
+  [data-lucide] title,
+  [data-lucide] desc,
+  .lucide text,
+  .lucide title,
+  .lucide desc,
+  [class*="lucide-"] text,
+  [class*="lucide-"] title,
+  [class*="lucide-"] desc {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    font-size: 0 !important;
+    line-height: 0 !important;
+  }
+  
+  /* Hide any potential icon labels */
+  [aria-label]:not([aria-label=""])::before,
+  [aria-label]:not([aria-label=""])::after {
+    content: none !important;
+    display: none !important;
+  }
+  
+  /* Ensure icons are properly sized */
+  svg[width][height] {
+    min-width: 1em;
+    min-height: 1em;
+    max-width: none;
+    max-height: none;
+  }
+  
+  /* Prevent icon text from showing during initial load */
+  body:not(.loaded) * {
+    /* Hide any potential icon text during initial load */
+  }
+  
+  body:not(.loaded) svg text,
+  body:not(.loaded) svg title,
+  body:not(.loaded) svg desc,
+  body:not(.loaded) [data-lucide] text,
+  body:not(.loaded) [data-lucide] title,
+  body:not(.loaded) [data-lucide] desc {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    font-size: 0 !important;
+    line-height: 0 !important;
+    position: absolute !important;
+    left: -9999px !important;
+    top: -9999px !important;
+  }
+  
+  /* Icon container styles */
+  .icon-container {
+    display: inline-block;
+    vertical-align: middle;
+    line-height: 0;
+  }
+  
+  .icon-container svg {
+    display: block;
+    line-height: 0;
+  }
+  
+  .icon-container svg text,
+  .icon-container svg title,
+  .icon-container svg desc {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    font-size: 0 !important;
+    line-height: 0 !important;
+  }
+  
+  /* Global icon text hiding for all Lucide icons */
+  [data-lucide] text,
+  [data-lucide] title,
+  [data-lucide] desc,
+  .lucide text,
+  .lucide title,
+  .lucide desc,
+  [class*="lucide-"] text,
+  [class*="lucide-"] title,
+  [class*="lucide-"] desc,
+  svg[data-lucide] text,
+  svg[data-lucide] title,
+  svg[data-lucide] desc {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    font-size: 0 !important;
+    line-height: 0 !important;
+    position: absolute !important;
+    left: -9999px !important;
+    top: -9999px !important;
+  }
+  
+  /* Ensure all icons are properly rendered */
+  svg[data-lucide],
+  .lucide,
+  [class*="lucide-"] {
+    display: inline-block;
+    vertical-align: middle;
+    line-height: 0;
+  }
+  
+  /* Prevent icon text from showing during initial page load */
+  html:not(.loaded) svg text,
+  html:not(.loaded) svg title,
+  html:not(.loaded) svg desc,
+  html:not(.loaded) [data-lucide] text,
+  html:not(.loaded) [data-lucide] title,
+  html:not(.loaded) [data-lucide] desc {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    font-size: 0 !important;
+    line-height: 0 !important;
+    position: absolute !important;
+    left: -9999px !important;
+    top: -9999px !important;
+  }
+  
+  /* Add loaded class to html after initial render */
+  html.loaded {
+    transition: opacity 0.1s ease-in;
+  }
+  
+  /* Global prevention of icon text display */
+  * {
+    /* Prevent any icon text from showing globally */
+  }
+  
+  /* Ensure all SVG text elements are hidden by default */
+  svg text,
+  svg title,
+  svg desc {
+    display: none !important;
+    opacity: 0 !important;
+    visibility: hidden !important;
+    font-size: 0 !important;
+    line-height: 0 !important;
+    position: absolute !important;
+    left: -9999px !important;
+    top: -9999px !important;
+  }
 }
 
 @layer components {

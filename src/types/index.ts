@@ -55,6 +55,9 @@ export interface UserProfile {
   company_name?: string;
   company_region?: string;
   profile_picture?: string;
+  email_verified: boolean;
+  created_at: string;
+  updated_at: string;
   user_details: {
     username: string;
     email: string;
