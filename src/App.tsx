@@ -4,6 +4,7 @@ import { useAppStore } from '@/store';
 import { ThemeProvider } from '@/components/ThemeProvider';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
+import { SecurityErrorBoundary } from '@/components/SecurityErrorBoundary';
 import { ToastContainer } from '@/components/ui/ToastContainer';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { PWAUpdatePrompt } from '@/components/PWAUpdatePrompt';
@@ -26,6 +27,7 @@ import { WeeklyReportDetailPage } from '@/pages/reports/WeeklyReportDetailPage';
 import { GeneralReportPage } from '@/pages/reports/GeneralReportPage';
 import { ProfilePage } from '@/pages/ProfilePage';
 import { SettingsPage } from '@/pages/SettingsPage';
+import ResetPasswordPage from '@/pages/ResetPasswordPage';
 
 import { PTAssessmentPage } from '@/pages/PTAssessmentPage';
 import BillingPage from '@/pages/BillingPage';
@@ -114,8 +116,9 @@ const App: React.FC = () => {
 
   return (
     <ErrorBoundary>
-      <ThemeProvider theme={theme}>
-        <ToastProvider>
+      <SecurityErrorBoundary>
+        <ThemeProvider theme={theme}>
+          <ToastProvider>
           <div className={`theme-${theme} min-h-screen bg-gray-50`}>
             {/* Loading Overlay */}
             {loading.isLoading && (
@@ -158,6 +161,10 @@ const App: React.FC = () => {
               element={
                 <AccountActivationPage />
               }
+            />
+            <Route
+              path="/reset-password"
+              element={<ResetPasswordPage />}
             />
 
             {/* Protected Routes */}
@@ -454,6 +461,7 @@ const App: React.FC = () => {
         </div>
         </ToastProvider>
       </ThemeProvider>
+      </SecurityErrorBoundary>
     </ErrorBoundary>
   );
 };

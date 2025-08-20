@@ -513,16 +513,89 @@ export const RegisterPage: React.FC = () => {
                 <h4 className={`text-lg font-semibold text-${theme}-600 dark:text-${theme}-400`}>Terms & Conditions</h4>
                 <button onClick={() => setShowTerms(false)} className="text-gray-500 hover:text-gray-700">✕</button>
               </div>
-              <div className="px-6 py-4 max-h-[60vh] overflow-y-auto text-sm text-gray-700 dark:text-gray-200 space-y-3">
-                <p>Welcome to MiPT. By creating an account and using our services, you agree to the following:</p>
-                <ul className="list-disc pl-5 space-y-2">
-                  <li>Your account details must be accurate and belong to you.</li>
-                  <li>You will keep your credentials secure and not share them with others.</li>
-                  <li>All content you submit must comply with academic integrity and applicable laws.</li>
-                  <li>We may send you service-related notifications to your registered email/phone.</li>
-                  <li>Your usage may be monitored to improve service quality and ensure compliance.</li>
-                </ul>
-                <p>For more details, contact support at support@mipt.co.tz.</p>
+              <div className="px-6 py-4 max-h-[60vh] overflow-y-auto text-xs text-gray-700 dark:text-gray-200 space-y-3 leading-relaxed">
+                <div className="text-center mb-4">
+                  <h5 className="font-semibold text-base mb-2">Terms of Service & Academic Use Agreement</h5>
+                  <p className="text-gray-600 dark:text-gray-400">Last updated: {new Date().toLocaleDateString()}</p>
+                </div>
+                
+                <div className="space-y-4">
+                  <section>
+                    <h6 className="font-semibold text-sm mb-2 text-blue-600 dark:text-blue-400">1. Academic Tool & Purpose</h6>
+                    <p className="mb-2">MiPT is designed as an <strong>academic assistance tool</strong> to enhance your Industrial Practical Training (PT) experience. This platform aims to help students improve their understanding and amplify their PT experience through structured reporting and AI-enhanced content generation.</p>
+                  </section>
+
+                  <section>
+                    <h6 className="font-semibold text-sm mb-2 text-blue-600 dark:text-blue-400">2. User Responsibilities & Academic Integrity</h6>
+                    <ul className="list-disc pl-5 space-y-1 text-xs">
+                      <li>You acknowledge that this is a <strong>helping tool</strong>, not a replacement for your own academic work</li>
+                      <li>You promise to use generated reports as guidance and will make necessary adjustments to meet your department's specific requirements</li>
+                      <li>You understand that <strong>over-reliance</strong> on this tool may impact your academic performance</li>
+                      <li>You accept full responsibility for your academic outcomes and any potential disqualification</li>
+                      <li>MiPT bears no responsibility for academic consequences resulting from misuse or over-reliance</li>
+                    </ul>
+                  </section>
+
+                  <section>
+                    <h6 className="font-semibold text-sm mb-2 text-blue-600 dark:text-blue-400">3. Account Security & Usage</h6>
+                    <ul className="list-disc pl-5 space-y-1 text-xs">
+                      <li>Your account details must be accurate and belong exclusively to you</li>
+                      <li>You will maintain the security of your credentials and not share them with others</li>
+                      <li><strong>Creating multiple accounts is strictly prohibited</strong> and may result in account termination</li>
+                      <li>You agree not to attempt to circumvent any security measures or access controls</li>
+                    </ul>
+                  </section>
+
+                  <section>
+                    <h6 className="font-semibold text-sm mb-2 text-blue-600 dark:text-blue-400">4. Content & Data Usage</h6>
+                    <ul className="list-disc pl-5 space-y-1 text-xs">
+                      <li>All content you submit must comply with academic integrity standards and applicable laws</li>
+                      <li>You retain ownership of your submitted content</li>
+                      <li>By using our services, you grant MiPT permission to use your data to improve our AI models and enhance service quality</li>
+                      <li>We may send service-related notifications to your registered email/phone</li>
+                    </ul>
+                  </section>
+
+                  <section>
+                    <h6 className="font-semibold text-sm mb-2 text-blue-600 dark:text-blue-400">5. Security & Monitoring</h6>
+                    <ul className="list-disc pl-5 space-y-1 text-xs">
+                      <li>Your usage may be monitored to improve service quality and ensure compliance</li>
+                      <li>For security reasons, we may analyze usage patterns to identify and prevent potential threats</li>
+                      <li>We are committed to handling security concerns peacefully and professionally</li>
+                      <li>Any suspicious activity will be investigated with appropriate measures</li>
+                    </ul>
+                  </section>
+
+                  <section>
+                    <h6 className="font-semibold text-sm mb-2 text-blue-600 dark:text-blue-400">6. Service Limitations & Disclaimers</h6>
+                    <ul className="list-disc pl-5 space-y-1 text-xs">
+                      <li>Generated reports are templates that require customization for your specific needs</li>
+                      <li>AI-generated content should be reviewed and modified to match your department's requirements</li>
+                      <li>We do not guarantee the accuracy or completeness of generated content</li>
+                      <li>Service availability may vary and is subject to maintenance and updates</li>
+                    </ul>
+                  </section>
+
+                  <section>
+                    <h6 className="font-semibold text-sm mb-2 text-blue-600 dark:text-blue-400">7. Termination & Consequences</h6>
+                    <ul className="list-disc pl-5 space-y-1 text-xs">
+                      <li>Violation of these terms may result in account suspension or termination</li>
+                      <li>We reserve the right to modify these terms with appropriate notice</li>
+                      <li>Continued use of the service constitutes acceptance of any updated terms</li>
+                    </ul>
+                  </section>
+                </div>
+
+                <div className="mt-6 p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-md">
+                  <p className="text-xs text-blue-800 dark:text-blue-200 text-center">
+                    <strong>By clicking "I Agree", you acknowledge that you have read, understood, and agree to these terms.</strong>
+                  </p>
+                </div>
+
+                <div className="text-center text-xs text-gray-500 dark:text-gray-400">
+                  <p>For questions or concerns about these terms, contact us at:</p>
+                  <p className="font-medium">miptsoftware@gmail.com</p>
+                </div>
               </div>
               <div className="px-6 py-4 border-t border-gray-200 dark:border-gray-700 flex items-center justify-end gap-2">
                 <button onClick={() => setShowTerms(false)} className="btn-secondary">Close</button>

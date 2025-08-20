@@ -17,10 +17,8 @@ export const LoginPage: React.FC = () => {
 
   // Forgot password state
   const [forgotOpen, setForgotOpen] = useState(false);
-  const [resetStage, setResetStage] = useState<'request' | 'confirm'>('request');
+  const [resetStage, setResetStage] = useState<'request'>('request');
   const [resetEmail, setResetEmail] = useState('');
-  const [resetToken, setResetToken] = useState('');
-  const [newPassword, setNewPassword] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const onSubmit = async (data: LoginData) => {
@@ -47,31 +45,10 @@ export const LoginPage: React.FC = () => {
     setSubmitting(true);
     try {
       await authService.requestPasswordReset(resetEmail);
-      showSuccess('Reset code sent. Check your email.');
-      setResetStage('confirm');
+      showSuccess('If the email exists, a reset link was sent. Check your inbox.');
+      setForgotOpen(false);
     } catch (e: any) {
       const msg = e?.response?.data?.detail || 'Failed to send reset code';
-      showError(msg);
-    } finally {
-      setSubmitting(false);
-    }
-  };
-
-  const confirmReset = async () => {
-    if (!resetEmail || !resetToken || !newPassword) {
-      showError('Please fill all fields');
-      return;
-    }
-    setSubmitting(true);
-    try {
-      await authService.confirmPasswordReset({ email: resetEmail, token: resetToken, new_password: newPassword });
-      showSuccess('Password reset successfully. You can now log in.');
-      setForgotOpen(false);
-      setResetStage('request');
-      setResetToken('');
-      setNewPassword('');
-    } catch (e: any) {
-      const msg = e?.response?.data?.detail || 'Failed to reset password';
       showError(msg);
     } finally {
       setSubmitting(false);
@@ -184,44 +161,10 @@ export const LoginPage: React.FC = () => {
                     />
                   </div>
                   <button onClick={requestReset} disabled={submitting} className="btn-primary w-full">
-                    {submitting ? 'Sending...' : 'Send Reset Code'}
+                    {submitting ? 'Sending...' : 'Send Reset Link'}
                   </button>
                 </>
-              ) : (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Email</label>
-                    <input
-                      className="input-field"
-                      type="email"
-                      value={resetEmail}
-                      onChange={(e) => setResetEmail(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Reset Code</label>
-                    <input
-                      className="input-field"
-                      placeholder="Enter the code received"
-                      value={resetToken}
-                      onChange={(e) => setResetToken(e.target.value)}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium mb-1">New Password</label>
-                    <input
-                      className="input-field"
-                      type="password"
-                      placeholder="Enter new password"
-                      value={newPassword}
-                      onChange={(e) => setNewPassword(e.target.value)}
-                    />
-                  </div>
-                  <button onClick={confirmReset} disabled={submitting} className="btn-primary w-full">
-                    {submitting ? 'Resetting...' : 'Reset Password'}
-                  </button>
-                </>
-              )}
+              ) : null}
             </div>
           </div>
         </div>

@@ -163,10 +163,14 @@ export const authService = {
     }
   },
 
-  // Request password reset by email
-  requestPasswordReset: async (email: string): Promise<{ success?: boolean; detail?: string; message?: string }> => {
+  // Request password reset (backend may use either endpoint)
+  requestPasswordReset: async (email: string): Promise<{ detail?: string; message?: string }> => {
     try {
-      const response = await apiClient.post('/auth/password-reset/request/', { email });
+      const frontendUrl = (import.meta as any)?.env?.VITE_FRONTEND_URL || (typeof window !== 'undefined' ? window.location.origin : '');
+      const payload = { email, frontend_url: frontendUrl } as const;
+      const response = await apiClient.post('/auth/password-reset/', payload, {
+        headers: { 'Content-Type': 'application/json' }
+      });
       return response.data;
     } catch (error: any) {
       handleApiError(error as AxiosError);
@@ -174,10 +178,16 @@ export const authService = {
     }
   },
 
-  // Confirm password reset with token/code
-  confirmPasswordReset: async (data: { email: string; token: string; new_password: string }): Promise<{ success?: boolean; detail?: string; message?: string }> => {
+  // Confirm password reset (expects uid, token, and password)
+  confirmPasswordResetWithUid: async (data: { uid: string; token: string; password: string }): Promise<{ message?: string }> => {
     try {
-      const response = await apiClient.post('/auth/password-reset/confirm/', data);
+      const form = new URLSearchParams();
+      form.append('uid', data.uid);
+      form.append('token', data.token);
+      form.append('password', data.password);
+      const response = await apiClient.post('/auth/password-reset-confirm/', form, {
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+      });
       return response.data;
     } catch (error: any) {
       handleApiError(error as AxiosError);
@@ -760,15 +770,25 @@ export const weeklyReportService = {
               date: '2025-01-20',
               description: 'Enhanced: Conducted comprehensive analysis of electrical system requirements and design specifications',
               hours_spent: 8,
+              week_number: 1,
+              is_submitted: false,
+              is_editable: true,
+              student_name: 'Student',
               skills_learned: 'Enhanced: Advanced electrical design principles and AutoCAD proficiency',
               challenges_faced: 'Enhanced: Complex system integration challenges requiring innovative problem-solving approaches',
-              supervisor_feedback: 'Enhanced: Excellent technical understanding and professional approach to design challenges'
+              supervisor_feedback: 'Enhanced: Excellent technical understanding and professional approach to design challenges',
+              created_at: new Date().toISOString(),
+              updated_at: new Date().toISOString()
             },
             {
               id: 2,
               date: '2025-01-21',
               description: 'Enhanced: Implemented sophisticated electrical circuit design using industry-standard software tools',
               hours_spent: 8,
+              week_number: 1,
+              is_submitted: false,
+              is_editable: true,
+              student_name: 'Student',
               skills_learned: 'Enhanced: Circuit design optimization and technical documentation',
               challenges_faced: 'Enhanced: Optimization of circuit efficiency while maintaining safety standards',
               supervisor_feedback: 'Enhanced: Outstanding attention to detail and technical accuracy'
@@ -1487,8 +1507,5 @@ export const resourcesService = {
       console.error('Failed to download report:', error);
       throw handleApiError(error as AxiosError);
     }
-  },
+  }
 };
-
-
- 

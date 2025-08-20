@@ -856,41 +856,15 @@ export const WeeklyReportDetailPage: React.FC = () => {
             <div className="flex flex-col lg:flex-row items-center justify-center gap-2 lg:gap-8 text-xs lg:text-sm">
               <div className="flex items-center gap-1 lg:gap-2">
                 <span className="font-medium">Weekly Report No:</span>
-                {isEditing ? (
-                  <input
-                    {...register('week_number')}
-                    defaultValue={reportData.week_number}
-                    className="w-12 lg:w-16 p-1 border border-gray-300 rounded text-center text-xs"
-                  />
-                ) : (
-                  <span className="font-bold">{reportData.week_number}</span>
-                )}
+                <span className="font-bold">{reportData.week_number}</span>
               </div>
               <div className="flex items-center gap-1 lg:gap-2">
                 <span className="font-medium">from:</span>
-                {isEditing ? (
-                  <input
-                    type="date"
-                    {...register('start_date')}
-                    defaultValue={reportData.start_date}
-                    className="p-1 border border-gray-300 rounded text-xs"
-                  />
-                ) : (
-                  <span>{new Date(reportData.start_date).toLocaleDateString()}</span>
-                )}
+                <span>{new Date(reportData.start_date).toLocaleDateString()}</span>
               </div>
               <div className="flex items-center gap-1 lg:gap-2">
                 <span className="font-medium">to:</span>
-                {isEditing ? (
-                  <input
-                    type="date"
-                    {...register('end_date')}
-                    defaultValue={reportData.end_date}
-                    className="p-1 border border-gray-300 rounded text-xs"
-                  />
-                ) : (
-                  <span>{new Date(reportData.end_date).toLocaleDateString()}</span>
-                )}
+                <span>{new Date(reportData.end_date).toLocaleDateString()}</span>
               </div>
             </div>
           </div>

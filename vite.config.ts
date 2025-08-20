@@ -182,6 +182,13 @@ export default defineConfig({
   server: {
     host: '0.0.0.0', // Allow access from any IP address
     port: 3000,
+    proxy: {
+      '/api': {
+        target: 'https://mipt.pythonanywhere.com',
+        changeOrigin: true,
+        secure: true,
+      }
+    }
   },
   build: {
     outDir: 'dist',

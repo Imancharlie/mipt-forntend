@@ -77,12 +77,12 @@ const BillingPage: React.FC = () => {
       accountName: 'MIPT Software'
     },
     {
-      id: 'airtel',
-      name: 'Airtel Money',
-      description: 'LiPA NAMBA',
+      id: 'M-Pesa',
+      name: 'M-Pesa',
+      description: '',
       icon: <Phone className="w-6 h-6" />,
-      number: '4556432',
-      accountName: 'MIPT Software'
+      number: '0741233416',
+      accountName: 'ABDUL NURDIN'
     }
   ];
 
