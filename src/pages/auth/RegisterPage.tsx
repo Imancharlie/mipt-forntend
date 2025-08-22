@@ -7,6 +7,7 @@ import { useTheme } from '@/components/ThemeProvider';
 import { useNavigate } from 'react-router-dom';
 import { authService } from '@/api/services';
 import { useToastContext } from '@/contexts/ToastContext';
+import { CollegeProgramSelector } from '@/components/CollegeProgramSelector';
 
 import { storeRegistrationProfile } from '@/utils/registrationStorage';
 
@@ -53,17 +54,36 @@ export const RegisterPage: React.FC = () => {
   // Function to auto-determine department based on program
   const getDepartmentByProgram = (program: string): string => {
     const departmentMap: { [key: string]: string } = {
-      'MECHANICAL': 'Mechanical Engineering Department',
+      // CoET Departments
+      'MECHANICAL': 'Mechanical and Industrial Engineering Department',
       'ELECTRICAL': 'Electrical Engineering Department',
       'CIVIL': 'Civil Engineering Department',
-      'COMPUTER': 'Computer Science Department',
       'CHEMICAL': 'Chemical Engineering Department',
-      'TEXTILE_DESIGN': 'Textile Design Department',
-      'TEXTILE_ENGINEERING': 'Textile Engineering Department',
-      'INDUSTRIAL': 'Industrial Engineering Department',
-      'GEOMATIC': 'Geomatic Engineering Department',
-      'ARCHITECTURE': 'Architecture Department',
-      'QUANTITY_SURVEYING': 'Quantity Surveying Department'
+      'TEXTILE_DESIGN': 'Mechanical and Industrial Engineering Department',
+      'TEXTILE_ENGINEERING': 'Mechanical and Industrial Engineering Department',
+      'INDUSTRIAL': 'Mechanical and Industrial Engineering Department',
+      'GEOMATIC': 'Transportation and Geotechnical Engineering Department',
+      'ARCHITECTURE': 'Departments of Structural and Construction Engineering',
+      'QUANTITY_SURVEYING': 'Departments of Structural and Construction Engineering',
+      
+      // CoICT Departments
+      'COMPUTER': 'Computer Science Department',
+      'ELECTRONIC_SCIENCE': 'Electronic Science and Communication Department',
+      'COMPUTER_ENGINEERING': 'Computer Engineering and Information Technology Department',
+      'TELECOMMUNICATIONS': 'Telecommunications Engineering Department',
+      'BUSINESS_IT': 'Business Information Technology Department',
+      'ELECTRONIC_ENGINEERING': 'Electronic Engineering Department',
+      
+      // SoMG Departments
+      'GEOPHYSICS': 'Geophysics Department',
+      'GEOLOGY_GEOTHERMAL': 'Geology and Mining Department',
+      'PETROLEUM_GEOLOGY': 'Geology and Mining Department',
+      'GEOLOGY': 'Geology and Mining Department',
+      'GEOLOGY_WITH': 'Geology and Mining Department',
+      'ENGINEERING_GEOLOGY': 'Geology and Mining Department',
+      'METALLURGY_MINERAL': 'Metallurgy and Mineral Processing Department',
+      'MINING': 'Geology and Mining Department',
+      'PETROLEUM': 'Geology and Mining Department'
     };
     return departmentMap[program] || 'General Engineering Department';
   };
@@ -376,32 +396,12 @@ export const RegisterPage: React.FC = () => {
                     <p className="text-xs text-red-500 mt-1">{(currentMethods as any).formState.errors.student_id.message}</p>}
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-1">Program</label>
-                  <select 
-                    className="input-field" 
-                    {...(currentMethods as any).register('program', { required: 'Program is required' })} 
-                  >
-                    <option value="">Select a program</option>
-                    <option value="MECHANICAL">BSc. Mechanical Engineering</option>
-                    <option value="ELECTRICAL">BSc. Electrical Engineering</option>
-                    <option value="CIVIL">BSc. Civil Engineering</option>
-                    <option value="COMPUTER">BSc. Computer Science</option>
-                    <option value="ELECTRONIC_SCIENCE">BSc. Electronic Science and Communication</option>
-                    <option value="COMPUTER_ENGINEERING">BSc. Computer Engineering and Information Technology</option>
-                    <option value="TELECOMMUNICATIONS">BSc. Telecommunications Engineering</option>
-                    <option value="BUSINESS_IT">BSc. Business Information Technology</option>
-                    <option value="CHEMICAL">BSc. Chemical Engineering</option>
-                    <option value="TEXTILE_DESIGN">BSc. Textile Design</option>
-                    <option value="TEXTILE_ENGINEERING">BSc. Textile Engineering</option>
-                    <option value="INDUSTRIAL">BSc. Industrial Engineering</option>
-                    <option value="GEOMATIC">BSc. Geomatic Engineering</option>
-                    <option value="ARCHITECTURE">BSc. Architecture</option>
-                    <option value="QUANTITY_SURVEYING">BSc. Quantity Surveying</option>
-                  </select>
-                  {(currentMethods as any).formState.errors.program && 
-                    <p className="text-xs text-red-500 mt-1">{(currentMethods as any).formState.errors.program.message}</p>}
-                </div>
+                <CollegeProgramSelector
+                  value={(currentMethods as any).watch('program')}
+                  onChange={(value) => (currentMethods as any).setValue('program', value)}
+                  error={(currentMethods as any).formState.errors.program?.message}
+                  required={true}
+                />
 
                 <div>
                   <label className="block text-sm font-medium mb-1">PT Phase</label>

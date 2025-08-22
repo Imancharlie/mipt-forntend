@@ -73,7 +73,7 @@ const BillingPage: React.FC = () => {
       name: 'M-Pesa',
       description: 'LiPA NAMBA',
       icon: <Phone className="w-6 h-6" />,
-      number: paymentInfo?.payment_number || '5356432',
+      number: paymentInfo?.payment_number || '68256127',
       accountName: 'MIPT Software'
     },
     {

@@ -5,6 +5,7 @@ import { UpdateProfileData } from '@/types';
 import { Loader2, User, Phone, Building2, GraduationCap, Calendar, Save, Edit, Camera, Upload, X } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { cleanProfileData, mapProgramToFrontend, mapPTPhaseToFrontend, PROGRAM_MAPPING, PT_PHASE_MAPPING } from '@/utils/profileMapping';
+import { CollegeProgramSelector } from '@/components/CollegeProgramSelector';
 import { getRegistrationProfile, clearRegistrationProfile } from '@/utils/registrationStorage';
 import { useToastContext } from '@/contexts/ToastContext';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
@@ -18,7 +19,7 @@ export const ProfilePage: React.FC = () => {
   const [isUploadingPicture, setIsUploadingPicture] = useState(false);
   const [localNames, setLocalNames] = useState<{firstName: string, lastName: string} | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const { register, handleSubmit, reset, watch, formState: { errors, isSubmitting } } = useForm<UpdateProfileData>();
+  const { register, handleSubmit, reset, watch, setValue, formState: { errors, isSubmitting } } = useForm<UpdateProfileData>();
 
   useEffect(() => {
     fetchProfile();
@@ -315,21 +316,18 @@ export const ProfilePage: React.FC = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Program</label>
-                <select 
-                  className="input-field" 
-                  disabled={!isEditing}
-                  {...register('program')} 
-                >
-                  <option value="">Select a program</option>
-                  {Object.entries(PROGRAM_MAPPING)
-                    .filter(([key]) => key.includes('BSc.') || key.includes('Bachelor'))
-                    .map(([displayName, value]) => (
-                    <option key={value} value={displayName}>
-                      {displayName}
-                    </option>
-                  ))}
-                </select>
-                {errors.program && <p className="text-xs text-red-500 mt-1">{errors.program.message}</p>}
+                {isEditing ? (
+                  <CollegeProgramSelector
+                    value={watch('program') || ''}
+                    onChange={(value) => setValue('program', value)}
+                    error={errors.program?.message}
+                    required={false}
+                  />
+                ) : (
+                  <div className="input-field bg-gray-100 dark:bg-gray-700 cursor-not-allowed">
+                    {watch('program') || 'No program selected'}
+                  </div>
+                )}
               </div>
               <div>
                 <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">Year of Study</label>

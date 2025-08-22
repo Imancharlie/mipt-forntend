@@ -46,9 +46,14 @@ import { adminDashboardService } from '@/api/adminServices';
 import { 
   isTokenExpired, 
   updateLastActivity, 
-  getLastActivity
+  getLastActivity,
+  startInactivityTracking,
+  stopInactivityTracking,
+  getTimeRemaining,
+  extendSession
 } from '@/utils/auth';
 import { setAuthToken } from '@/api/client';
+import { apiClient } from '@/api/client';
 
 interface AppState {
   // Authentication
@@ -126,6 +131,12 @@ interface AppState {
   dailyReportsLoading: boolean;
   weeklyReportsLoading: boolean;
   error: AppError | null;
+  
+  // Inactivity warning
+  inactivityWarning: {
+    show: boolean;
+    timeLeft: number;
+  };
   
   // Actions
   setUser: (user: UserData | null) => void;
@@ -213,6 +224,10 @@ interface AppState {
   setupAuthListener: () => (() => void);
   silentTokenRefresh: () => Promise<boolean>;
   fastLogout: () => void;
+
+  // Inactivity actions
+  extendSession: () => void;
+  handleInactivityWarning: (timeLeft: number) => void;
 }
 
 export const useAppStore = create<AppState>()(
@@ -285,6 +300,7 @@ export const useAppStore = create<AppState>()(
       dailyReportsLoading: false,
       weeklyReportsLoading: false,
       error: null,
+      inactivityWarning: { show: false, timeLeft: 0 },
 
       // Setters
       setUser: (user) => set({ user }),
@@ -324,6 +340,17 @@ export const useAppStore = create<AppState>()(
       setAdminUsers: (adminUsers: any) => set({ adminUsers }),
       setAdminUserBalances: (adminUserBalances: Record<number, UserBalance>) => set({ adminUserBalances }),
       setAdminLoading: (adminLoading: { users: boolean; userActions: boolean; userBalances: boolean }) => set({ adminLoading }),
+      setInactivityWarning: (warning: { show: boolean; timeLeft: number }) => set({ inactivityWarning: warning }),
+
+      // Inactivity actions
+      extendSession: () => {
+        extendSession();
+        set({ inactivityWarning: { show: false, timeLeft: 0 } });
+      },
+      
+      handleInactivityWarning: (timeLeft: number) => {
+        set({ inactivityWarning: { show: true, timeLeft } });
+      },
 
       // API Actions
       login: async (credentials) => {
@@ -472,10 +499,13 @@ export const useAppStore = create<AppState>()(
       },
 
       logout: async () => {
-        set({ loading: { isLoading: true, message: 'Logging out...' } });
+        console.log('🚪 Logout initiated');
+        
+        // Stop inactivity tracking
+        stopInactivityTracking();
+        
         try {
           const { tokens } = get();
-          
           // Try to logout from backend if token is still valid
           if (tokens.refresh && !isTokenExpired(tokens.refresh)) {
             try {
@@ -485,39 +515,50 @@ export const useAppStore = create<AppState>()(
               console.warn('Logout API call failed, but clearing local state:', logoutError);
             }
           }
-          
-          // Clear all offline actions when logging out
-          // Note: OfflineQueue functionality removed
-          
-          set({ 
-            user: null,
-            tokens: { access: null, refresh: null },
-            isAuthenticated: false,
-            profile: null,
-            dashboardStats: null,
-            loading: { isLoading: false }
-          });
-          
-          // Clear the token from apiClient and localStorage
-          setAuthToken(null);
-          localStorage.removeItem('access_token');
-          localStorage.removeItem('refresh_token');
-          localStorage.removeItem('last_activity');
-          
-          // Smooth redirect to login
-          if (window.location.pathname !== '/login') {
-            window.location.href = '/login';
-          }
         } catch (error) {
           // Even if there's an error, clear the auth state
           set({ 
+            isAuthenticated: false,
             user: null,
             tokens: { access: null, refresh: null },
-            isAuthenticated: false,
             profile: null,
+            profileComplete: false,
             dashboardStats: null,
-            error: { message: 'Logout completed but with warnings', type: 'auth' },
-            loading: { isLoading: false }
+            weeklyProgress: null,
+            dailyReports: [],
+            weeklyReports: [],
+            generalReport: null,
+            companies: [],
+            aiUsageStats: null,
+            userBalance: null,
+            transactions: [],
+            tokenUsageHistory: [],
+            billingDashboard: null,
+            paymentInfo: null,
+            resources: {
+              reports: [],
+              loading: false,
+              filters: {
+                department: '',
+                report_type: '',
+                search: ''
+              }
+            },
+            adminUsers: null,
+            adminUserBalances: {},
+            adminLoading: {
+              users: false,
+              userActions: false,
+              userBalances: false
+            },
+            theme: get().theme, // Keep current theme
+            loading: { isLoading: false, message: '' },
+            balanceLoading: false,
+            dashboardLoading: false,
+            dailyReportsLoading: false,
+            weeklyReportsLoading: false,
+            error: null,
+            inactivityWarning: { show: false, timeLeft: 0 }
           });
           
           // Clear the token from apiClient and localStorage
@@ -531,6 +572,66 @@ export const useAppStore = create<AppState>()(
             window.location.href = '/login';
           }
         }
+        
+        // Clear authentication state
+        set({ 
+          isAuthenticated: false,
+          user: null,
+          tokens: { access: null, refresh: null },
+          profile: null,
+          profileComplete: false,
+          dashboardStats: null,
+          weeklyProgress: null,
+          dailyReports: [],
+          weeklyReports: [],
+          generalReport: null,
+          companies: [],
+          aiUsageStats: null,
+          userBalance: null,
+          transactions: [],
+          tokenUsageHistory: [],
+          billingDashboard: null,
+          paymentInfo: null,
+          resources: {
+            reports: [],
+            loading: false,
+            filters: {
+              department: '',
+              report_type: '',
+              search: ''
+            }
+          },
+          adminUsers: null,
+          adminUserBalances: {},
+          adminLoading: {
+            users: false,
+            userActions: false,
+            userBalances: false
+          },
+          theme: get().theme, // Keep current theme
+          loading: { isLoading: false, message: '' },
+          balanceLoading: false,
+          dashboardLoading: false,
+          dailyReportsLoading: false,
+          weeklyReportsLoading: false,
+          error: null,
+          inactivityWarning: { show: false, timeLeft: 0 }
+        });
+        
+        // Clear tokens from localStorage
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
+        localStorage.removeItem('last_activity');
+        
+        // Clear the token from apiClient
+        setAuthToken(null);
+        
+        // Redirect to login
+        if (window.location.pathname !== '/login') {
+          window.location.href = '/login';
+        }
+        
+        console.log('✅ Logout completed');
       },
 
       updateProfile: async (data) => {
@@ -986,13 +1087,68 @@ export const useAppStore = create<AppState>()(
       downloadAllWeeklyReports: async (type: 'pdf' | 'docx') => {
         set({ loading: { isLoading: true, message: `Downloading all weekly reports as ${type.toUpperCase()}...` } });
         try {
-          // This would need to be implemented in the backend
-          // For now, we'll throw an error that can be caught by the calling component
-          set({ loading: { isLoading: false } });
-          throw new Error('Downloading all weekly reports combined will be available soon. This feature will combine all 8 weeks into one comprehensive document.');
-        } catch (error) {
+          if (type === 'pdf') {
+            // Use the specific endpoint for PDF export
+            const response = await apiClient.post('/export/all-weekly-reports/pdf/', {}, {
+              responseType: 'blob',
+              headers: {
+                'Content-Type': 'application/json',
+              }
+            });
+
+            // Create download link
+            const blob = new Blob([response.data], { type: 'application/pdf' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `all-weekly-reports-${new Date().toISOString().split('T')[0]}.pdf`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+
+            set({ loading: { isLoading: false } });
+          } else if (type === 'docx') {
+            // Use the specific endpoint for DOCX export
+            const response = await apiClient.post('/export/all-weekly-reports/docx/', {}, {
+              responseType: 'blob',
+              headers: {
+                'Content-Type': 'application/json',
+              }
+            });
+
+            // Create download link
+            const blob = new Blob([response.data], { type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `all-weekly-reports-${new Date().toISOString().split('T')[0]}.docx`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+
+            set({ loading: { isLoading: false } });
+          } else {
+            set({ loading: { isLoading: false } });
+            throw new Error('Unsupported export format. Please use PDF or DOCX.');
+          }
+        } catch (error: any) {
+          console.error('PDF download error:', error);
+          
+          let errorMessage = 'Download failed';
+          if (error.response?.status === 404) {
+            errorMessage = 'PDF export endpoint not found. Please contact support.';
+          } else if (error.response?.status === 401) {
+            errorMessage = 'Authentication required. Please login again.';
+          } else if (error.response?.status >= 500) {
+            errorMessage = 'Server error. Please try again later.';
+          } else if (error.message) {
+            errorMessage = error.message;
+          }
+          
           set({ 
-            error: { message: 'Download failed', type: 'general' },
+            error: { message: errorMessage, type: 'general' },
             loading: { isLoading: false }
           });
           throw error;
@@ -1334,12 +1490,22 @@ export const useAppStore = create<AppState>()(
           get().logout(); // This will clear everything and redirect to login
         };
 
+        // Handle inactivity warnings
+        const handleInactivityWarning = (timeLeft: number) => {
+          console.log('⚠️ Inactivity warning triggered:', timeLeft);
+          get().handleInactivityWarning(timeLeft);
+        };
+
         // Add event listener
         window.addEventListener('auth:token-expired', handleTokenExpired);
         
+        // Start inactivity tracking with warning callback
+        startInactivityTracking(handleTokenExpired, handleInactivityWarning);
+
         // Return cleanup function
         return () => {
           window.removeEventListener('auth:token-expired', handleTokenExpired);
+          stopInactivityTracking(); // Stop inactivity tracking on cleanup
         };
       },
 
@@ -1374,6 +1540,9 @@ export const useAppStore = create<AppState>()(
       fastLogout: () => {
         console.log('🚀 Manual fast logout initiated by user');
         
+        // Stop inactivity tracking
+        stopInactivityTracking();
+        
         // Clear authentication state immediately
         set({ 
           isAuthenticated: false,
@@ -1385,6 +1554,7 @@ export const useAppStore = create<AppState>()(
         // Clear tokens from localStorage
         localStorage.removeItem('access_token');
         localStorage.removeItem('refresh_token');
+        localStorage.removeItem('last_activity');
         
         // Clear the token from apiClient
         setAuthToken(null);

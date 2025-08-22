@@ -183,7 +183,7 @@ export const WeeklyReportPage: React.FC = () => {
     navigate(`/weekly-report/${weekNumber}`);
   };
 
-  const handleDownloadAllReports = async () => {
+  const handleDownloadAllReports = async (format: 'pdf' | 'docx') => {
     if (weeklyReports.length === 0) {
       showError('No reports available to download. Please complete some weekly reports first.');
       return;
@@ -191,8 +191,8 @@ export const WeeklyReportPage: React.FC = () => {
 
     setIsDownloading(true);
     try {
-      await downloadAllWeeklyReports('pdf');
-      showSuccess('All weekly reports downloaded successfully!');
+      await downloadAllWeeklyReports(format);
+      showSuccess(`All weekly reports downloaded successfully as ${format.toUpperCase()}!`);
     } catch (error) {
       console.error('Failed to download reports:', error);
       showError('Failed to download reports. Please try again.');
@@ -266,9 +266,9 @@ export const WeeklyReportPage: React.FC = () => {
             
             {/* Action Buttons */}
             <div className="flex flex-col sm:flex-row gap-3">
-              {/* Download button */}
+              {/* PDF Download button */}
               <button 
-                onClick={handleDownloadAllReports}
+                onClick={() => handleDownloadAllReports('pdf')}
                 disabled={isDownloading || weeklyReports.length === 0}
                 className={`group relative px-6 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl hover:shadow-orange-500/25 transition-all duration-300 transform hover:-translate-y-1 text-sm ${
                   isDownloading || weeklyReports.length === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'
@@ -281,13 +281,34 @@ export const WeeklyReportPage: React.FC = () => {
                   ) : (
                     <DownloadIcon className="w-4 h-4 group-hover:rotate-12 transition-transform duration-300" />
                   )}
-                  <span>All Reports</span>
+                  <span>Download PDF</span>
+                </div>
+              </button>
+              
+              {/* DOCX Download button */}
+              <button 
+                onClick={() => handleDownloadAllReports('docx')}
+                disabled={isDownloading || weeklyReports.length === 0}
+                className={`group relative px-6 py-3 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl font-semibold shadow-lg hover:shadow-xl hover:shadow-blue-500/25 transition-all duration-300 transform hover:-translate-y-1 text-sm ${
+                  isDownloading || weeklyReports.length === 0 ? 'opacity-50 cursor-not-allowed' : 'hover:scale-105'
+                }`}
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-blue-700 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <div className="relative flex items-center gap-2">
+                  {isDownloading ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <DownloadIcon className="w-4 h-4 group-hover:rotate-12 transition-transform duration-300" />
+                  )}
+                  <span>Download DOCX</span>
                 </div>
               </button>
             </div>
-            </div>
+            
+      
+          </div>
 
-            {/* Compact Stats Cards - Hidden on mobile, visible on desktop */}
+          {/* Compact Stats Cards - Hidden on mobile, visible on desktop */}
             <div className="hidden md:grid grid-cols-2 gap-6">
               <div className="group relative overflow-hidden bg-white/60 backdrop-blur-lg border border-white/30 rounded-2xl p-4 hover:bg-white/80 transition-all duration-300">
                 <div className="flex items-center justify-between">

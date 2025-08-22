@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useAppStore } from '@/store';
 import { ThemeProvider } from '@/components/ThemeProvider';
@@ -8,6 +8,8 @@ import { SecurityErrorBoundary } from '@/components/SecurityErrorBoundary';
 import { ToastContainer } from '@/components/ui/ToastContainer';
 import { ToastProvider } from '@/contexts/ToastContext';
 import { PWAUpdatePrompt } from '@/components/PWAUpdatePrompt';
+import { SimpleInactivityWarning } from '@/components/SimpleInactivityWarning';
+import { useInactivityTimeout } from '@/hooks/useInactivityTimeout';
 
 
 // Layout Components
@@ -91,7 +93,11 @@ const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 };
 
 const App: React.FC = () => {
-  const { theme, loading, initializeAuth, setupAuthListener } = useAppStore();
+  const { theme, loading, initializeAuth, setupAuthListener, logout } = useAppStore();
+  
+  // Inactivity timeout state
+  const [showInactivityWarning, setShowInactivityWarning] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(0);
 
   // Initialize authentication state on app startup
   React.useEffect(() => {
@@ -103,6 +109,32 @@ const App: React.FC = () => {
     const cleanup = setupAuthListener();
     return cleanup;
   }, [setupAuthListener]);
+
+  // Setup inactivity timeout (10 minutes)
+  const { extendSession } = useInactivityTimeout({
+    timeout: 10 * 60 * 1000, // 10 minutes
+    onTimeout: () => {
+      console.log('🕐 Inactivity timeout reached - logging out user');
+      logout();
+    },
+    onWarning: (timeLeft) => {
+      console.log('⚠️ Showing inactivity warning');
+      setTimeLeft(timeLeft);
+      setShowInactivityWarning(true);
+    }
+  });
+
+  // Handle stay active
+  const handleStayActive = () => {
+    extendSession();
+    setShowInactivityWarning(false);
+  };
+
+  // Handle manual logout
+  const handleLogout = () => {
+    setShowInactivityWarning(false);
+    logout();
+  };
 
   // Add loaded class to body and html after initial render to prevent icon text from showing
   React.useEffect(() => {
@@ -135,9 +167,16 @@ const App: React.FC = () => {
             {/* PWA Components */}
             <PWAUpdatePrompt />
 
+            {/* Simple Inactivity Warning */}
+            {showInactivityWarning && (
+              <SimpleInactivityWarning
+                timeLeft={timeLeft}
+                onStayActive={handleStayActive}
+                onLogout={handleLogout}
+              />
+            )}
 
-
-          {/* Main Application */}
+            {/* Main Application */}
           <Routes>
             {/* Public Routes */}
             <Route

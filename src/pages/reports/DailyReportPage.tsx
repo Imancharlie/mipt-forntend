@@ -4,7 +4,7 @@ import { useTheme } from '@/components/ThemeProvider';
 import { DailyReport, CreateDailyReportData } from '@/types';
 import { apiClient } from '@/api/client';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { 
   Calendar, 
   CheckCircle,
@@ -13,7 +13,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Play,
-  Target
+  Target,
+  BarChart3
 } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { useToastContext } from '@/contexts/ToastContext';
@@ -35,6 +36,7 @@ export const DailyReportPage: React.FC = () => {
   const { theme } = useTheme();
   const { showSuccess, showError } = useToastContext();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
   
   // Simplified current week calculation
   const getCurrentWeekNumber = () => {
@@ -358,9 +360,17 @@ export const DailyReportPage: React.FC = () => {
                 Week {selectedWeek} • {getWeekDateRange(selectedWeek)}
               </p>
             </div>
-                
-
-                </div>
+            
+            {/* Navigation to Weekly Report */}
+            <button
+              onClick={() => navigate('/weekly-report')}
+              className={`flex items-center gap-2 px-4 py-2 bg-${theme}-600 hover:bg-${theme}-700 text-white rounded-lg transition-colors duration-200 shadow-md hover:shadow-lg`}
+            >
+              <BarChart3 className="w-4 h-4" />
+              <span className="hidden sm:inline">Weekly Report</span>
+              <span className="sm:hidden">Weekly</span>
+            </button>
+        </div>
               </div>
               
       {/* Enhanced Weekday Navigation */}

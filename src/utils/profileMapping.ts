@@ -1,40 +1,108 @@
 // Mapping functions for profile data between frontend and backend
 
-// Program mapping
+// College-based program organization
+export const COLLEGE_PROGRAMS = {
+  'CoET': {
+    name: 'College of Engineering and Technology',
+    programs: {
+      'CHEMICAL': 'BSc in Chemical and Process Engineering',
+      'CIVIL': 'BSc in Civil Engineering',
+      'ELECTRICAL': 'BSc in Electrical Engineering',
+      'MECHANICAL': 'BSc in Mechanical Engineering',
+      'INDUSTRIAL': 'BSc in Industrial Engineering',
+      'TEXTILE_DESIGN': 'BSc in Textile Design and Technology',
+      'TEXTILE_ENGINEERING': 'BSc in Textile Engineering',
+      'ARCHITECTURE': 'Bachelor of Architecture (5-year programme)',
+      'QUANTITY_SURVEYING': 'BSc in Quantity Surveying',
+      'GEOMATIC': 'BSc in Geomatics',
+    }
+  },
+  'CoICT': {
+    name: 'College of Information and Communication Technologies',
+    programs: {
+      'COMPUTER': 'BSc in Computer Science',
+      'ELECTRONIC_SCIENCE': 'BSc in Electronic Science and Communication',
+      'COMPUTER_ENGINEERING': 'BSc in Computer Engineering and Information Technology',
+      'TELECOMMUNICATIONS': 'BSc in Telecommunications Engineering',
+      'BUSINESS_IT': 'BSc in Business Information Technology',
+      'ELECTRONIC_ENGINEERING': 'BSc in Electronic Engineering',
+    }
+  },
+  'SoMG': {
+    name: 'School of Mines and Geosciences',
+    programs: {
+      'GEOPHYSICS': 'BSc in Geophysics',
+      'GEOLOGY_GEOTHERMAL': 'BSc in Geology and Geothermal Resources',
+      'PETROLEUM_GEOLOGY': 'BSc in Petroleum Geology',
+      'GEOLOGY': 'BSc in Geology',
+      'GEOLOGY_WITH': 'BSc with Geology',
+      'ENGINEERING_GEOLOGY': 'BSc in Engineering Geology',
+      'METALLURGY_MINERAL': 'BSc in Metallurgy and Mineral Processing Engineering',
+      'MINING': 'BSc in Mining Engineering',
+      'PETROLEUM': 'BSc in Petroleum Engineering',
+    }
+  }
+};
+
+// Program mapping (maintained for backward compatibility)
 export const PROGRAM_MAPPING = {
-    'BSc. Mechanical Engineering': 'MECHANICAL',
-  'BSc. Electrical Engineering': 'ELECTRICAL',
-  'BSc. Civil Engineering': 'CIVIL',
- 
-  'BSc. Chemical Engineering': 'CHEMICAL',
-  'BSc. Textile Design': 'TEXTILE_DESIGN',
-  'BSc. Textile Engineering': 'TEXTILE_ENGINEERING',
-  'BSc. Industrial Engineering': 'INDUSTRIAL',
-  'BSc. Geomatic Engineering': 'GEOMATIC',
-  'Bachelor of Architecture': 'ARCHITECTURE',
-  'Bachelor of Science in Quantity Surveying': 'QUANTITY_SURVEYING',
-  'BSc. Computer Science': 'COMPUTER',
-  'BSc. Electronic Science and Communication': 'ELECTRONIC_SCIENCE',
-  'BSc. Computer Engineering and Information Technology': 'COMPUTER_ENGINEERING',
-  'BSc. Telecommunications Engineering': 'TELECOMMUNICATIONS',
-  'BSc. Business Information Technology': 'BUSINESS_IT',
+  // CoET Programs
+  'BSc in Chemical and Process Engineering': 'CHEMICAL',
+  'BSc in Civil Engineering': 'CIVIL',
+  'BSc in Electrical Engineering': 'ELECTRICAL',
+  'BSc in Mechanical Engineering': 'MECHANICAL',
+  'BSc in Industrial Engineering': 'INDUSTRIAL',
+  'BSc in Textile Design and Technology': 'TEXTILE_DESIGN',
+  'BSc in Textile Engineering': 'TEXTILE_ENGINEERING',
+  'Bachelor of Architecture (5-year programme)': 'ARCHITECTURE',
+  'BSc in Quantity Surveying': 'QUANTITY_SURVEYING',
+  'BSc in Geomatics': 'GEOMATIC',
+  
+  // CoICT Programs
+  'BSc in Computer Science': 'COMPUTER',
+  'BSc in Electronic Science and Communication': 'ELECTRONIC_SCIENCE',
+  'BSc in Computer Engineering and Information Technology': 'COMPUTER_ENGINEERING',
+  'BSc in Telecommunications Engineering': 'TELECOMMUNICATIONS',
+  'BSc in Business Information Technology': 'BUSINESS_IT',
+  'BSc in Electronic Engineering': 'ELECTRONIC_ENGINEERING',
+  
+  // SoMG Programs
+  'BSc in Geophysics': 'GEOPHYSICS',
+  'BSc in Geology and Geothermal Resources': 'GEOLOGY_GEOTHERMAL',
+  'BSc in Petroleum Geology': 'PETROLEUM_GEOLOGY',
+  'BSc in Geology': 'GEOLOGY',
+  'BSc with Geology': 'GEOLOGY_WITH',
+  'BSc in Engineering Geology': 'ENGINEERING_GEOLOGY',
+  'BSc in Metallurgy and Mineral Processing Engineering': 'METALLURGY_MINERAL',
+  'BSc in Mining Engineering': 'MINING',
+  'BSc in Petroleum Engineering': 'PETROLEUM',
+  
   // Reverse mapping for display
-  'MECHANICAL': 'BSc. Mechanical Engineering',
-  'ELECTRICAL': 'BSc. Electrical Engineering',
-  'CIVIL': 'BSc. Civil Engineering',
- 
-  'CHEMICAL': 'BSc. Chemical Engineering',
-  'TEXTILE_DESIGN': 'BSc. Textile Design',
-  'TEXTILE_ENGINEERING': 'BSc. Textile Engineering',
-  'INDUSTRIAL': 'BSc. Industrial Engineering',
-  'GEOMATIC': 'BSc. Geomatic Engineering',
-  'ARCHITECTURE': 'Bachelor of Architecture',
-  'QUANTITY_SURVEYING': 'Bachelor of Science in Quantity Surveying',
-  'COMPUTER': 'BSc. Computer Science',
-  'ELECTRONIC_SCIENCE': 'BSc. Electronic Science and Communication',
-  'COMPUTER_ENGINEERING': 'BSc. Computer Engineering and Information Technology',
-  'TELECOMMUNICATIONS': 'BSc. Telecommunications Engineering',
-  'BUSINESS_IT': 'BSc. Business Information Technology',
+  'CHEMICAL': 'BSc in Chemical and Process Engineering',
+  'CIVIL': 'BSc in Civil Engineering',
+  'ELECTRICAL': 'BSc in Electrical Engineering',
+  'MECHANICAL': 'BSc in Mechanical Engineering',
+  'INDUSTRIAL': 'BSc in Industrial Engineering',
+  'TEXTILE_DESIGN': 'BSc in Textile Design and Technology',
+  'TEXTILE_ENGINEERING': 'BSc in Textile Engineering',
+  'ARCHITECTURE': 'Bachelor of Architecture (5-year programme)',
+  'QUANTITY_SURVEYING': 'BSc in Quantity Surveying',
+  'GEOMATIC': 'BSc in Geomatics',
+  'COMPUTER': 'BSc in Computer Science',
+  'ELECTRONIC_SCIENCE': 'BSc in Electronic Science and Communication',
+  'COMPUTER_ENGINEERING': 'BSc in Computer Engineering and Information Technology',
+  'TELECOMMUNICATIONS': 'BSc in Telecommunications Engineering',
+  'BUSINESS_IT': 'BSc in Business Information Technology',
+  'ELECTRONIC_ENGINEERING': 'BSc in Electronic Engineering',
+  'GEOPHYSICS': 'BSc in Geophysics',
+  'GEOLOGY_GEOTHERMAL': 'BSc in Geology and Geothermal Resources',
+  'PETROLEUM_GEOLOGY': 'BSc in Petroleum Geology',
+  'GEOLOGY': 'BSc in Geology',
+  'GEOLOGY_WITH': 'BSc with Geology',
+  'ENGINEERING_GEOLOGY': 'BSc in Engineering Geology',
+  'METALLURGY_MINERAL': 'BSc in Metallurgy and Mineral Processing Engineering',
+  'MINING': 'BSc in Mining Engineering',
+  'PETROLEUM': 'BSc in Petroleum Engineering',
 };
 
 // PT Phase mapping
@@ -74,6 +142,15 @@ export const mapProgramToBackend = (program: string): string => {
   if (upperProgram.includes('COMPUTER_ENGINEERING')) return 'COMPUTER_ENGINEERING';
   if (upperProgram.includes('TELECOMMUNICATIONS')) return 'TELECOMMUNICATIONS';
   if (upperProgram.includes('BUSINESS_IT')) return 'BUSINESS_IT';
+  if (upperProgram.includes('ELECTRONIC_ENGINEERING')) return 'ELECTRONIC_ENGINEERING';
+  if (upperProgram.includes('GEOPHYSICS')) return 'GEOPHYSICS';
+  if (upperProgram.includes('GEOLOGY_GEOTHERMAL')) return 'GEOLOGY_GEOTHERMAL';
+  if (upperProgram.includes('PETROLEUM_GEOLOGY')) return 'PETROLEUM_GEOLOGY';
+  if (upperProgram.includes('GEOLOGY')) return 'GEOLOGY';
+  if (upperProgram.includes('ENGINEERING_GEOLOGY')) return 'ENGINEERING_GEOLOGY';
+  if (upperProgram.includes('METALLURGY_MINERAL')) return 'METALLURGY_MINERAL';
+  if (upperProgram.includes('MINING')) return 'MINING';
+  if (upperProgram.includes('PETROLEUM')) return 'PETROLEUM';
   
   // Default to the original value if no match found
   return program;
@@ -115,12 +192,13 @@ export const getDepartmentFromProgram = (program: string): string => {
   
   const programUpper = program.toUpperCase();
   
+  // CoET Departments
   if (programUpper.includes('MECHANICAL')) {
     return 'Mechanical and Industrial Engineering Department';
   } else if (programUpper.includes('ELECTRICAL')) {
     return 'Electrical Engineering Department';
   } else if (programUpper.includes('CIVIL')) {
-    return 'Civil Engineering Departments';
+    return 'Civil Engineering Department';
   } else if (programUpper.includes('CHEMICAL')) {
     return 'Chemical Engineering Department';
   } else if (programUpper.includes('TEXTILE_DESIGN')) {
@@ -135,7 +213,9 @@ export const getDepartmentFromProgram = (program: string): string => {
     return 'Departments of Structural and Construction Engineering';
   } else if (programUpper.includes('QUANTITY_SURVEYING')) {
     return 'Departments of Structural and Construction Engineering';
-  } else if (programUpper.includes('COMPUTER')) {
+  }
+  // CoICT Departments
+  else if (programUpper.includes('COMPUTER')) {
     return 'Computer Science Department';
   } else if (programUpper.includes('ELECTRONIC_SCIENCE')) {
     return 'Electronic Science and Communication Department';
@@ -145,6 +225,16 @@ export const getDepartmentFromProgram = (program: string): string => {
     return 'Telecommunications Engineering Department';
   } else if (programUpper.includes('BUSINESS_IT')) {
     return 'Business Information Technology Department';
+  } else if (programUpper.includes('ELECTRONIC_ENGINEERING')) {
+    return 'Electronic Engineering Department';
+  }
+  // SoMG Departments
+  else if (programUpper.includes('GEOPHYSICS')) {
+    return 'Geophysics Department';
+  } else if (programUpper.includes('GEOLOGY') || programUpper.includes('MINING') || programUpper.includes('PETROLEUM')) {
+    return 'Geology and Mining Department';
+  } else if (programUpper.includes('METALLURGY')) {
+    return 'Metallurgy and Mineral Processing Department';
   }
   
   return '';
