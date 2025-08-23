@@ -50,7 +50,10 @@ import {
   startInactivityTracking,
   stopInactivityTracking,
   getTimeRemaining,
-  extendSession
+  extendSession,
+  isSessionExpired,
+  startSessionExpiryMonitoring,
+  stopSessionExpiryMonitoring
 } from '@/utils/auth';
 import { setAuthToken } from '@/api/client';
 import { apiClient } from '@/api/client';
@@ -1410,6 +1413,13 @@ export const useAppStore = create<AppState>()(
           return;
         }
         
+        // Check if session is too old (24+ hours) - force logout
+        if (isSessionExpired()) {
+          console.log('🕐 Session expired (24+ hours old), forcing logout');
+          get().fastLogout();
+          return;
+        }
+        
         // Check if we have tokens in localStorage (they might be more up-to-date)
         const storedAccessToken = localStorage.getItem('access_token');
         const storedRefreshToken = localStorage.getItem('refresh_token');
@@ -1496,16 +1506,26 @@ export const useAppStore = create<AppState>()(
           get().handleInactivityWarning(timeLeft);
         };
 
+        // Handle session expiry (24+ hours old)
+        const handleSessionExpired = () => {
+          console.log('🕐 Global auth listener: Session expired (24+ hours old), forcing logout');
+          get().fastLogout();
+        };
+
         // Add event listener
         window.addEventListener('auth:token-expired', handleTokenExpired);
         
         // Start inactivity tracking with warning callback
         startInactivityTracking(handleTokenExpired, handleInactivityWarning);
+        
+        // Start session expiry monitoring
+        startSessionExpiryMonitoring(handleSessionExpired);
 
         // Return cleanup function
         return () => {
           window.removeEventListener('auth:token-expired', handleTokenExpired);
           stopInactivityTracking(); // Stop inactivity tracking on cleanup
+          stopSessionExpiryMonitoring(); // Stop session expiry monitoring
         };
       },
 
@@ -1540,8 +1560,9 @@ export const useAppStore = create<AppState>()(
       fastLogout: () => {
         console.log('🚀 Manual fast logout initiated by user');
         
-        // Stop inactivity tracking
+        // Stop inactivity tracking and session expiry monitoring
         stopInactivityTracking();
+        stopSessionExpiryMonitoring();
         
         // Clear authentication state immediately
         set({ 

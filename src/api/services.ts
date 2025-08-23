@@ -1,5 +1,5 @@
 import { apiClient, handleApiError } from './client';
-import { AxiosError } from 'axios';
+import axios, { AxiosError } from 'axios';
 import {
   LoginData,
   RegisterData,
@@ -338,17 +338,109 @@ export const profileService = {
 
   uploadProfilePicture: async (file: File): Promise<{ success: boolean; message: string; profile_picture_url: string }> => {
     try {
+      console.log('📤 API: Starting profile picture upload');
+      console.log('📤 API: File details:', {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        lastModified: file.lastModified
+      });
+      
       const formData = new FormData();
       formData.append('profile_picture', file);
       
+      // Additional debugging - try different field names to test
+      console.log('📤 API: Testing FormData creation...');
+      const testFormData = new FormData();
+      testFormData.append('profile_picture', file);
+      testFormData.append('test_field', 'test_value');
+      
+      console.log('📤 API: Test FormData entries:');
+      for (let [key, value] of testFormData.entries()) {
+        console.log(`📤 API: Test - ${key}:`, value);
+      }
+      
+      // Log FormData contents for debugging
+      console.log('📤 API: FormData contents:');
+      for (let [key, value] of formData.entries()) {
+        console.log(`📤 API: ${key}:`, value);
+        if (value instanceof File) {
+          console.log(`📤 API: File details for ${key}:`, {
+            name: value.name,
+            size: value.size,
+            type: value.type,
+            lastModified: value.lastModified
+          });
+        }
+      }
+      
+      // Verify FormData has the expected field
+      const hasProfilePicture = formData.has('profile_picture');
+      console.log('📤 API: FormData has "profile_picture" field:', hasProfilePicture);
+      
       // Use the correct endpoint structure based on backend
-      const response = await apiClient.post('/auth/profile/upload-picture/', formData, {
-        headers: {
-          'Content-Type': 'multipart/form-data',
-        },
+      console.log('📤 API: Making request to /auth/profile/upload-picture/');
+      console.log('📤 API: Request config:', {
+        method: 'POST',
+        url: '/auth/profile/upload-picture/',
+        hasAuthToken: !!localStorage.getItem('access_token'),
+        formDataSize: formData.has('profile_picture') ? 'Has profile_picture field' : 'Missing profile_picture field'
       });
+      
+      // Create a simple axios instance for file upload to avoid interference from interceptors
+      const token = localStorage.getItem('access_token');
+      const baseURL = apiClient.defaults.baseURL;
+      
+      console.log('📤 API: Using direct axios call with minimal headers');
+      const response = await axios.post(`${baseURL}/auth/profile/upload-picture/`, formData, {
+        headers: {
+          'Authorization': token ? `Bearer ${token}` : undefined,
+          // Let browser set Content-Type with proper boundary
+        },
+        timeout: 30000,
+      });
+      
+      console.log('📤 API: Upload successful:', response.data);
       return response.data;
     } catch (error) {
+      console.error('📤 API: Upload failed:', error);
+      
+      // Enhanced error logging
+      if (error instanceof Error) {
+        console.error('📤 API: Error details:', {
+          message: error.message,
+          name: error.name,
+          stack: error.stack
+        });
+      }
+      
+      if ((error as any)?.response) {
+        console.error('📤 API: Response error:', {
+          status: (error as any).response.status,
+          statusText: (error as any).response.statusText,
+          data: (error as any).response.data,
+          headers: (error as any).response.headers
+        });
+        
+        // Log the specific error message from backend
+        if ((error as any).response.data) {
+          console.error('📤 API: Backend error details:', {
+            error: (error as any).response.data.error,
+            message: (error as any).response.data.message,
+            success: (error as any).response.data.success,
+            fullResponse: (error as any).response.data
+          });
+          
+          // Check if it's the "no picture provided" error specifically
+          const errorMsg = (error as any).response.data.error || (error as any).response.data.message || '';
+          if (errorMsg.toLowerCase().includes('no') && errorMsg.toLowerCase().includes('picture')) {
+            console.error('🚨 SPECIFIC ISSUE: Backend says "no picture provided"');
+            console.error('🚨 This means FormData is not being received correctly by backend');
+            console.error('🚨 Check if field name matches backend expectation');
+          }
+        }
+      }
+      
       handleApiError(error as AxiosError);
       throw error;
     }

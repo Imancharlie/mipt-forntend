@@ -1,4 +1,4 @@
-// Simplified authentication utilities - no automatic logouts
+// Authentication utilities with improved session management
 
 // Token expiration settings - minimal buffer to prevent edge cases
 const TOKEN_EXPIRY_BUFFER = 1 * 60 * 1000; // 1 minute buffer
@@ -6,6 +6,10 @@ const TOKEN_EXPIRY_BUFFER = 1 * 60 * 1000; // 1 minute buffer
 // Inactivity timeout settings
 const INACTIVITY_TIMEOUT = 10 * 60 * 1000; // 10 minutes
 const ACTIVITY_DEBOUNCE = 1000; // 1 second debounce to avoid excessive resets
+
+// Session expiry settings - force logout for very old sessions
+const SESSION_EXPIRY = 24 * 60 * 60 * 1000; // 24 hours (1 day)
+const SESSION_CHECK_INTERVAL = 60 * 60 * 1000; // Check every hour
 
 // Inactivity tracking
 let inactivityTimer: NodeJS.Timeout | null = null;
@@ -155,6 +159,20 @@ export const getTimeRemaining = (): number => {
   return Math.max(0, timeRemaining);
 };
 
+// Check if session is too old (more than 24 hours)
+export const isSessionExpired = (): boolean => {
+  const lastActivity = getLastActivity();
+  const timeSinceLastActivity = Date.now() - lastActivity;
+  return timeSinceLastActivity > SESSION_EXPIRY;
+};
+
+// Get session age in hours
+export const getSessionAge = (): number => {
+  const lastActivity = getLastActivity();
+  const timeSinceLastActivity = Date.now() - lastActivity;
+  return Math.floor(timeSinceLastActivity / (60 * 60 * 1000));
+};
+
 // Extend session (called when user clicks "Stay Active")
 export const extendSession = (): void => {
   if (!isTracking) return;
@@ -184,4 +202,28 @@ export const extendSession = (): void => {
       onWarningCallback(0); // Trigger timeout
     }
   }, INACTIVITY_TIMEOUT);
+};
+
+// Start session expiry monitoring
+export const startSessionExpiryMonitoring = (onSessionExpired: () => void): void => {
+  // Check session expiry every hour
+  const sessionCheckInterval = setInterval(() => {
+    if (isSessionExpired()) {
+      console.log('🕐 Session expired (24+ hours old), logging out user');
+      onSessionExpired();
+      clearInterval(sessionCheckInterval);
+    }
+  }, SESSION_CHECK_INTERVAL);
+  
+  // Store cleanup function
+  (window as any).__sessionExpiryCleanup = () => {
+    clearInterval(sessionCheckInterval);
+  };
+};
+
+// Stop session expiry monitoring
+export const stopSessionExpiryMonitoring = (): void => {
+  if ((window as any).__sessionExpiryCleanup) {
+    (window as any).__sessionExpiryCleanup();
+  }
 }; 

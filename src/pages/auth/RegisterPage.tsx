@@ -385,16 +385,7 @@ export const RegisterPage: React.FC = () => {
                   <h3 className="font-semibold">Academic Information</h3>
                 </div>
                 
-                <div>
-                  <label className="block text-sm font-medium mb-1">Student ID</label>
-                  <input 
-                    className="input-field" 
-                    placeholder="Enter your student ID (optional)"
-                    {...(currentMethods as any).register('student_id')} 
-                  />
-                  {(currentMethods as any).formState.errors.student_id && 
-                    <p className="text-xs text-red-500 mt-1">{(currentMethods as any).formState.errors.student_id.message}</p>}
-                </div>
+                
 
                 <CollegeProgramSelector
                   value={(currentMethods as any).watch('program')}

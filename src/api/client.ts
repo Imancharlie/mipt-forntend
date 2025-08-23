@@ -119,8 +119,8 @@ apiClient.interceptors.request.use(
         config.url = sanitizeUrl(config.url);
       }
 
-      // Security: Validate request data
-      if (config.data && typeof config.data === 'object') {
+      // Security: Validate request data (skip FormData for file uploads)
+      if (config.data && typeof config.data === 'object' && !(config.data instanceof FormData)) {
         config.data = sanitizeInput(config.data);
       }
 

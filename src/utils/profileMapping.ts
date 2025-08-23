@@ -3,7 +3,7 @@
 // College-based program organization
 export const COLLEGE_PROGRAMS = {
   'CoET': {
-    name: 'College of Engineering and Technology',
+    name: 'CoET',
     programs: {
       'CHEMICAL': 'BSc in Chemical and Process Engineering',
       'CIVIL': 'BSc in Civil Engineering',
@@ -18,7 +18,7 @@ export const COLLEGE_PROGRAMS = {
     }
   },
   'CoICT': {
-    name: 'College of Information and Communication Technologies',
+    name: 'CoICT',
     programs: {
       'COMPUTER': 'BSc in Computer Science',
       'ELECTRONIC_SCIENCE': 'BSc in Electronic Science and Communication',
@@ -29,17 +29,15 @@ export const COLLEGE_PROGRAMS = {
     }
   },
   'SoMG': {
-    name: 'School of Mines and Geosciences',
+    name: 'SoMG',
     programs: {
-      'GEOPHYSICS': 'BSc in Geophysics',
-      'GEOLOGY_GEOTHERMAL': 'BSc in Geology and Geothermal Resources',
-      'PETROLEUM_GEOLOGY': 'BSc in Petroleum Geology',
+      'MINING_ENGINEERING': 'BSc in Mining Engineering',
+      'GEOLOGICAL_ENGINEERING': 'BSc in Geological Engineering',
+      'MINERAL_PROCESSING': 'BSc in Mineral Processing Engineering',
+      'PETROLEUM_ENGINEERING': 'BSc in Petroleum Engineering',
       'GEOLOGY': 'BSc in Geology',
-      'GEOLOGY_WITH': 'BSc with Geology',
-      'ENGINEERING_GEOLOGY': 'BSc in Engineering Geology',
-      'METALLURGY_MINERAL': 'BSc in Metallurgy and Mineral Processing Engineering',
-      'MINING': 'BSc in Mining Engineering',
-      'PETROLEUM': 'BSc in Petroleum Engineering',
+      'GEOPHYSICS': 'BSc in Geophysics',
+      'ENVIRONMENTAL_GEOLOGY': 'BSc in Environmental Geology',
     }
   }
 };
@@ -67,15 +65,13 @@ export const PROGRAM_MAPPING = {
   'BSc in Electronic Engineering': 'ELECTRONIC_ENGINEERING',
   
   // SoMG Programs
-  'BSc in Geophysics': 'GEOPHYSICS',
-  'BSc in Geology and Geothermal Resources': 'GEOLOGY_GEOTHERMAL',
-  'BSc in Petroleum Geology': 'PETROLEUM_GEOLOGY',
+  'BSc in Mining Engineering': 'MINING_ENGINEERING',
+  'BSc in Geological Engineering': 'GEOLOGICAL_ENGINEERING',
+  'BSc in Mineral Processing Engineering': 'MINERAL_PROCESSING',
+  'BSc in Petroleum Engineering': 'PETROLEUM_ENGINEERING',
   'BSc in Geology': 'GEOLOGY',
-  'BSc with Geology': 'GEOLOGY_WITH',
-  'BSc in Engineering Geology': 'ENGINEERING_GEOLOGY',
-  'BSc in Metallurgy and Mineral Processing Engineering': 'METALLURGY_MINERAL',
-  'BSc in Mining Engineering': 'MINING',
-  'BSc in Petroleum Engineering': 'PETROLEUM',
+  'BSc in Geophysics': 'GEOPHYSICS',
+  'BSc in Environmental Geology': 'ENVIRONMENTAL_GEOLOGY',
   
   // Reverse mapping for display
   'CHEMICAL': 'BSc in Chemical and Process Engineering',
@@ -94,15 +90,13 @@ export const PROGRAM_MAPPING = {
   'TELECOMMUNICATIONS': 'BSc in Telecommunications Engineering',
   'BUSINESS_IT': 'BSc in Business Information Technology',
   'ELECTRONIC_ENGINEERING': 'BSc in Electronic Engineering',
-  'GEOPHYSICS': 'BSc in Geophysics',
-  'GEOLOGY_GEOTHERMAL': 'BSc in Geology and Geothermal Resources',
-  'PETROLEUM_GEOLOGY': 'BSc in Petroleum Geology',
+  'MINING_ENGINEERING': 'BSc in Mining Engineering',
+  'GEOLOGICAL_ENGINEERING': 'BSc in Geological Engineering',
+  'MINERAL_PROCESSING': 'BSc in Mineral Processing Engineering',
+  'PETROLEUM_ENGINEERING': 'BSc in Petroleum Engineering',
   'GEOLOGY': 'BSc in Geology',
-  'GEOLOGY_WITH': 'BSc with Geology',
-  'ENGINEERING_GEOLOGY': 'BSc in Engineering Geology',
-  'METALLURGY_MINERAL': 'BSc in Metallurgy and Mineral Processing Engineering',
-  'MINING': 'BSc in Mining Engineering',
-  'PETROLEUM': 'BSc in Petroleum Engineering',
+  'GEOPHYSICS': 'BSc in Geophysics',
+  'ENVIRONMENTAL_GEOLOGY': 'BSc in Environmental Geology',
 };
 
 // PT Phase mapping
@@ -143,14 +137,13 @@ export const mapProgramToBackend = (program: string): string => {
   if (upperProgram.includes('TELECOMMUNICATIONS')) return 'TELECOMMUNICATIONS';
   if (upperProgram.includes('BUSINESS_IT')) return 'BUSINESS_IT';
   if (upperProgram.includes('ELECTRONIC_ENGINEERING')) return 'ELECTRONIC_ENGINEERING';
-  if (upperProgram.includes('GEOPHYSICS')) return 'GEOPHYSICS';
-  if (upperProgram.includes('GEOLOGY_GEOTHERMAL')) return 'GEOLOGY_GEOTHERMAL';
-  if (upperProgram.includes('PETROLEUM_GEOLOGY')) return 'PETROLEUM_GEOLOGY';
+  if (upperProgram.includes('MINING_ENGINEERING') || upperProgram.includes('MINING')) return 'MINING_ENGINEERING';
+  if (upperProgram.includes('GEOLOGICAL_ENGINEERING') || upperProgram.includes('GEOLOGICAL')) return 'GEOLOGICAL_ENGINEERING';
+  if (upperProgram.includes('MINERAL_PROCESSING') || upperProgram.includes('MINERAL')) return 'MINERAL_PROCESSING';
+  if (upperProgram.includes('PETROLEUM_ENGINEERING') || upperProgram.includes('PETROLEUM')) return 'PETROLEUM_ENGINEERING';
   if (upperProgram.includes('GEOLOGY')) return 'GEOLOGY';
-  if (upperProgram.includes('ENGINEERING_GEOLOGY')) return 'ENGINEERING_GEOLOGY';
-  if (upperProgram.includes('METALLURGY_MINERAL')) return 'METALLURGY_MINERAL';
-  if (upperProgram.includes('MINING')) return 'MINING';
-  if (upperProgram.includes('PETROLEUM')) return 'PETROLEUM';
+  if (upperProgram.includes('GEOPHYSICS')) return 'GEOPHYSICS';
+  if (upperProgram.includes('ENVIRONMENTAL_GEOLOGY') || upperProgram.includes('ENVIRONMENTAL')) return 'ENVIRONMENTAL_GEOLOGY';
   
   // Default to the original value if no match found
   return program;
@@ -231,10 +224,10 @@ export const getDepartmentFromProgram = (program: string): string => {
   // SoMG Departments
   else if (programUpper.includes('GEOPHYSICS')) {
     return 'Geophysics Department';
-  } else if (programUpper.includes('GEOLOGY') || programUpper.includes('MINING') || programUpper.includes('PETROLEUM')) {
+  } else if (programUpper.includes('GEOLOGY') || programUpper.includes('MINING_ENGINEERING') || programUpper.includes('GEOLOGICAL_ENGINEERING') || programUpper.includes('PETROLEUM_ENGINEERING')) {
     return 'Geology and Mining Department';
-  } else if (programUpper.includes('METALLURGY')) {
-    return 'Metallurgy and Mineral Processing Department';
+  } else if (programUpper.includes('MINERAL_PROCESSING') || programUpper.includes('ENVIRONMENTAL_GEOLOGY')) {
+    return 'Mineral Processing and Environmental Geology Department';
   }
   
   return '';

@@ -73,13 +73,13 @@ const BillingPage: React.FC = () => {
       name: 'M-Pesa',
       description: 'LiPA NAMBA',
       icon: <Phone className="w-6 h-6" />,
-      number: paymentInfo?.payment_number || '68256127',
+      number: '68256127', // LiPA NAMBA number
       accountName: 'MIPT Software'
     },
     {
-      id: 'M-Pesa',
+      id: 'mpesa-personal',
       name: 'M-Pesa',
-      description: '',
+      description: 'Mpesa Number',
       icon: <Phone className="w-6 h-6" />,
       number: '0741233416',
       accountName: 'ABDUL NURDIN'
@@ -305,34 +305,44 @@ const BillingPage: React.FC = () => {
           {/* Payment Methods */}
           <div className="mb-8">
             <h2 className="text-xl font-bold text-gray-800 dark:text-white mb-6">Payment Methods</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {paymentMethods.map((method) => (
-                <div
-                  key={method.id}
-                  className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 hover:shadow-md transition-all duration-300"
-                >
-                  <div className="flex items-center gap-3 mb-3">
-                    <div className="p-2 bg-orange-100 dark:bg-orange-900/30 rounded-lg text-orange-600 dark:text-orange-400">
-                      {method.icon}
+            
+            {/* M-Pesa Image */}
+            <div className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4 mb-6">
+              <img 
+                src="/mpesa.png" 
+                alt="M-Pesa" 
+                className="w-full object-contain mb-4"
+              />
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {paymentMethods.map((method) => (
+                  <div
+                    key={method.id}
+                    className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 border border-gray-200 dark:border-gray-600"
+                  >
+                    <div className="flex items-center gap-2 mb-2">
+                      <div className="p-1.5 bg-orange-100 dark:bg-orange-900/30 rounded-lg text-orange-600 dark:text-orange-400">
+                        {method.icon}
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-semibold text-gray-800 dark:text-white">{method.description || 'M-Pesa Number'}</h4>
+                        <p className="text-xs text-gray-600 dark:text-gray-400">Payment Number</p>
+                      </div>
                     </div>
-                    <div>
-                      <h3 className="text-base font-semibold text-gray-800 dark:text-white">{method.name}</h3>
-                      <p className="text-xs text-gray-600 dark:text-gray-400">{method.description}</p>
+                    
+                    <div className="space-y-1.5">
+                      <div className="flex items-center justify-between p-1.5 bg-white dark:bg-gray-800 rounded-lg">
+                        <span className="text-xs text-gray-600 dark:text-gray-400">Number:</span>
+                        <span className="text-sm font-medium text-gray-800 dark:text-white">{method.number}</span>
+                      </div>
+                      <div className="flex items-center justify-between p-1.5 bg-white dark:bg-gray-800 rounded-lg">
+                        <span className="text-xs text-gray-600 dark:text-gray-400">Name:</span>
+                        <span className="text-sm font-medium text-gray-800 dark:text-white">{method.accountName}</span>
+                      </div>
                     </div>
                   </div>
-                  
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                      <span className="text-xs text-gray-600 dark:text-gray-400">Account:</span>
-                      <span className="text-sm font-medium text-gray-800 dark:text-white">{method.number}</span>
-                    </div>
-                    <div className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-lg">
-                      <span className="text-xs text-gray-600 dark:text-gray-400">Name:</span>
-                      <span className="text-sm font-medium text-gray-800 dark:text-white">{method.accountName}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
 

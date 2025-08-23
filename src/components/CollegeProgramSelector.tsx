@@ -55,17 +55,17 @@ export const CollegeProgramSelector: React.FC<CollegeProgramSelectorProps> = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-2">
       {/* College Selection */}
       <div className="relative">
-        <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+        <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
           College {required && <span className="text-red-500">*</span>}
         </label>
         
         <button
           type="button"
           onClick={() => setIsCollegeOpen(!isCollegeOpen)}
-          className={`w-full flex items-center justify-between p-3 border rounded-lg transition-all duration-200 ${
+          className={`w-full flex items-center justify-between p-2 border rounded-lg transition-all duration-200 ${
             error 
               ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-500' 
               : selectedCollege
@@ -73,8 +73,8 @@ export const CollegeProgramSelector: React.FC<CollegeProgramSelectorProps> = ({
                 : 'border-gray-300 bg-white focus:border-blue-500 focus:ring-blue-500'
           } focus:ring-2 focus:ring-opacity-20`}
         >
-          <div className="flex items-center gap-3">
-            <Building2 className={`w-5 h-5 ${
+          <div className="flex items-center gap-2">
+            <Building2 className={`w-4 h-4 ${
               selectedCollege ? 'text-green-600' : 'text-gray-400'
             }`} />
             <span className={selectedCollege ? 'text-gray-900' : 'text-gray-500'}>
@@ -88,22 +88,22 @@ export const CollegeProgramSelector: React.FC<CollegeProgramSelectorProps> = ({
 
         {/* College Dropdown */}
         {isCollegeOpen && (
-          <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto">
+          <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg">
             {Object.entries(COLLEGE_PROGRAMS).map(([collegeKey, college]) => (
               <button
                 key={collegeKey}
                 type="button"
                 onClick={() => handleCollegeSelect(collegeKey)}
-                className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors duration-150 text-left"
+                className="w-full flex items-center gap-2 p-2 hover:bg-gray-50 transition-colors duration-150 text-left"
               >
                 <div className="flex-1">
                   <div className="font-medium text-gray-900">{college.name}</div>
-                  <div className="text-sm text-gray-500">
+                  <div className="text-xs text-gray-500">
                     {Object.keys(college.programs).length} programs available
                   </div>
                 </div>
                 {selectedCollege === collegeKey && (
-                  <Check className="w-5 h-5 text-green-600" />
+                  <Check className="w-4 h-4 text-green-600" />
                 )}
               </button>
             ))}
@@ -114,14 +114,14 @@ export const CollegeProgramSelector: React.FC<CollegeProgramSelectorProps> = ({
       {/* Program Selection */}
       {selectedCollege && (
         <div className="relative">
-          <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+          <label className="block text-sm font-medium mb-1 text-gray-700 dark:text-gray-300">
             Program {required && <span className="text-red-500">*</span>}
           </label>
           
           <button
             type="button"
             onClick={() => setIsProgramOpen(!isProgramOpen)}
-            className={`w-full flex items-center justify-between p-3 border rounded-lg transition-all duration-200 ${
+            className={`w-full flex items-center justify-between p-2 border rounded-lg transition-all duration-200 ${
               error 
                 ? 'border-red-300 bg-red-50 focus:border-red-500 focus:ring-red-500' 
                 : value
@@ -129,8 +129,8 @@ export const CollegeProgramSelector: React.FC<CollegeProgramSelectorProps> = ({
                   : 'border-gray-300 bg-white focus:border-blue-500 focus:ring-blue-500'
             } focus:ring-2 focus:ring-opacity-20`}
           >
-            <div className="flex items-center gap-3">
-              <GraduationCap className={`w-5 h-5 ${
+            <div className="flex items-center gap-2">
+              <GraduationCap className={`w-4 h-4 ${
                 value ? 'text-green-600' : 'text-gray-400'
               }`} />
               <span className={value ? 'text-gray-900' : 'text-gray-500'}>
@@ -144,19 +144,19 @@ export const CollegeProgramSelector: React.FC<CollegeProgramSelectorProps> = ({
 
           {/* Program Dropdown */}
           {isProgramOpen && (
-            <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-auto">
+            <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg">
               {Object.entries(COLLEGE_PROGRAMS[selectedCollege as keyof typeof COLLEGE_PROGRAMS].programs).map(([programKey, programName]) => (
                 <button
                   key={programKey}
                   type="button"
                   onClick={() => handleProgramSelect(programKey)}
-                  className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 transition-colors duration-150 text-left"
+                  className="w-full flex items-center gap-2 p-2 hover:bg-gray-50 transition-colors duration-150 text-left"
                 >
                   <div className="flex-1">
-                    <div className="font-medium text-gray-900">{programName}</div>
+                    <div className="font-medium text-gray-900 text-sm">{programName}</div>
                   </div>
                   {value === programKey && (
-                    <Check className="w-5 h-5 text-green-600" />
+                    <Check className="w-4 h-4 text-green-600" />
                   )}
                 </button>
               ))}
@@ -172,7 +172,7 @@ export const CollegeProgramSelector: React.FC<CollegeProgramSelectorProps> = ({
 
       {/* Help Text */}
       {!selectedCollege && (
-        <p className="text-xs text-gray-500 mt-2">
+        <p className="text-xs text-gray-500 mt-1">
           First select a college, then choose your specific program from the available options.
         </p>
       )}

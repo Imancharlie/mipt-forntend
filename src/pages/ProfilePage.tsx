@@ -29,13 +29,37 @@ export const ProfilePage: React.FC = () => {
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
+      // Additional validation before upload
+      console.log('📸 File selected:', {
+        name: file.name,
+        type: file.type,
+        size: file.size,
+        lastModified: file.lastModified
+      });
+      
+      // Validate file extension
+      const fileName = file.name.toLowerCase();
+      const validExtensions = ['.jpg', '.jpeg', '.png', '.gif'];
+      const hasValidExtension = validExtensions.some(ext => fileName.endsWith(ext));
+      
+      if (!hasValidExtension) {
+        showError('Invalid file extension. Please select a JPG, PNG, or GIF file.');
+        return;
+      }
+      
       handleProfilePictureUpload(file);
     }
+    
+    // Reset the input value so the same file can be selected again if needed
+    event.target.value = '';
   };
 
   const handleProfilePictureUpload = async (file: File) => {
-    if (!file.type.startsWith('image/')) {
-      showError('Please select a valid image file');
+    // Enhanced file validation
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+    
+    if (!allowedTypes.includes(file.type)) {
+      showError('Invalid file type. Only JPG, PNG, and GIF files are allowed.');
       return;
     }
 
@@ -44,14 +68,44 @@ export const ProfilePage: React.FC = () => {
       return;
     }
 
+    // Additional validation
+    if (file.size === 0) {
+      showError('File is empty. Please select a valid image.');
+      return;
+    }
+
+    console.log('📸 Uploading profile picture:', {
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      lastModified: file.lastModified
+    });
+
     setIsUploadingPicture(true);
     try {
       const profilePictureUrl = await uploadProfilePicture(file);
       setProfilePicture(profilePictureUrl);
       showSuccess('Profile picture updated successfully!');
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to upload profile picture:', error);
-      showError('Failed to upload profile picture. Please try again.');
+      
+      // Better error handling
+      let errorMessage = 'Failed to upload profile picture. Please try again.';
+      
+      if (error?.response?.status === 400) {
+        const backendError = error.response.data?.error || error.response.data?.message;
+        if (backendError) {
+          errorMessage = `Upload failed: ${backendError}`;
+        } else {
+          errorMessage = 'Upload failed: Invalid file format or size. Please check your image.';
+        }
+      } else if (error?.response?.status === 413) {
+        errorMessage = 'File too large. Please select an image smaller than 5MB.';
+      } else if (error?.response?.status === 415) {
+        errorMessage = 'Unsupported file type. Please use JPG, PNG, or GIF.';
+      }
+      
+      showError(errorMessage);
     } finally {
       setIsUploadingPicture(false);
     }
@@ -264,7 +318,7 @@ export const ProfilePage: React.FC = () => {
           <input
             ref={fileInputRef}
             type="file"
-            accept="image/*"
+            accept=".jpg,.jpeg,.png,.gif,image/jpeg,image/jpg,image/png,image/gif"
             onChange={handleFileSelect}
             className="hidden"
           />

@@ -70,6 +70,13 @@ export const WeeklyReportDetailPage: React.FC = () => {
   const { theme } = useTheme();
   const { showSuccess, showError, showWarning, showInfo } = useToastContext();
   
+  // Debug profile data
+  console.log('=== PROFILE DEBUG ===');
+  console.log('Profile object:', profile);
+  console.log('Profile program:', profile?.program);
+  console.log('Profile type:', typeof profile?.program);
+  console.log('====================');
+  
   const [reportData, setReportData] = useState<WeeklyReportData | null>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [isAddingDaily, setIsAddingDaily] = useState(false);
@@ -88,10 +95,12 @@ export const WeeklyReportDetailPage: React.FC = () => {
   // Function to determine college based on user's course
   const getCollegeName = (): string => {
     if (!profile?.program) {
+      console.log('No program found in profile, defaulting to CoET');
       return 'College of Engineering and Technology (CoET)'; // Default fallback
     }
 
     const program = profile.program;
+    console.log('Current program from profile:', program);
     
     // CoICT courses (using the enum values from types)
     const coictCourses = [
@@ -102,11 +111,33 @@ export const WeeklyReportDetailPage: React.FC = () => {
       'BUSINESS_IT' // BSc in Business Information Technology
     ];
 
+    // SoMG courses (School of Mines and Geology)
+    const somgCourses = [
+      'MINING_ENGINEERING', // BSc in Mining Engineering
+      'GEOLOGICAL_ENGINEERING', // BSc in Geological Engineering
+      'MINERAL_PROCESSING', // BSc in Mineral Processing Engineering
+      'PETROLEUM_ENGINEERING', // BSc in Petroleum Engineering
+      'GEOLOGY', // BSc in Geology
+      'GEOPHYSICS', // BSc in Geophysics
+      'ENVIRONMENTAL_GEOLOGY' // BSc in Environmental Geology
+    ];
+
+    console.log('Checking against CoICT courses:', coictCourses);
+    console.log('Checking against SoMG courses:', somgCourses);
+
     // Check if the user's program is in CoICT
     if (coictCourses.includes(program)) {
+      console.log('Program matched CoICT, returning full CoICT name');
       return 'College of Information and Communication Technologies (CoICT)';
     }
 
+    // Check if the user's program is in SoMG
+    if (somgCourses.includes(program)) {
+      console.log('Program matched SoMG, returning full SoMG name');
+      return 'School of Mines and Geology (SoMG)';
+    }
+
+    console.log('Program not found in CoICT or SoMG, defaulting to full CoET name');
     // All other courses are CoET
     return 'College of Engineering and Technology (CoET)';
   };
