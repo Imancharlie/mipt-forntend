@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm, FormProvider } from 'react-hook-form';
 import { useAppStore } from '@/store';
 import { RegisterData, RegistrationSteps } from '@/types';
 import { Loader2, ArrowRight, ArrowLeft, User, GraduationCap, Phone, Mail, Lock } from 'lucide-react';
 import { useTheme } from '@/components/ThemeProvider';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { authService } from '@/api/services';
 import { useToastContext } from '@/contexts/ToastContext';
 import { CollegeProgramSelector } from '@/components/CollegeProgramSelector';
@@ -15,6 +15,7 @@ const stepTitles = ['Personal Info', 'Account Details', 'Academic Info'];
 
 export const RegisterPage: React.FC = () => {
   const [step, setStep] = useState(0);
+  const [searchParams] = useSearchParams();
   const [formData, setFormData] = useState<RegistrationSteps>({
     step1: {
       first_name: '',
@@ -39,11 +40,43 @@ export const RegisterPage: React.FC = () => {
   });
   const [phoneChecking, setPhoneChecking] = useState(false);
   const [showTerms, setShowTerms] = useState(false);
+  const [wrongEmailMessage, setWrongEmailMessage] = useState(false);
   const { registerAndLogin, loading, error } = useAppStore();
   const { theme } = useTheme();
   const navigate = useNavigate();
   const { showSuccess, showError } = useToastContext();
   
+  // Check for wrong email parameter and show message
+  useEffect(() => {
+    const wrongEmail = searchParams.get('wrongEmail');
+    if (wrongEmail === '1') {
+      setWrongEmailMessage(true);
+      showSuccess('You can now register with a different email address.');
+      
+      // Reset form data to start fresh
+      setFormData({
+        step1: { first_name: '', last_name: '', phone_number: '' },
+        step2: { email: '', password: '', password_confirm: '' },
+        step3: { 
+          student_id: '', 
+          program: '', 
+          pt_phase: 'PT1', 
+          academic_year: 1, 
+          supervisor_name: '', 
+          supervisor_email: '', 
+          area_of_field: '', 
+          region: '' 
+        },
+      });
+      
+      // Reset form steps
+      setStep(0);
+      
+      // Clear the URL parameter
+      navigate('/register', { replace: true });
+    }
+  }, [searchParams, navigate, showSuccess]);
+
   // Show validation errors (e.g., email already exists)
   React.useEffect(() => {
     if (error?.message) {
@@ -98,6 +131,17 @@ export const RegisterPage: React.FC = () => {
   const step3Methods = useForm<RegistrationSteps["step3"]>({ 
     defaultValues: formData.step3 
   });
+
+  // Reset form methods when wrong email is detected
+  useEffect(() => {
+    const wrongEmail = searchParams.get('wrongEmail');
+    if (wrongEmail === '1') {
+      // Reset form methods to clear validation states
+      step1Methods.reset();
+      step2Methods.reset();
+      step3Methods.reset();
+    }
+  }, [searchParams, step1Methods, step2Methods, step3Methods]);
 
   // Check phone number availability
   const checkPhoneNumber = async (phoneNumber: string): Promise<boolean> => {
@@ -207,6 +251,24 @@ export const RegisterPage: React.FC = () => {
     <div className="min-h-screen flex flex-col justify-center items-center px-4 bg-gray-50 dark:bg-gray-900">
       <div className="w-full max-w-md bg-white dark:bg-gray-800 rounded-xl shadow-lg p-8 border border-gray-200 dark:border-gray-700">
         <h2 className="text-2xl font-bold mb-6 text-orange-600 dark:text-orange-400 text-center">Register</h2>
+        
+        {/* Wrong Email Message */}
+        {wrongEmailMessage && (
+          <div className="mb-4 p-4 rounded-lg border border-orange-300 bg-orange-50 text-orange-700 text-sm">
+            <div className="flex items-center gap-2">
+              <div className="w-2 h-2 bg-orange-500 rounded-full"></div>
+              <span className="font-medium">Email Reset</span>
+            </div>
+            <p className="mt-1">You can now register with a different email address. All previous data has been cleared.</p>
+            <button 
+              onClick={() => setWrongEmailMessage(false)}
+              className="mt-2 text-orange-600 hover:text-orange-800 underline text-xs"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
+        
         {error?.message && (
           <div className="mb-4 p-3 rounded-lg border border-red-300 bg-red-50 text-red-700 text-sm">
             {error.message}
@@ -427,27 +489,9 @@ export const RegisterPage: React.FC = () => {
                     <p className="text-xs text-red-500 mt-1">{(currentMethods as any).formState.errors.academic_year.message}</p>}
                 </div>
 
-                <div>
-                  <label className="block text-sm font-medium mb-1">Supervisor Name</label>
-                  <input 
-                    className="input-field" 
-                    placeholder="Enter your supervisor's name (optional)"
-                    {...(currentMethods as any).register('supervisor_name')} 
-                  />
-                  {(currentMethods as any).formState.errors.supervisor_name && 
-                    <p className="text-xs text-red-500 mt-1">{(currentMethods as any).formState.errors.supervisor_name.message}</p>}
-                </div>
+                {/* Supervisor Name field removed - keeping data structure intact */}
 
-                <div>
-                  <label className="block text-sm font-medium mb-1">Supervisor Email</label>
-                  <input 
-                    className="input-field" 
-                    placeholder="Enter your supervisor's email (optional)"
-                    {...(currentMethods as any).register('supervisor_email')} 
-                  />
-                  {(currentMethods as any).formState.errors.supervisor_email && 
-                    <p className="text-xs text-red-500 mt-1">{(currentMethods as any).formState.errors.supervisor_email.message}</p>}
-                </div>
+                {/* Supervisor Email field removed - keeping data structure intact */}
                 
                 <div>
                   <label className="block text-sm font-medium mb-1">Area of Field (Company)</label>
@@ -460,16 +504,7 @@ export const RegisterPage: React.FC = () => {
                     <p className="text-xs text-red-500 mt-1">{(currentMethods as any).formState.errors.area_of_field.message}</p>}
                 </div>
                 
-                <div>
-                  <label className="block text-sm font-medium mb-1">Region</label>
-                  <input 
-                    className="input-field" 
-                    placeholder="Enter your region"
-                    {...(currentMethods as any).register('region', { required: 'Region is required' })} 
-                  />
-                  {(currentMethods as any).formState.errors.region && 
-                    <p className="text-xs text-red-500 mt-1">{(currentMethods as any).formState.errors.region.message}</p>}
-                </div>
+                {/* Region field removed - keeping data structure intact */}
               </>
             )}
 

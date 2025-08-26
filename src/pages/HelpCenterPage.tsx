@@ -36,7 +36,7 @@ export const HelpCenterPage: React.FC = () => {
   const handleQuickHelp = () => {
     const whatsappMessage = "Hi! I need quick help with the app.";
     const encodedMessage = encodeURIComponent(whatsappMessage);
-    window.open(`https://wa.me/255614021404?text=${encodedMessage}`, '_blank');
+    window.open(`https://wa.me/255741233416?text=${encodedMessage}`, '_blank');
   };
 
   return (

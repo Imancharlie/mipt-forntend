@@ -1,8 +1,8 @@
-import React, { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAppStore } from '@/store';
 import { useTheme } from '@/components/ThemeProvider';
 import { UpdateProfileData } from '@/types';
-import { Loader2, User, Phone, Building2, GraduationCap, Calendar, Save, Edit, Camera, Upload, X } from 'lucide-react';
+import { Loader2, User, Phone, Building2, GraduationCap, Calendar, Save, Edit } from 'lucide-react';
 import { useForm } from 'react-hook-form';
 import { cleanProfileData, mapProgramToFrontend, mapPTPhaseToFrontend, PROGRAM_MAPPING, PT_PHASE_MAPPING } from '@/utils/profileMapping';
 import { CollegeProgramSelector } from '@/components/CollegeProgramSelector';
@@ -11,140 +11,54 @@ import { useToastContext } from '@/contexts/ToastContext';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 
 export const ProfilePage: React.FC = () => {
-  const { profile, updateProfile, loading, fetchProfile, user, uploadProfilePicture, removeProfilePicture } = useAppStore();
+  const { profile, updateProfile, loading, fetchProfile, user } = useAppStore();
   const { theme } = useTheme();
   const { showSuccess, showError, showInfo } = useToastContext();
   const [isEditing, setIsEditing] = useState(false);
-  const [profilePicture, setProfilePicture] = useState<string | null>(null);
-  const [isUploadingPicture, setIsUploadingPicture] = useState(false);
   const [localNames, setLocalNames] = useState<{firstName: string, lastName: string} | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isUpdatingProfile, setIsUpdatingProfile] = useState(false);
   const { register, handleSubmit, reset, watch, setValue, formState: { errors, isSubmitting } } = useForm<UpdateProfileData>();
 
   useEffect(() => {
     fetchProfile();
   }, []); // Removed fetchProfile from dependencies to prevent infinite loop
 
-  // Profile picture upload functions
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      // Additional validation before upload
-      console.log('📸 File selected:', {
-        name: file.name,
-        type: file.type,
-        size: file.size,
-        lastModified: file.lastModified
-      });
-      
-      // Validate file extension
-      const fileName = file.name.toLowerCase();
-      const validExtensions = ['.jpg', '.jpeg', '.png', '.gif'];
-      const hasValidExtension = validExtensions.some(ext => fileName.endsWith(ext));
-      
-      if (!hasValidExtension) {
-        showError('Invalid file extension. Please select a JPG, PNG, or GIF file.');
-        return;
-      }
-      
-      handleProfilePictureUpload(file);
-    }
-    
-    // Reset the input value so the same file can be selected again if needed
-    event.target.value = '';
-  };
-
-  const handleProfilePictureUpload = async (file: File) => {
-    // Enhanced file validation
-    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
-    
-    if (!allowedTypes.includes(file.type)) {
-      showError('Invalid file type. Only JPG, PNG, and GIF files are allowed.');
-      return;
-    }
-
-    if (file.size > 5 * 1024 * 1024) { // 5MB limit
-      showError('Image size must be less than 5MB');
-      return;
-    }
-
-    // Additional validation
-    if (file.size === 0) {
-      showError('File is empty. Please select a valid image.');
-      return;
-    }
-
-    console.log('📸 Uploading profile picture:', {
-      name: file.name,
-      type: file.type,
-      size: file.size,
-      lastModified: file.lastModified
-    });
-
-    setIsUploadingPicture(true);
-    try {
-      const profilePictureUrl = await uploadProfilePicture(file);
-      setProfilePicture(profilePictureUrl);
-      showSuccess('Profile picture updated successfully!');
-    } catch (error: any) {
-      console.error('Failed to upload profile picture:', error);
-      
-      // Better error handling
-      let errorMessage = 'Failed to upload profile picture. Please try again.';
-      
-      if (error?.response?.status === 400) {
-        const backendError = error.response.data?.error || error.response.data?.message;
-        if (backendError) {
-          errorMessage = `Upload failed: ${backendError}`;
-        } else {
-          errorMessage = 'Upload failed: Invalid file format or size. Please check your image.';
-        }
-      } else if (error?.response?.status === 413) {
-        errorMessage = 'File too large. Please select an image smaller than 5MB.';
-      } else if (error?.response?.status === 415) {
-        errorMessage = 'Unsupported file type. Please use JPG, PNG, or GIF.';
-      }
-      
-      showError(errorMessage);
-    } finally {
-      setIsUploadingPicture(false);
-    }
-  };
-
-  const handleRemoveProfilePicture = async () => {
-    try {
-      await removeProfilePicture();
-      setProfilePicture(null);
-      showSuccess('Profile picture removed successfully!');
-    } catch (error) {
-      console.error('Failed to remove profile picture:', error);
-      showError('Failed to remove profile picture. Please try again.');
-    }
-  };
+  // Profile picture functions removed due to backend issues
 
   useEffect(() => {
     if (profile) {
-      // Set profile picture if available (check both user and profile objects)
-      if (user?.profile_picture) {
-        setProfilePicture(user.profile_picture);
-      } else if (profile.profile_picture) {
-        setProfilePicture(profile.profile_picture);
+      // Reset form with current data - try multiple sources for names with better fallbacks
+      let firstName = localNames?.firstName || user?.first_name || '';
+      let lastName = localNames?.lastName || user?.last_name || '';
+      
+      // If names are still empty, try to extract from profile data
+      if (!firstName && profile?.user_details?.full_name) {
+        const fullNameParts = profile.user_details.full_name.trim().split(' ').filter(part => part.length > 0);
+        if (fullNameParts.length > 0) {
+          firstName = fullNameParts[0];
+          lastName = fullNameParts.slice(1).join(' ') || '';
+        }
       }
       
-      // Reset form with current data - try multiple sources for names
-      const firstName = localNames?.firstName || user?.first_name || profile?.user_details?.full_name?.split(' ')[0] || '';
-      const lastName = localNames?.lastName || user?.last_name || profile?.user_details?.full_name?.split(' ').slice(1).join(' ') || '';
+      // Additional fallback: try profile fields directly
+      if (!firstName && profile?.user_details?.username) {
+        firstName = profile.user_details.username.split('.')[0] || 'Not Set';
+      }
+      if (!lastName && profile?.user_details?.username) {
+        const usernameParts = profile.user_details.username.split('.');
+        lastName = usernameParts.length > 1 ? usernameParts[1] : 'Not Set';
+      }
       
       const formData = {
-        first_name: firstName,
-        last_name: lastName,
-        program: mapProgramToFrontend(profile.program),
-        year_of_study: profile.year_of_study,
-        pt_phase: mapPTPhaseToFrontend(profile.pt_phase),
-        department: profile.department,
-        phone_number: profile.phone_number,
-        company_name: profile.company_name,
-        company_region: profile.company_region,
+        first_name: firstName || 'Not Set',
+        last_name: lastName || 'Not Set',
+        program: mapProgramToFrontend(profile.program) || 'Not Set',
+        year_of_study: profile.year_of_study || 1,
+        pt_phase: mapPTPhaseToFrontend(profile.pt_phase) || 'PT1',
+        department: profile.department || 'Not Set',
+        phone_number: profile.phone_number || 'Not Set',
+        company_name: profile.company_name || 'Not Set',
+        company_region: profile.company_region || 'Not Set',
       };
       
       console.log('=== PROFILE DEBUG INFO ===');
@@ -187,6 +101,8 @@ export const ProfilePage: React.FC = () => {
 
   const onSubmit = async (data: UpdateProfileData) => {
     try {
+      setIsUpdatingProfile(true);
+      
       // Store names locally for immediate display
       if (data.first_name || data.last_name) {
         setLocalNames({
@@ -199,17 +115,42 @@ export const ProfilePage: React.FC = () => {
       const cleanedData = cleanProfileData(data);
       
       console.log('Sending profile data:', cleanedData);
-      await updateProfile(cleanedData);
+      
+      // Add timeout handling for profile update
+      const updatePromise = updateProfile(cleanedData);
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error('Request timeout - server is taking too long to respond')), 20000)
+      );
+      
+      await Promise.race([updatePromise, timeoutPromise]);
+      
       setIsEditing(false);
-      // Show success message
       showSuccess('Profile updated successfully!');
+      
       // Refresh profile data to show updated information
       await fetchProfile();
-    } catch (error) {
+    } catch (error: any) {
       console.error('Failed to update profile:', error);
+      
       // Clear local names on error
       setLocalNames(null);
-      showError('Failed to update profile. Please try again.');
+      
+      // Provide specific error messages based on error type
+      let errorMessage = 'Failed to update profile. Please try again.';
+      
+      if (error?.code === 'ECONNABORTED' || error?.message?.includes('timeout')) {
+        errorMessage = 'Profile update timed out. The server is taking too long to respond. Please try again in a few minutes.';
+      } else if (error?.response?.status === 401) {
+        errorMessage = 'Your session has expired. Please login again.';
+      } else if (error?.response?.status === 500) {
+        errorMessage = 'Server error occurred. Please try again later.';
+      } else if (error?.response?.status === 400) {
+        errorMessage = 'Invalid profile data. Please check your information and try again.';
+      }
+      
+      showError(errorMessage);
+    } finally {
+      setIsUpdatingProfile(false);
     }
   };
 
@@ -251,7 +192,8 @@ export const ProfilePage: React.FC = () => {
           </button>
         </div>
 
-        {/* Profile Picture Section */}
+        {/* Profile Picture Section - Temporarily Hidden Due to Backend Issues */}
+        {/* 
         <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-lg border border-gray-200 dark:border-gray-700 p-6 mb-6">
           <div className="flex items-center gap-6">
             <div className="relative">
@@ -323,6 +265,7 @@ export const ProfilePage: React.FC = () => {
             className="hidden"
           />
         </div>
+        */}
       </div>
 
       {/* Profile Form */}
@@ -335,10 +278,10 @@ export const ProfilePage: React.FC = () => {
               <button 
                 type="submit" 
                 className="btn-primary flex items-center gap-2"
-                disabled={isSubmitting || loading.isLoading}
+                disabled={isSubmitting || loading.isLoading || isUpdatingProfile}
               >
-                {(isSubmitting || loading.isLoading) ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                Save 
+                {(isSubmitting || loading.isLoading || isUpdatingProfile) ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {isUpdatingProfile ? 'Updating...' : 'Save'}
               </button>
             </div>
           )}

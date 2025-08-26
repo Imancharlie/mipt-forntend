@@ -535,7 +535,7 @@ export const AIEnhancementButton: React.FC<AIEnhancementButtonProps> = ({
                </button>
               
               <button
-                onClick={handleQuickEnhance}
+                onClick={additionalDescription.trim() ? handleCustomEnhance : handleQuickEnhance}
                 disabled={!canEnhance || !hasContentOrDescription}
                 className={`flex-1 px-4 py-2 rounded-lg font-medium transition-all duration-300 flex items-center justify-center gap-2 text-xs sm:text-sm ${
                   !canEnhance || !hasContentOrDescription
@@ -543,49 +543,32 @@ export const AIEnhancementButton: React.FC<AIEnhancementButtonProps> = ({
                     : `bg-gradient-to-r from-${theme}-500 to-${theme}-600 text-white hover:from-${theme}-600 hover:to-${theme}-700`
                 }`}
               >
-                                 {isEnhancing ? (
-                   <>
-                     <LoadingSpinner size="sm" inline color="white" />
-                     Enhancing...
-                   </>
+                {isEnhancing ? (
+                  <>
+                    <LoadingSpinner size="sm" inline color="white" />
+                    Enhancing...
+                  </>
                 ) : !userBalance || userBalance.available_tokens < FIXED_COST ? (
-                   <>
+                  <>
                     <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4" />
-                     <a href="/billing" className="underline hover:text-blue-600">
-                       Get Tokens
-                     </a>
-                   </>
+                    <a href="/billing" className="underline hover:text-blue-600">
+                      Get Tokens
+                    </a>
+                  </>
                 ) : !hasContentOrDescription ? (
                   <>
                     <AlertCircle className="w-3 h-3 sm:w-4 sm:h-4" />
                     Add Content or Description
-                   </>
-                 ) : (
-                   <>
+                  </>
+                ) : (
+                  <>
                     <Sparkles className="w-3 h-3 sm:w-4 sm:h-4" />
-                    Enhance Report
-                   </>
-                 )}
+                    {additionalDescription.trim() ? 'Enhance with Instructions' : 'Enhance Report'}
+                  </>
+                )}
               </button>
               
-              {additionalDescription.trim() && (
-                <button
-                  onClick={handleCustomEnhance}
-                  disabled={!canEnhance}
-                  className={`px-4 py-2 rounded-lg font-medium transition-all duration-300 flex items-center justify-center gap-2 text-xs sm:text-sm ${
-                    !canEnhance
-                      ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                      : 'bg-green-500 text-white hover:bg-green-600'
-                  }`}
-                >
-                                   {isEnhancing ? (
-                   <LoadingSpinner size="sm" inline color="white" />
-                 ) : (
-                    <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4" />
-                 )}
-                  Custom
-                </button>
-              )}
+
             </div>
           </div>
         </div>

@@ -1168,7 +1168,20 @@ export const useAppStore = create<AppState>()(
           } else {
             throw new Error('Failed to fetch balance');
           }
-        } catch (error) {
+        } catch (error: any) {
+          // Check if it's a 401 Unauthorized error
+          if (error?.response?.status === 401) {
+            console.log('🔐 401 Unauthorized error in fetchUserBalance - user needs to re-authenticate');
+            
+            // Clear balance loading state
+            set({ balanceLoading: false });
+            
+            // Automatically logout user and redirect to login
+            get().fastLogout();
+            return; // Exit early, don't throw error
+          }
+          
+          // For other errors, set error state but don't logout
           set({ 
             error: { message: 'Failed to fetch balance', type: 'network' },
             balanceLoading: false
@@ -1185,7 +1198,13 @@ export const useAppStore = create<AppState>()(
             // Try to refresh transactions, but don't fail if it doesn't work
             try {
               await get().fetchTransactions();
-            } catch (refreshError) {
+            } catch (refreshError: any) {
+              // Check if it's a 401 error
+              if (refreshError?.response?.status === 401) {
+                console.log('🔐 401 Unauthorized error refreshing transactions - logging out user');
+                get().fastLogout();
+                return response.data; // Return success but logout user
+              }
               console.warn('Failed to refresh transactions after creation:', refreshError);
               // Don't let this break the transaction creation success
             }
@@ -1194,7 +1213,15 @@ export const useAppStore = create<AppState>()(
           } else {
             throw new Error(response.message || 'Failed to create transaction');
           }
-        } catch (error) {
+        } catch (error: any) {
+          // Check if it's a 401 Unauthorized error
+          if (error?.response?.status === 401) {
+            console.log('🔐 401 Unauthorized error in createTransaction - user needs to re-authenticate');
+            set({ loading: { isLoading: false } });
+            get().fastLogout();
+            throw new Error('Authentication expired - please login again'); // Throw error to maintain return type
+          }
+          
           set({ 
             error: { message: 'Failed to create transaction', type: 'network' },
             loading: { isLoading: false }
@@ -1217,7 +1244,15 @@ export const useAppStore = create<AppState>()(
           } else {
             throw new Error(response.message || 'Failed to verify payment');
           }
-        } catch (error) {
+        } catch (error: any) {
+          // Check if it's a 401 Unauthorized error
+          if (error?.response?.status === 401) {
+            console.log('🔐 401 Unauthorized error in verifyPayment - user needs to re-authenticate');
+            set({ loading: { isLoading: false } });
+            get().fastLogout();
+            throw new Error('Authentication expired - please login again');
+          }
+          
           set({ 
             error: { message: 'Failed to verify payment', type: 'network' },
             loading: { isLoading: false }
@@ -1236,7 +1271,14 @@ export const useAppStore = create<AppState>()(
           } else {
             throw new Error('Failed to fetch usage history');
           }
-        } catch (error) {
+        } catch (error: any) {
+          // Check if it's a 401 Unauthorized error
+          if (error?.response?.status === 401) {
+            console.log('🔐 401 Unauthorized error in fetchTokenUsageHistory - user needs to re-authenticate');
+            get().fastLogout();
+            return; // Exit early for 401 errors
+          }
+          
           set({ 
             error: { message: 'Failed to fetch usage history', type: 'network' },
             tokenUsageHistory: [] // Ensure it's always an array even on error
@@ -1254,7 +1296,15 @@ export const useAppStore = create<AppState>()(
           } else {
             throw new Error('Failed to fetch billing dashboard');
           }
-        } catch (error) {
+        } catch (error: any) {
+          // Check if it's a 401 Unauthorized error
+          if (error?.response?.status === 401) {
+            console.log('🔐 401 Unauthorized error in fetchBillingDashboard - user needs to re-authenticate');
+            set({ loading: { isLoading: false } });
+            get().fastLogout();
+            return; // Exit early for 401 errors
+          }
+          
           set({ 
             error: { message: 'Failed to fetch billing data', type: 'network' },
             loading: { isLoading: false }
@@ -1271,7 +1321,14 @@ export const useAppStore = create<AppState>()(
           } else {
             throw new Error('Failed to fetch payment info');
           }
-        } catch (error) {
+        } catch (error: any) {
+          // Check if it's a 401 Unauthorized error
+          if (error?.response?.status === 401) {
+            console.log('🔐 401 Unauthorized error in fetchPaymentInfo - user needs to re-authenticate');
+            get().fastLogout();
+            return; // Exit early for 401 errors
+          }
+          
           set({ error: { message: 'Failed to fetch payment info', type: 'network' } });
           throw error;
         }
@@ -1285,7 +1342,14 @@ export const useAppStore = create<AppState>()(
           } else {
             throw new Error('Failed to fetch transactions');
           }
-        } catch (error) {
+        } catch (error: any) {
+          // Check if it's a 401 Unauthorized error
+          if (error?.response?.status === 401) {
+            console.log('🔐 401 Unauthorized error in fetchTransactions - user needs to re-authenticate');
+            get().fastLogout();
+            return; // Exit early for 401 errors
+          }
+          
           set({ 
             error: { message: 'Failed to fetch transactions', type: 'network' },
             transactions: [] // Ensure it's always an array even on error
